@@ -198,12 +198,17 @@ sub do_file {
 
         # decide what sort of file we have and get the coordinate details
 	my $name;
+	my $score;
 	my ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $shard);
 	my ($chr1b, $strand1b, $pos1_startb, $pos1_endb, $chr2b, $strand2b, $pos2_startb, $pos2_endb, $shardb);
 	my ($chr1c, $strand1c, $pos1_startc, $pos1_endc, $chr2c, $strand2c, $pos2_startc, $pos2_endc, $shardc);
 
-	if (($line[0] =~ /^\S+$/) && ($line[1] =~ /^[+-]$/) && ($line[2] =~ /^\d+$/)&& ($line[3] =~ /^\d+$/)) { # brassI format
+	if (($line[0] =~ /^\S+$/) && ($line[1] =~ /^[+-]$/) && ($line[2] =~ /^\d+$/)&& ($line[3] =~ /^\d+$/)) { # brassI marked.rg format
 	    ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end) = ($line[0],$line[1],$line[2],$line[3],$line[4],$line[5],$line[6],$line[7]);
+	    $name = $chr1 . ':' . $strand1 . ':' . $pos1_start . '-' . $pos1_end . ',' . $chr2 . ':' . $strand2 . ':' . $pos2_start . '-' . $pos2_end;
+	}
+	elsif (($line[0] =~ /^\S+$/) && ($line[1] =~ /^\d+$/)&& ($line[2] =~ /^\d+$/) && ($line[3] =~ /^\S+$/) && ($line[4] =~ /^\d+$/)&& ($line[5] =~ /^\d+$/) && ($line[6] =~ /^\S+$/) && ($line[7] =~ /^\S+$/) && ($line[8] =~ /^[+-]$/) && ($line[9] =~ /^[+-]$/) ) { # brassI filter bedpe format
+	    ($chr1, $pos1_start, $pos1_end, $chr2, $pos2_start, $pos2_end, $score, $name, $strand1, $strand2) = ($line[0],$line[1],$line[2],$line[3],$line[4],$line[5],$line[6],$line[7],$line[8],$line[9]);
 	    $name = $chr1 . ':' . $strand1 . ':' . $pos1_start . '-' . $pos1_end . ',' . $chr2 . ':' . $strand2 . ':' . $pos2_start . '-' . $pos2_end;
 	}
 	elsif ($is_refract) { # refract format - coordinate usually in second field, possibly more than one pair of coordinates, ?? in place of shards or unknown coordinate
