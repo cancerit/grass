@@ -67,11 +67,12 @@ sub new {
 
     if ($args{-dataset})  { $self->dataset($args{-dataset}); }
     if ($args{-entry})    { $self->entry($args{-entry}); }
-    if ($args{-microhom}) { $self->microhom($args{-microhom}); }
     if ($args{-within})   { $self->within($args{-within}); }
     if ($args{-species})  { $self->species($args{-species}); }
     if ($args{-registry}) { $self->registry($args{-registry}); }
-    if ($args{-entrez_required}) { $self->{entrez_required} = 1; }
+    if (defined($args{-entrez_required})) { $self->entrez_required($args{-entrez_required}); }
+    if (defined($args{-show_biotype})) { $self->show_biotype($args{-show_biotype}); }
+    if (defined($args{-list_between})) { $self->list_between($args{-list_between}); }
 
     return $self;
 }
@@ -91,22 +92,6 @@ sub dataset {
     my $self = shift;
     $self->{dataset} = shift if @_;
     return $self->{dataset};
-}
-#-----------------------------------------------------------------------#
-
-=head2 microhom
-
-  Arg (0)    : $microhom
-  Example    : $microhom = $pair->microhom($microhom);
-  Description: microhom between breakpoints
-  Return     : $microhom
-
-=cut
-
-sub microhom {
-    my $self = shift;
-    $self->{microhom} = shift if @_;
-    return $self->{microhom};
 }
 #-----------------------------------------------------------------------#
 
@@ -178,6 +163,55 @@ sub species {
 }
 #-----------------------------------------------------------------------#
 
+=head2 entrez_required
+
+  Arg (0)    : 1/0
+  Example    : $entrez_required = $Object->entrez_required($entrez_required);
+  Description: define whether entrez id is required
+  Return     : 1/0
+
+=cut
+
+sub entrez_required {
+    my $self = shift;
+    $self->{entrez_required} = shift if @_;
+    return $self->{entrez_required};
+}
+#-----------------------------------------------------------------------#
+
+=head2 show_biotype
+
+  Arg (0)    : 1/0
+  Example    : $show_biotype = $Object->show_biotype($show_biotype);
+  Description: whether to show the biotype or not (eg protein_coding) for each gene
+  Return     : 1/0
+
+=cut
+
+sub show_biotype {
+    my $self = shift;
+    $self->{show_biotype} = shift if @_;
+    return $self->{show_biotype};
+}
+#-----------------------------------------------------------------------#
+
+=head2 list_between
+
+  Arg (0)    : 1/0
+  Example    : $list_between = $Object->list_between($list_between);
+  Description: define whether to include a list of all the genes that lie between the 2 breakpoints
+  Return     : 1/0
+
+=cut
+
+sub list_between {
+    my $self = shift;
+    $self->{list_between} = shift if @_;
+    return $self->{list_between};
+}
+#-----------------------------------------------------------------------#
+#-----------------------------------------------------------------------#
+
 =head2 rg_annos
 
   Arg (0)    : $rg_annos
@@ -192,6 +226,7 @@ sub rg_annos {
     $self->{rg_annos} = shift if @_;
     return $self->{rg_annos};
 }
+#-----------------------------------------------------------------------#
 #-----------------------------------------------------------------------#
 
 =head2 getAnnotation
@@ -279,6 +314,7 @@ sub getAnnotation {
 
 	$count++;
     }
+    if ($self->{list_between}) { $self->get_list_between(); }
 }
 #-----------------------------------------------------------------------#
 sub get_end_anns {
@@ -294,7 +330,7 @@ sub get_end_anns {
 						      -within   => $self->{within});
     my $anns = $rgend->annotate();
 
-    return($anns, ($rgend->ccds_only()))
+    return($anns, ($rgend->ccds_only()));
 }
 #---------------------------------------------------------------------------------------------------------------#
 sub combine {
@@ -431,5 +467,131 @@ sub thin_end {
     if (@new_annos) { return (\@new_annos); }
     else { print "thin end failed\n"; return ($annos); }
 }
+#------------------------------------------------------------------------------------------#
+
+sub get_list_between {
+    my ($self) = @_;
+    my $registry = $self->{registry};
+    my $dataset = $self->{dataset};
+    my $within = $self->{within};
+    my $species = $self->{species};
+
+    my @genes = ();
+    # only look for genes if this is a single chromosome deletion/insertion of < 1mb
+    if (($dataset->[0]->chr1 eq $dataset->[0]->chr2) && ($dataset->[0]->strand1 eq $dataset->[0]->strand2)) {
+	my $distance = 0;
+	my $chr = $dataset->[0]->chr1;
+	my $start_coord = 0;
+	my $end_coord = 0;
+	if ($dataset->[0]->pos1_end < $dataset->[0]->pos2_start) { 
+	    $distance = $dataset->[0]->pos2_start - $dataset->[0]->pos1_end; 
+	    $start_coord = $dataset->[0]->pos1_end;
+	    $end_coord = $dataset->[0]->pos2_start;
+	}  
+	elsif ($dataset->[0]->pos2_end < $dataset->[0]->pos1_start) { 
+	    $distance = $dataset->[0]->pos1_start - $dataset->[0]->pos2_end; 
+	    $start_coord = $dataset->[0]->pos2_end;
+	    $end_coord = $dataset->[0]->pos1_start;
+	}  
+	return("") if ($distance > 1000000); # only get list of genes if less than 1MB between coordinates
+
+	# get the slice adaptor
+	my $slice_ad = $registry->get_adaptor($species,'core','slice');
+	unless ($slice_ad) { print "could not get slice for $species core\n"; return(""); }
+
+	my $slice = $slice_ad->fetch_by_region('chromosome', $chr, $start_coord, $end_coord);
+	unless ($slice) { $slice = $slice_ad->fetch_by_region(undef, chr, $start_coord, $end_coord); } # look at every type of structure, not just chromosomes
+
+	my $genes = $slice->get_all_Genes();
+	foreach my $gene(@$genes) {
+	    my $name = '';
+	    my @links = @{$gene->get_all_DBEntries};
+	    foreach my $link(@links){
+		if ($link->dbname =~ /^HGNC/) { $name = $link->display_id; 
+						last; 
+					    } # picks up 'HGNC' and 'HGNC_curated_gene' names
+	    }
+	    unless ($name) { $name = $gene->stable_id; }
+	    push @genes, $name;
+	}
+    }
+    my $gene_string = '';
+    if (@genes) { $gene_string = join ',', @genes; }
+
+    $self->{between_genes} = $gene_string;
+
+    return($gene_string);
+}
 #---------------------------------------------------------------------------------------------------------------#
+sub format_for_printing {
+    my ($self) = @_;
+
+    my $show_biotype = $self->{show_biotype};
+    my $list_between = $self->{list_between};
+    my $between_genes = $self->{between_genes};
+    my $entrez_required = $self->{entrez_required};
+    my $string = '';
+    my $found = 0;
+
+    foreach my $result (@{$self->{rg_annos}}) {
+	$found = 1;
+	if ($result->L5) {
+	    my $first_last_L = '';
+	    if ($result->L5->start_base) { $first_last_L = 'first_base'; }
+	    if ($result->L5->end_base)   { $first_last_L = 'last_base';  }
+	    my $phaseL = $result->L5->phase;
+	    unless (defined($phaseL)) { $phaseL = '_'; }
+	    $string .= $result->L5->gene . "\t"
+		. $result->L5->gene_id . "\t"
+		. $result->L5->transcript_id . "\t"
+		. $result->L5->strand . "\t"
+		. $phaseL . "\t"
+		. ($result->Ltype || $result->L5->region || '_') . "\t"
+		. ($result->L5->region_number || '_') . "\t"
+		. ($result->L5->trans_region_count || '_') . "\t"
+		. ($first_last_L || '_') . "\t";
+	    if ($show_biotype) {  $string .= '' . ($result->L5->biotype || '_')  . "\t"; }
+	}
+	else { 
+	    $string .= "_\t_\t_\t_\t_\t_\t_\t_\t_\t"; 
+	    if ($show_biotype) {  $string .= "_\t"; }
+	}
+	
+	if ($result->H5) {
+	    my $first_last_H = '';
+	    if ($result->H5->start_base) { $first_last_H = 'first_base'; }
+	    if ($result->H5->end_base)   { $first_last_H = 'last_base'; }
+	    my $phaseH = $result->H5->phase;
+	    unless (defined($phaseH)) { $phaseH = '_'; }
+	    
+	    $string .= $result->H5->gene . "\t"
+		. $result->H5->gene_id . "\t"
+		. $result->H5->transcript_id . "\t"
+		. $result->H5->strand . "\t"
+		. $phaseH . "\t"
+		. ($result->Htype || $result->H5->region || '_') . "\t"
+		. ($result->H5->region_number || '_') . "\t"
+		. ($result->H5->trans_region_count || '_') . "\t"
+		. ($first_last_H || '_') . "\t";
+	    if ($show_biotype) {  $string .= '' . ($result->H5->biotype || '_') . "\t"; }
+	}
+	else { 
+	    $string .= "_\t_\t_\t_\t_\t_\t_\t_\t_\t"; 
+	    if ($show_biotype) {  $string .= "_\t"; }
+	}
+	
+	$string .= $result->id_fusion_flag || 0;
+	if ($list_between) { $string .= "\t$between_genes";}
+	$string .= "\n";
+    }
+    
+    unless ($found) { 
+	if ($show_biotype) {  $string .= "_\t_\t"; }
+	if ($list_between) { $string .= "_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t0\t$between_genes\n"; }
+	else               { $string .= "_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t0\n"; }
+    }
+
+    return($string);
+}
+#------------------------------------------------------------------------------------------------#
 1;
