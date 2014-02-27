@@ -52,7 +52,6 @@ sub new {
     my $self = {};
     bless $self,$class;
 
-    if ($args{-conn}) { $self->conn($args{-conn}) }
     if ($args{-name}) { $self->name($args{-name}) }
     if ($args{-chr1}) { $self->chr1($args{-chr1}) }
     if ($args{-strand1}) { $self->strand1($args{-strand1}) }
@@ -74,22 +73,6 @@ sub new {
 
 #-----------------------------------------------------------------------#
 #-----------------------------------------------------------------------#
-#-----------------------------------------------------------------------#
-
-=head2 conn
-
-  Arg (0)    : $conn
-  Example    : $conn = $Pair->conn($conn);
-  Description: get/set the database connection
-  Return     : connection object
-
-=cut
-
-sub conn {
-    my $self = shift;
-    $self->{conn} = shift if @_;
-    return $self->{conn};
-}
 #-----------------------------------------------------------------------#
 
 =head2 name 
