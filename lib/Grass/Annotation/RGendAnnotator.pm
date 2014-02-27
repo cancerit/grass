@@ -93,7 +93,7 @@ sub new {
     if ($args{-registry}) { $self->registry($args{-registry}); }
     if ($args{-within}) { $self->within($args{-within}); }
     if ($args{-species}) { $self->species($args{-species}); }
-    if ($args{-entrez_required}) { $self->{entrez_required} = 1; }
+    if (defined($args{-entrez_required})) { $self->entrez_required($args{-entrez_required}); }
 
     return $self;
 }
@@ -179,6 +179,22 @@ sub species {
     my $self = shift;
     $self->{species} = shift if @_;
     return $self->{species};
+}
+#-----------------------------------------------------------------------#
+
+=head2 entrez_required
+
+  Arg (1)    : $entrez_required
+  Example    : $entrez_required = $Object->entrez_required($entrez_required);
+  Description: get the entrez id
+  Return     : entrez_required object
+
+=cut
+
+sub entrez_required {
+    my $self = shift;
+    $self->{entrez_required} = shift if @_;
+    return $self->{entrez_required};
 }
 #-----------------------------------------------------------------------#
 
