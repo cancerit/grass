@@ -44,10 +44,10 @@ my $coord = 0;
 my $file = '';
 my $file2 = '';
 my $ensembl_api = '58'; # current version of ensembl api - build 37 for human
-my $list_between = 0;
-my $help = 0;
 my $outfile = '';
+my $list_between = 0;
 my $show_biotype = 0;
+my $help = 0;
 
 GetOptions( 'within:s'      => \$within,
 	    'species:s'     => \$species,
@@ -57,14 +57,12 @@ GetOptions( 'within:s'      => \$within,
 	    'outfile:s'     => \$outfile,
 	    'ensembl_api:s' => \$ensembl_api,
 	    'list_between'  => \$list_between,
-	    'help'          => \$help,
 	    'show_biotype'  => \$show_biotype,
+	    'help'          => \$help,
          );
 
 # check inputs
 if ($help) { usage(); }
-
-print "species: $species\n";
 
 my $registry = set_ensembl($ensembl_api, $species);
 
@@ -137,74 +135,25 @@ sub do_coord {
     # get fusion prediction
     my $dataset = [];
     push @$dataset, $entry;
-    my ($fusions, $between_genes) = do_annotations($dataset, $within, $species, $list_between); 
+
+    my $rgann = new Grass::Annotation::RGannotator(-within   => $within,
+						   -dataset  => $dataset,
+						   -species  => $species,
+						   -list_between => $list_between,
+						   -show_biotype => $show_biotype,
+						   -registry => $registry);
+    $rgann->getAnnotation();
+    my $output_string = $rgann->format_for_printing();
 
     # print the results to screen
-    my $found = 0;
-
     if ($show_biotype) {
 	print "gene\tgene_id\ttranscript_id\tstrand\tend_phase\tregion\tregion_number\ttotal_region_count\tfirst/last\tbiotype\tgene\tgene_id\ttranscript_id\tstrand\tphase\tregion\tregion_number\ttotal_region_count\tfirst/last\tbiotype\tfusion_flag\n";
     }
     else {
 	print "gene\tgene_id\ttranscript_id\tstrand\tend_phase\tregion\tregion_number\ttotal_region_count\tfirst/last\tgene\tgene_id\ttranscript_id\tstrand\tphase\tregion\tregion_number\ttotal_region_count\tfirst/last\tfusion_flag\n";
     }
-    foreach my $result (@$fusions) {
-	$found = 1;
-	if ($result->L5) {
-	    my $first_last_L = '';
-	    if ($result->L5->start_base) { $first_last_L = 'first_base'; }
-	    if ($result->L5->end_base)   { $first_last_L = 'last_base';  }
-	    my $phaseL = $result->L5->phase;
-	    unless (defined($phaseL)) { $phaseL = '_'; }
-	    print $result->L5->gene . "\t"
-		. $result->L5->gene_id . "\t"
-		. $result->L5->transcript_id . "\t"
-		. $result->L5->strand . "\t"
-		. $phaseL . "\t"
-		. ($result->Ltype || $result->L5->region || '_') . "\t"
-		. ($result->L5->region_number || '_') . "\t"
-		. ($result->L5->trans_region_count || '_') . "\t"
-		. ($first_last_L || '_') . "\t";
-	    if ($show_biotype) {  print '' . ($result->L5->biotype || '_')  . "\t"; }
-	}
-	else { 
-	    print "_\t_\t_\t_\t_\t_\t_\t_\t_\t"; 
-	    if ($show_biotype) {  print "_\t"; }
-	}
-	
-	if ($result->H5) {
-	    my $first_last_H = '';
-	    if ($result->H5->start_base) { $first_last_H = 'first_base'; }
-	    if ($result->H5->end_base)   { $first_last_H = 'last_base'; }
-	    my $phaseH = $result->H5->phase;
-	    unless (defined($phaseH)) { $phaseH = '_'; }
-	    
-	    print $result->H5->gene . "\t"
-		. $result->H5->gene_id . "\t"
-		. $result->H5->transcript_id . "\t"
-		. $result->H5->strand . "\t"
-		. $phaseH . "\t"
-		. ($result->Htype || $result->H5->region || '_') . "\t"
-		. ($result->H5->region_number || '_') . "\t"
-		. ($result->H5->trans_region_count || '_') . "\t"
-		. ($first_last_H || '_') . "\t";
-	    if ($show_biotype) {  print '' . ($result->H5->biotype || '_') . "\t"; }
-	}
-	else { 
-	    print "_\t_\t_\t_\t_\t_\t_\t_\t_\t"; 
-	    if ($show_biotype) {  print "_\t"; }
-	}
-	
-	print $result->id_fusion_flag || 0;
-	if ($list_between) { print "\t$between_genes";}
-	print "\n";
-    }
-    
-    unless ($found) { 
-	if ($show_biotype) {  print "_\t_\t"; }
-	if ($list_between) { print "_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t0\t$between_genes\n"; }
-	else               { print "_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t0\n"; }
-    }
+    print $output_string;
+
 }
 #------------------------------------------------------------------------------------------------#
 sub do_file {
@@ -222,6 +171,8 @@ sub do_file {
 
     while (my $line = <$fh_in>) {
 	chomp $line;
+
+	# do any headers
 	if ($line =~ /k?e?y?\s*EXPECTED/i) { 
 	    if ($show_biotype) {
 		print $fh_out "$line\tgene\tgene_id\ttranscript_id\tstrand\tend_phase\tregion\tregion_number\ttotal_region_count\tfirst/last\tbiotype\tgene\tgene_id\ttranscript_id\tstrand\tphase\tregion\tregion_number\ttotal_region_count\tfirst/last\tbiotype\tfusion_flag\n";
@@ -240,18 +191,24 @@ sub do_file {
 	    }
 	    next;
 	}
+	next if ($line =~ /^#/);
+
+	# process main data line
 	my @line = split "\t", $line;
 
+        # decide what sort of file we have and get the coordinate details
 	my $name;
 	my ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $shard);
 	my ($chr1b, $strand1b, $pos1_startb, $pos1_endb, $chr2b, $strand2b, $pos2_startb, $pos2_endb, $shardb);
 	my ($chr1c, $strand1c, $pos1_startc, $pos1_endc, $chr2c, $strand2c, $pos2_startc, $pos2_endc, $shardc);
 
-	if ($is_refract) { # refract format - coordinate usually in second field, possibly more than one pair of coordinates, ?? in place of shards or unknown coordinate
+	if (($line[0] =~ /^\S+$/) && ($line[1] =~ /^[+-]$/) && ($line[2] =~ /^\d+$/)&& ($line[3] =~ /^\d+$/)) { # brassI format
+	    ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end) = ($line[0],$line[1],$line[2],$line[3],$line[4],$line[5],$line[6],$line[7]);
+	    $name = $chr1 . ':' . $strand1 . ':' . $pos1_start . '-' . $pos1_end . ',' . $chr2 . ':' . $strand2 . ':' . $pos2_start . '-' . $pos2_end;
+	}
+	elsif ($is_refract) { # refract format - coordinate usually in second field, possibly more than one pair of coordinates, ?? in place of shards or unknown coordinate
 	    $name = $line[$field];
-
 	    my ($coord1,$coord2,$coord3) = split_refract_string($line[$field]);
-
 	    if ($coord1) { 
 		($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end,$shard) = parse_coords($coord1); 
 	    }
@@ -266,7 +223,7 @@ sub do_file {
 		next;
 	    }
 	}
-	elsif ($field)  { # standard format coordinate pair in first field
+	elsif ($field)  { # standard format coordinate pair in specified field
 	    ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end,$shard) = parse_coords($line[$field]); 
 	    $name = $line[$field];
 	}
@@ -279,6 +236,8 @@ sub do_file {
 	    print $fh_out "$line\n";
 	    next;
 	}
+
+        # get the results string for each coordinate pair
 	my ($out_string,$out_stringb,$out_stringc);
 	$out_string = process_file_coords($line, $name, $chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $shard, $within, $species, $list_between, $show_biotype);
 
@@ -465,145 +424,22 @@ sub process_file_coords {
     # get fusion prediction
     my $dataset = [];
     push @$dataset, $entry;
-    my ($fusions, $between_genes) = do_annotations($dataset, $within, $species, $list_between); 
-    
-    # prepare the string to print to file
-    chomp $line;
-    foreach my $result (@$fusions) {
-	
-	$out_string .= $line . "\t";
-	
-	if ($result->L5) {
-	    my $first_last_L = '';
-	    if ($result->L5->start_base) { $first_last_L = 'first_base'; }
-	    if ($result->L5->end_base)   { $first_last_L = 'last_base'; }
-	    my $phaseL = $result->L5->phase;
-	    unless (defined($phaseL)) { $phaseL = '_'; }
-	    
-	    $out_string .=  $result->L5->gene . "\t"
-		          . $result->L5->gene_id . "\t"
-			  . $result->L5->transcript_id . "\t"
-			  . $result->L5->strand . "\t"
-			  . $phaseL . "\t"
-			  . ($result->Ltype || $result->L5->region || '_') . "\t"
-			  . ($result->L5->region_number || '_') . "\t"
-			  . ($result->L5->trans_region_count || '_') . "\t"
-			  . ($first_last_L || '_') . "\t";
-	    if ($show_biotype) {  $out_string .= '' . ($result->L5->biotype || '_') . "\t"; }
-	}
-	else { 
-	    $out_string .= "_\t_\t_\t_\t_\t_\t_\t_\t_\t"; 
-	    if ($show_biotype) {  $out_string .= "_\t"; }
-	}
-	
-	if ($result->H5) {
-	    my $first_last_H = '';
-	    if ($result->H5->start_base) { $first_last_H = 'first_base'; }
-	    if ($result->H5->end_base)   { $first_last_H = 'last_base'; }
-	    my $phaseH = $result->H5->phase;
-	    unless (defined($phaseH)) { $phaseH = '_'; }
-	    
-	    $out_string .= $result->H5->gene . "\t"
-		. $result->H5->gene_id . "\t"
-		. $result->H5->transcript_id . "\t"
-		. $result->H5->strand . "\t"
-		. $phaseH . "\t"
-		. ($result->Htype || $result->H5->region || '_') . "\t"
-		. ($result->H5->region_number || '_') . "\t"
-		. ($result->H5->trans_region_count || '_') . "\t"
-		. ($first_last_H || '_') . "\t";
-	    if ($show_biotype) {  $out_string .= '' . ($result->H5->biotype || '_') . "\t"; }
-	}
-	else { 
-	    $out_string .= "_\t_\t_\t_\t_\t_\t_\t_\t_\t"; 
-	    if ($show_biotype) {  $out_string .= "_\t"; }
-	}
-	
-	$out_string .= $result->id_fusion_flag || 0;
-	if ($list_between) { $out_string .= "\t$between_genes";}
-	$out_string .= "\n";
-    }
-
-    unless ($out_string) { 
-	$out_string = "$line";
-	if ($show_biotype) {  $out_string .= "\t_\t_"; }
-	if ($list_between) { $out_string .= "\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t0\t$between_genes\n"; }
-	else               { $out_string .= "\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t0\n"; }
-    }
-
-    return($out_string);
-}
-#------------------------------------------------------------------------------------------#
-# one coordinate set at a time...
-sub do_annotations {
-    my $dataset = shift;
-    my $within = shift;
-    my $species = shift;
-    my $list_between = shift;
 
     my $rgann = new Grass::Annotation::RGannotator(-within   => $within,
-								-dataset  => $dataset,
-								-species  => $species,
-								-registry => $registry);
+						   -dataset  => $dataset,
+						   -species  => $species,
+						   -list_between => $list_between,
+						   -show_biotype => $show_biotype,
+						   -registry => $registry);
     $rgann->getAnnotation();
-    my $fusions = $rgann->rg_annos(); # returns a set of fusion annotation objects
+    my $string = $rgann->format_for_printing();
+    my @results = split "\n", $string; 
 
-    undef $rgann;
+    # get the results string (may be more than one line) and prepend original line to it
+    chomp $line;
+    foreach (@results) { $out_string .= $line . "\t" . $_ . "\n"; }
 
-    my $between_genes = '';
-    if ($list_between) { $between_genes = get_list_between($registry, $dataset, $within, $species); }
-
-    return($fusions, $between_genes);
-}
-#------------------------------------------------------------------------------------------------------------#
-#------------------------------------------------------------------------------------------#
-
-sub get_list_between {
-    my ($registry, $dataset, $within, $species) = @_;
-
-    my @genes = ();
-    # only look for genes if this is a single chromosome deletion/insertion of < 1mb
-    if (($dataset->[0]->chr1 eq $dataset->[0]->chr2) && ($dataset->[0]->strand1 eq $dataset->[0]->strand2)) {
-	my $distance = 0;
-	my $chr = $dataset->[0]->chr1;
-	my $start_coord = 0;
-	my $end_coord = 0;
-	if ($dataset->[0]->pos1_end < $dataset->[0]->pos2_start) { 
-	    $distance = $dataset->[0]->pos2_start - $dataset->[0]->pos1_end; 
-	    $start_coord = $dataset->[0]->pos1_end;
-	    $end_coord = $dataset->[0]->pos2_start;
-	}  
-	elsif ($dataset->[0]->pos2_end < $dataset->[0]->pos1_start) { 
-	    $distance = $dataset->[0]->pos1_start - $dataset->[0]->pos2_end; 
-	    $start_coord = $dataset->[0]->pos2_end;
-	    $end_coord = $dataset->[0]->pos1_start;
-	}  
-	return("") if ($distance > 1000000); # only get list of genes if less than 1MB between coordinates
-
-	# get the slice adaptor
-	my $slice_ad = $registry->get_adaptor($species,'core','slice');
-	unless ($slice_ad) { print "could not get slice for $species core\n"; return(""); }
-
-	my $slice = $slice_ad->fetch_by_region('chromosome', $chr, $start_coord, $end_coord);
-	unless ($slice) { $slice = $slice_ad->fetch_by_region(undef, chr, $start_coord, $end_coord); } # look at every type of structure, not just chromosomes
-
-	my $genes = $slice->get_all_Genes();
-	foreach my $gene(@$genes) {
-	    my $name = '';
-	    my @links = @{$gene->get_all_DBEntries};
-	    foreach my $link(@links){
-		if ($link->dbname =~ /^HGNC/) { $name = $link->display_id; 
-						last; 
-					    } # picks up 'HGNC' and 'HGNC_curated_gene' names
-	    }
-	    unless ($name) { $name = $gene->stable_id; }
-	    push @genes, $name;
-	}
-    }
-    my $gene_string = '';
-    if (@genes) { $gene_string = join ',', @genes; }
-
-    return($gene_string);
+    return($out_string);
 }
 #------------------------------------------------------------------------------------------------------------#
 #------------------------------------------------------------------------------------------------------------#
@@ -627,7 +463,7 @@ options...
    -file          : input file - format type: tab delimited, coord string in first column. As for -coord or eg 10-:92877;13+:103483915 (refract file format)      
    -ensembl_api   : Ensembl api to use (default is 58)
    -remote        : use the remote ensembl server, do not try to use the local server
-   -list_between  : list genes lying between a coordinate pair if distance between them is < 1MB
+   -list_between  : list genes lying between a coordinate pair if they are one the same chromosome, on the same strand, and the distance between them is < 1MB
    -show_biotype  : shows the biotype (eg protein_coding) for each gene
    -help          : Print this message
 
@@ -638,6 +474,7 @@ grass.pl -coord  3:-:129389225,3:-:129390103,AA
 
 grass.pl -r_file PD4107a.AllDisruptions.txt
 
+grass.pl -coord 2:+:188365485-188365837,2:+:188417763-188418155 -list_between
 
 
 Author : las
