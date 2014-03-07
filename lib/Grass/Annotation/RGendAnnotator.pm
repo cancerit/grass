@@ -29,7 +29,7 @@ Project
 
 =head1 DESCRIPTION
 
-Class to do the annotation of one end of a rearrangement
+Class to do the annotation of one end of a rearrangement using genome cache files as downloaded from Ensembl by Vagrent
 
 =head1 CONTACT
 
@@ -90,9 +90,8 @@ sub new {
     # get the object by id
     if ($args{-entry}) { $self->entry($args{-entry}); }
     if ($args{-end}) { $self->end($args{-end}); }
-    if ($args{-registry}) { $self->registry($args{-registry}); }
+    if ($args{-genome_data}) { $self->genome_data($args{-genome_data}); }
     if ($args{-within}) { $self->within($args{-within}); }
-    if ($args{-species}) { $self->species($args{-species}); }
     if (defined($args{-entrez_required})) { $self->entrez_required($args{-entrez_required}); }
 
     return $self;
@@ -134,19 +133,19 @@ sub end {
 }
 #-----------------------------------------------------------------------#
 
-=head2 registry
+=head2 genome_data
 
-  Arg (01)    : $registry
-  Example    : $registry = $Object->registry($registry);
-  Description: get/set the ensembl registry object to use
-  Return     : registry object
+  Arg (01)    : $genome_data
+  Example    : $genome_data = $Object->genome_data($genome_data);
+  Description: get/set the genome_data object to use
+  Return     : genome_data object
 
 =cut
 
-sub registry {
+sub genome_data {
     my $self = shift;
-    $self->{registry} = shift if @_;
-    return $self->{registry};
+    $self->{genome_data} = shift if @_;
+    return $self->{genome_data};
 }
 #-----------------------------------------------------------------------#
 
@@ -163,22 +162,6 @@ sub within {
     my $self = shift;
     $self->{within} = shift if @_;
     return $self->{within};
-}
-#-----------------------------------------------------------------------#
-
-=head2 species
-
-  Arg (1)    : $species
-  Example    : $species = $Object->species($species);
-  Description: which species to get from Ensembl
-  Return     : species object
-
-=cut
-
-sub species {
-    my $self = shift;
-    $self->{species} = shift if @_;
-    return $self->{species};
 }
 #-----------------------------------------------------------------------#
 
@@ -299,15 +282,14 @@ sub annotate {
 
 	# if there are more than 4 transcripts, see if any are ccds entries and use those
 	# changed to 1 since want ccds if there is one
-	if ((scalar(@$transList)) > 1) { $transList = $self->thin_out_translist($transList); }
-
+	if ((scalar(@$transList)) > 1) { ($transList, $self->{ccds_only}) = $self->{genome_data}->thin_out_translist($transList); }
+	
   	foreach my $trans(@$transList){
-	    my ($name, $id, $biotype) = $self->getGeneNameForTranscript($trans);
+	    my $name = $trans->gene_name;
+	    my $id = $trans->gene_stable_id;
+	    my $biotype = $trans->gene_biotype;
 	    my $trans_id = $trans->display_id;
-	    my $aa_length = '';
-	    eval { $trans->translate;  };
-	    if ($@) { print "translating transcript failed... $@\n"; next; }
-	    if ($trans->translate) { $aa_length = $trans->translate->length; }
+	    my $aa_length = $trans->translation_length;
 	    if ($self->{debug}) { print "\nTranscript:  $trans_id, $name ($id)  TRANS LENGTH: " . $trans->length() . " ( aa $aa_length)\n"; }
 
 	    # See if breakpoint is in a gene (if so, whether it is exon or intron), 5'UTR, 3'UTR, upstream or downstream of coding region
@@ -325,77 +307,16 @@ sub annotate {
 sub getTranscripts {
     my $self = shift;
 
-    # get the slice adaptor
-    my $slice_ad = $self->{registry}->get_adaptor($self->{species},'core','slice');
-    unless ($slice_ad) { print "could not get slice for " . $self->{species} . " core\n"; return(0); }
-
     # get the coordinates (adjusted according to the 'within' parameter)
     $self->getEndCoords();
 
-    my $chr = $self->{chr};
-    if (($self->{species} eq 'DOG') && ($self->{chr} eq 'M')) { $chr = 'mt'; }
-
-    # get the slice
-    if ($self->{debug}) { print "\nSLICE " . $chr . ':' . $self->{pos_start} . '-' . $self->{pos_end} . "\n"; }
-    my $slice = $slice_ad->fetch_by_region('chromosome', $chr, ($self->{pos_start}), ($self->{pos_end}));
-    unless ($slice) { $slice = $slice_ad->fetch_by_region(undef, $chr, ($self->{pos_start}), ($self->{pos_end})); } # look at every type of structure, not just chromosomes
-    unless ($slice) { print "slice fetching errors\n"; return(); }
-
-    # get the transcript adaptor
-    my $trans_ad = $self->{registry}->get_adaptor(($self->{species}),'core','transcript');
-	
-    # get all the transcripts that are in the slice
-    my $transcripts = $trans_ad->fetch_all_by_Slice($slice);
-
-    $slice_ad->dbc->disconnect_if_idle();
-    $trans_ad->dbc->disconnect_if_idle();
+    # get the transcripts overlapping this region
+    if ($self->{debug}) { print "\nSLICE " . $self->{chr} . ':' . $self->{pos_start} . '-' . $self->{pos_end} . "\n"; }
+    my $transcripts = $self->{genome_data}->fetch_transcripts_by_region($self->{chr}, ($self->{pos_start}), ($self->{pos_end}));
 
     return($transcripts);
 }
 
-#--------------------------------------------------------------------------------------------#
-sub thin_out_translist {
-    my $self = shift;
-    my $translist = shift;
-
-    my @new_translist = ();
-
-    # check to see if any have a consensus coding sequence id (only available for human and mouse)
-    # this will reduce the number of rg_gene_anno entries by about 1/3rd but keep the same number of fusion_flags in rg_rearrangement_group table
-    my $ccds_total = 0;
-    foreach my $trans(@$translist){
-	my @links = @{$trans->get_all_DBEntries};
-	my $trans_id = $trans->display_id;
-	my $ccds = 0;
-	foreach my $l(@links){
-	    if($l->dbname eq 'CCDS') { $ccds = 1; $ccds_total++; last; }
-	}
-	if ($ccds) { 
-	    if ($self->{debug}) { print $trans->display_id . "\n"; }
-	    push @new_translist, $trans; 
-	}
-    }
-    if ($self->{debug}) { print "\n ccds count $ccds_total, trans count " . (scalar(@$translist)) . "\n"; }
-    if (scalar(@new_translist)) { 
-	$self->{ccds_only} = 1; # mark this end as using ccds entries only
-	return(\@new_translist); 
-    }
-
-
-    # dont do this unless necessary, may miss high value fusions
-#    # if there are no ccds entries, try taking the 3 with the longest coding regions.
-#    # trans->length gives the sum of the lengths of all the exons in the transcript
-#    $count = 0;
-#    foreach my $trans(sort {$b->length <=> $a->length} @$transList){
-#	push @new_translist, $trans;
-#	$count++;
-#	last if ($count > 2);
-#    }
-#    if (scalar(@new_translist)) { return(\@new_translist); }
-
-    # if it can't be restricted, use what we've got
-    return($translist);
-}
 #--------------------------------------------------------------------------------------------#
 # get the coordinates for the requested end, adjusted according to the 'within' parameter
 sub getEndCoords {
@@ -435,42 +356,6 @@ sub getEndCoords {
     $self->{pos_end} = $pos_end;
 }
 #--------------------------------------------------------------------------------------------#
-
-sub getGeneNameForTranscript {
-	my ($self,$transcript) = @_;
-
-	my $ga = $self->{registry}->get_adaptor($self->{species},'core','gene');
-	my $gene = $ga->fetch_by_transcript_stable_id($transcript->stable_id);
-	my $biotype = $gene->biotype();
-	my @links = @{$gene->get_all_DBEntries};
-	foreach my $link(@links){
-	    return ($link->display_id, $gene->stable_id, $biotype) if ($link->dbname =~ /^HGNC/); # picks up 'HGNC' and 'HGNC_curated_gene' names
-	}
-
-	$ga->dbc->disconnect_if_idle();
-	return ($gene->stable_id, $gene->stable_id, $biotype);
-}
-#--------------------------------------------------------------------------------------------#
-
-sub getCCDSNameForTranscript {
-	my ($self,$transcript) = @_;
-	my @links = @{$transcript->get_all_DBEntries};
-	foreach my $link(@links){
-		return $link->display_id if ($link->dbname eq 'CCDS');
-	}
-	return '';
-}
-#--------------------------------------------------------------------------------------------#
-
-sub getEntrezIdForTranscript {
-	my ($self,$transcript) = @_;
-	my @links = @{$transcript->get_all_DBLinks};
-	foreach my $link(@links){
-		return $link->primary_id if ($link->dbname eq 'EntrezGene');
-	}
-	return '';
-}
-#--------------------------------------------------------------------------------------------#
 #--------------------------------------------------------------------------------------------#
 
 sub buildRGanno {
@@ -495,16 +380,15 @@ sub buildRGanno {
     elsif ($end_intron)   { $end_number = $end_intron; }
 
     # get various names...
-    my ($label, $id, $biotype) = $self->getGeneNameForTranscript($tran);
-    my $entrez_id = 0;
-    if ($self->{entrez_required}) { $entrez_id = $self->getEntrezIdForTranscript($tran); }
+    my $label = $tran->gene_name;
+    my $id = $tran->gene_stable_id;
+    my $biotype = $tran->gene_biotype;
+    my $entrez_id = ($tran->entrez_id || '');
     my $transcript = $tran->display_id(); 
     my $transcript_id = $tran->stable_id(); 
-
-    # not using these at the moment - should we?
-    my $acc = '';
-    if ($tran->translation) { $acc = $tran->translation->stable_id(); }
-    my $ccds = $self->getCCDSNameForTranscript($tran);
+    my $ccds = ($tran->ccds_id() || ''); 
+    my $acc = ($tran->accession() || ''); 
+    my $length = int($tran->length); 
 
     # make half an RGanno object and populate it with the RGannoPoint objects (L5/L3 or H5/H3) for this end
     my $annopoint1 = undef;
@@ -515,7 +399,7 @@ sub buildRGanno {
 				       -transcript    => $transcript,
 				       -transcript_id => $transcript_id,
 				       -trans_region_count => $region_count,
-				       -trans_length  => $tran->length(),
+				       -trans_length  => $length,
 				       -entrez_id     => $entrez_id,
 				       -strand        => $strand,
 				       -phase         => $phase,
@@ -532,7 +416,7 @@ sub buildRGanno {
 				       -transcript    => $transcript,
 				       -transcript_id => $transcript_id,
 				       -trans_region_count => $region_count,
-				       -trans_length  => $tran->length(),
+				       -trans_length  => $length,
 				       -entrez_id     => $entrez_id,
 				       -strand        => $strand,
 				       -phase         => $phase,
@@ -602,8 +486,8 @@ sub getRegion {
     my $cds_start = $tran->coding_region_start();
     my $cds_end = $tran->coding_region_end();
     if ($self->{debug}) {
-	if ($cds_start && $cds_end) { print "RG:$pos_start,$pos_end  TRANS:$trans_start,$trans_end CDS:$cds_start,$cds_end\n"; }
-	elsif ($trans_start && $trans_end) { print "RG:$pos_start,$pos_end  TRANS:$trans_start,$trans_end CDS:\n"; }
+	if ($cds_start && $cds_end) { print $tran->display_id . " RG:$pos_start,$pos_end  TRANS:$trans_start,$trans_end CDS:$cds_start,$cds_end\n"; }
+	elsif ($trans_start && $trans_end) { print $tran->display_id . " RG:$pos_start,$pos_end  TRANS:$trans_start,$trans_end CDS:\n"; }
     }
     # get the degree of overlap of pos_start and pos_end with cds, or transcript
     # and whether the start/end range is entirely within/without the cds or the transcript, or just overlapping
@@ -750,7 +634,7 @@ sub getRegion {
 sub getIntronExon {
     my ($self,$pos_start,$pos_end,$tran) = @_;
 
-    my @exons = @{$tran->get_all_Exons()};
+    my @exons = @{($tran->exons())};
     if ($tran->strand() == -1) { @exons = reverse(@exons); } # reverse the exon array order when transcript is on the negative strand 
                                                              # so we go the same direction along the chromosome
     my $exon_count = 0;
@@ -768,7 +652,7 @@ sub getIntronExon {
 
     foreach my $exon(@exons) {
 	$exon_count++;
-	if ($self->{debug} && ($self->{debug} == 2)) { print "query $pos_start, exon $exon_count " . $exon->start() . "-" . $exon->end() .  " P" . $exon->phase() . ", cds_start "  . ($exon->coding_region_start($tran) || '')  . ", cds_end "  . ($exon->coding_region_end($tran) || '') . "\n"; }
+	if ($self->{debug} && ($self->{debug} == 2)) { print "query $pos_start, exon $exon_count " . $exon->start() . "-" . $exon->end() .  " P" . $exon->phase() . ", cds_start "  . ($exon->coding_region_start() || '')  . ", cds_end "  . ($exon->coding_region_end() || '') . "\n"; }
 	unless ($start_exon || $start_intron) {
 	    if    ($pos_start < $exon->start()) { $start_intron = $intron_count; 
 						  $phase = $self->getPhase($tran,$intron_count,\@exons); }
@@ -870,23 +754,23 @@ sub getExonPhase {
     # sort out phases if they haven't been done yet
     # add up the coding bases to work out the phase
     my $coding_bases = 0;
-    foreach my $exon(@{$tran->get_all_Exons()}) {
-	if ($self->{debug}) { print "test " . $exon->display_id . " " . ($exon->coding_region_start($tran) || '') . " (" . ($exon->phase || '') . ") " . ($exon->coding_region_end($tran) || '') . " (" . ($exon->end_phase || '') . ")\n"; }	    
+    foreach my $exon(@{$tran->exons}) {
+	if ($self->{debug}) { print "test " . ($exon->coding_region_start() || '') . " (" . ($exon->phase || '') . ") " . ($exon->coding_region_end() || '') . " (" . ($exon->end_phase || '') . ")\n"; }	    
 
 	# if the breakpoint is in this exon...
 	if ( ($pos >= $exon->start()) && 
 	     ($pos <= $exon->end()) ) {
 	    my $used_exon_bases = 0;
-	    if ($tran->strand() == -1) { $used_exon_bases = $exon->coding_region_end($tran) - $pos + 1; }
-	    else                       { $used_exon_bases = $pos - $exon->coding_region_start($tran); }
+	    if ($tran->strand() == -1) { $used_exon_bases = $exon->coding_region_end() - $pos + 1; }
+	    else                       { $used_exon_bases = $pos - $exon->coding_region_start(); }
 	    if ($self->{debug}) { print "add $used_exon_bases (last)\n"; }
 	    $coding_bases += $used_exon_bases;
 	    last;
 	}
 	# if the breakpoint is Not in this exon, use it all...
-	elsif ($exon->coding_region_start($tran)) {
-	    my $total_exon_bases = $exon->coding_region_end($tran) - $exon->coding_region_start($tran) + 1;
-	    if ($self->{debug}) { print $exon->coding_region_end($tran) . " - " . $exon->coding_region_start($tran) . " + 1\n"; }
+	elsif ($exon->coding_region_start()) {
+	    my $total_exon_bases = $exon->coding_region_end() - $exon->coding_region_start() + 1;
+	    if ($self->{debug}) { print $exon->coding_region_end() . " - " . $exon->coding_region_start() . " + 1\n"; }
 	    if ($self->{debug}) { print "add $total_exon_bases\n"; }
 	    $coding_bases += $total_exon_bases;
 	}
@@ -917,49 +801,49 @@ sub getSeqs {
     my $upstream_check = 1;
     my $downstream_check = 0;
 
-    foreach my $exon(@{$tran->get_all_Exons()}) {
-	if ($self->{debug}) { print "test " . $exon->display_id . " " . ($exon->coding_region_start($tran) || '') . " (" . ($exon->phase || '') . ") " . ($exon->coding_region_end($tran) || '') . " (" . ($exon->end_phase || '') . ")\n"; }	    
+    foreach my $exon(@{$tran->exons}) {
+	if ($self->{debug}) { print "test " . ($exon->coding_region_start() || '') . " (" . ($exon->phase || '') . ") " . ($exon->coding_region_end() || '') . " (" . ($exon->end_phase || '') . ")\n"; }	    
 
 	# switch to downstream once the breakpoint is found
-	if (($tran->strand() == 1) && $exon->coding_region_start($tran) && ($exon->coding_region_start($tran) >= $pos)) {	    
+	if (($tran->strand() == 1) && $exon->coding_region_start() && ($exon->coding_region_start() >= $pos)) {	    
 	    $upstream_check = 0;
 	    $downstream_check = 1;
 	}
-	elsif (($tran->strand() == -1) && $exon->coding_region_start($tran) && ($exon->coding_region_start($tran) < $pos)) {	    
+	elsif (($tran->strand() == -1) && $exon->coding_region_start() && ($exon->coding_region_start() < $pos)) {	    
 	    $upstream_check = 0;
 	    $downstream_check = 1;
 	}
 
 	my ($len, $start, $start_rev);
-	if (defined($exon->coding_region_start($tran)) && defined($exon->coding_region_end($tran))) {
-	    $len = $exon->coding_region_end($tran) - $exon->coding_region_start($tran) + 1; # length of entire coding region
-	    $start = $exon->coding_region_start($tran) - $exon->start; # number of first coding base in this exon counting from the exon start
-	    $start_rev = $exon->end - $exon->coding_region_end($tran); # number of first coding base in this exon counting back from the exon end
+	if (defined($exon->coding_region_start()) && defined($exon->coding_region_end())) {
+	    $len = $exon->coding_region_end() - $exon->coding_region_start() + 1; # length of entire coding region
+	    $start = $exon->coding_region_start() - $exon->start; # number of first coding base in this exon counting from the exon start
+	    $start_rev = $exon->end - $exon->coding_region_end(); # number of first coding base in this exon counting back from the exon end
 	}
 	# if the exon contains the breakpoint, part is upstream, part is downstream (pos is always (1 + within) - slice is relative to this)
 	if ( ($pos >= $exon->start()) && 
 	     ($pos <= $exon->end()) ) {
 
 	    if ($tran->strand() == -1) { 
-		my $start_u =  $exon->end() - $exon->coding_region_end($tran);
-		my $len_u = $exon->coding_region_end($tran) - $pos;
+		my $start_u =  $exon->end() - $exon->coding_region_end();
+		my $len_u = $exon->coding_region_end() - $pos;
 		my $start_d = $exon->end() - $pos;
-		my $len_d = $pos -($exon->coding_region_start($tran)) + 1;
+		my $len_d = $pos -($exon->coding_region_start()) + 1;
 		if ($self->{end} == 1) { # for end1, include the base we are on in the upstream region, for end2 its included in the downstream region
 		    $len_u++;
 		    $len_d--;
 		    $start_d++;
 		}
 		# upstream portion...
-		$upstream_seq   .= substr($exon->seq->seq,$start_u,$len_u); 
-		if ($self->{debug}) { print "U $len_u $start_u " . substr($exon->seq->seq,$start_u,$len_u) . "\n"; } 
+		$upstream_seq   .= substr($exon->seq,$start_u,$len_u); 
+		if ($self->{debug}) { print "U $len_u $start_u " . substr($exon->seq,$start_u,$len_u) . "\n"; } 
 		# downstream portion...
-		$downstream_seq .= substr($exon->seq->seq,$start_d,$len_d); 
-		if ($self->{debug}) { print "D $len_d $start_d " . substr($exon->seq->seq,$start_d,$len_d) . "\n"; } 
+		$downstream_seq .= substr($exon->seq,$start_d,$len_d); 
+		if ($self->{debug}) { print "D $len_d $start_d " . substr($exon->seq,$start_d,$len_d) . "\n"; } 
 	    }
 	    else { 
-	        my $len_u = $pos -($exon->coding_region_start($tran));
-		my $len_d = $exon->coding_region_end($tran) - $pos + 1;
+	        my $len_u = $pos -($exon->coding_region_start());
+		my $len_d = $exon->coding_region_end() - $pos + 1;
 		my $start_d = $pos -($exon->start());
 		if ($self->{end} == 1) { # for end1, include the base we are on in the upstream region, for end2 its included in the downstream region
 		    $len_u++;
@@ -967,33 +851,33 @@ sub getSeqs {
 		    $start_d++;
 		}
 		# upstream portion...
-		$upstream_seq   .= substr($exon->seq->seq,$start,$len_u); 
-		if ($self->{debug}) { print "U  " . substr($exon->seq->seq,$start,$len_u) . "\n"; } 
+		$upstream_seq   .= substr($exon->seq,$start,$len_u); 
+		if ($self->{debug}) { print "U  " . substr($exon->seq,$start,$len_u) . "\n"; } 
 		# downstream portion...
-		$downstream_seq   .= substr($exon->seq->seq,$start_d,$len_d); 
-		if ($self->{debug}) { print "D  " . -($exon->start()) . "  " . substr($exon->seq->seq,$start_d,$len_d) . "\n"; } 
+		$downstream_seq   .= substr($exon->seq,$start_d,$len_d); 
+		if ($self->{debug}) { print "D  " . -($exon->start()) . "  " . substr($exon->seq,$start_d,$len_d) . "\n"; } 
 	    }
 	}
 	# if the exon is upstream of the breakpoint...
 	elsif ($upstream_check && defined($len))   { 
 	    if ($tran->strand() == -1) { 
-		$upstream_seq   .= substr($exon->seq->seq,$start_rev,$len); 
-		if ($self->{debug}) { print "UP $len $start_rev " . substr($exon->seq->seq,$start_rev,$len) . "\n"; } 
+		$upstream_seq   .= substr($exon->seq,$start_rev,$len); 
+		if ($self->{debug}) { print "UP $len $start_rev " . substr($exon->seq,$start_rev,$len) . "\n"; } 
 	    }
 	    else {
-		$upstream_seq   .= substr($exon->seq->seq,$start,$len); 
-		if ($self->{debug}) { print "UP $len $start " . substr($exon->seq->seq,$start,$len) . "\n"; } 
+		$upstream_seq   .= substr($exon->seq,$start,$len); 
+		if ($self->{debug}) { print "UP $len $start " . substr($exon->seq,$start,$len) . "\n"; } 
 	    }
 	}
 	# if the exon is downstream of the breakpoint...
 	elsif ($downstream_check && defined($len)) { 
 	    if ($tran->strand() == -1) { 
-		$downstream_seq .= substr($exon->seq->seq,$start_rev,$len); 
-		if ($self->{debug}) { print "DOWN $len $start_rev " . substr($exon->seq->seq,$start_rev,$len) . "\n"; } 
+		$downstream_seq .= substr($exon->seq,$start_rev,$len); 
+		if ($self->{debug}) { print "DOWN $len $start_rev " . substr($exon->seq,$start_rev,$len) . "\n"; } 
 	    }
 	    else {
-		$downstream_seq .= substr($exon->seq->seq,$start,$len);
-		if ($self->{debug}) { print "DOWN $len $start " . substr($exon->seq->seq,$start,$len) . "\n"; } 
+		$downstream_seq .= substr($exon->seq,$start,$len);
+		if ($self->{debug}) { print "DOWN $len $start " . substr($exon->seq,$start,$len) . "\n"; } 
 	    }
 	}
 	else { if ($self->{debug}) { print "Non-coding\n"; } }

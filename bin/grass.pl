@@ -31,31 +31,37 @@ use strict;
 use warnings FATAL => 'all';
 use autodie qw(:all);
 
+use Grass::GenomeData;
 use Grass::DataEntry;
 use Grass::Annotation::RGannotator;
-
+ 
 use Getopt::Long;
 
 $| = 1;
 
 my $within = 0; # how close to a range should the gene be before we flag it?
-my $species = 'HUMAN';
 my $coord = 0;
 my $file = '';
 my $file2 = '';
-my $ensembl_api = '58'; # current version of ensembl api - build 37 for human
 my $outfile = '';
 my $list_between = 0;
 my $show_biotype = 0;
+
+my $genome_cache_file = '';
+
+my $ensembl_api = ''; # path to ensembl_api install eg /software/pubseq/PerlModules/Ensembl/www_58_1
+my $species = ''; # eg HUMAN
+
 my $help = 0;
 
 GetOptions( 'within:s'      => \$within,
-	    'species:s'     => \$species,
 	    'coord:s'       => \$coord, # formats 1:-:123-456,2:+:345-678 or 1:-:123,2:+:345 or 1:-:123,2:+:345,atgatatat (shard at end)
 	    'file:s'        => \$file,
 	    'r_file:s'      => \$file2,
 	    'outfile:s'     => \$outfile,
+	    'genome_cache:s'=> \$genome_cache_file,
 	    'ensembl_api:s' => \$ensembl_api,
+	    'species:s'     => \$species,
 	    'list_between'  => \$list_between,
 	    'show_biotype'  => \$show_biotype,
 	    'help'          => \$help,
@@ -64,61 +70,20 @@ GetOptions( 'within:s'      => \$within,
 # check inputs
 if ($help) { usage(); }
 
-my $registry = set_ensembl($ensembl_api, $species);
+# set up access to genome data  from EnsemblDB (if species/ensembl_api supplied) or a cached flat file version (if genome_cache supplied)
+my $genome_data = new Grass::GenomeData(-species      => $species,
+					-ensembl_api  => $ensembl_api,
+					-genome_cache => $genome_cache_file);
 
 my $field = 0; # field of file that contains the coordinate string
 
-if ($coord) { do_coord($within, $species, $coord, $list_between, $show_biotype); }
-elsif ($file)   { $field = 0; do_file($within, $species, $file,    $outfile, $field, '', $list_between, $show_biotype); }
-elsif ($file2)  { $field = 2; do_file($within, $species, $file2,   $outfile, $field, 'refract', $list_between, $show_biotype); } # 2 is the field array index that contains the refract coordinate string
+if ($coord) { do_coord($within, $species, $coord, $list_between, $show_biotype, $genome_data); }
+elsif ($file)   { $field = 0; do_file($within, $species, $file,    $outfile, $field, '', $list_between, $show_biotype, $genome_data); }
+elsif ($file2)  { $field = 2; do_file($within, $species, $file2,   $outfile, $field, 'refract', $list_between, $show_biotype, $genome_data); } # 2 is the field array index that contains the refract coordinate string
 
-#------------------------------------------------------------------------------------------------#
-sub set_ensembl {
-    my $ensembl_api = shift; # either passed in or from the CGP DB
-    my $species = shift;
-
-    my $ensembl = '';
-    if    ($ensembl_api =~ /^\d+$/)         { $ensembl = "www_" . $ensembl_api . "_1"; }
-    elsif ($ensembl_api =~ /^\d+_\d+$/)     { $ensembl = "www_" . $ensembl_api; }
-    elsif ($ensembl_api =~ /^www_\d+_\d+$/) { $ensembl =          $ensembl_api; }
-    else                                    { print "ensembl_api format $ensembl_api not recognised\n"; exit; }
-    print "$ensembl\n";
-
-# put this here because may need to pass in which ensembl version to use
-    my $sent = 'use lib qw(/software/pubseq/PerlModules/Ensembl/' . $ensembl . '/ensembl/modules/  );
-                use Bio::EnsEMBL::Registry;';
-    eval $sent; # delays it until run time so that $ensembl is set first
-
-    #print "@INC\n";
-    # team ENSEMBL install (fast, build 37)
-    my $registry = 'Bio::EnsEMBL::Registry';
-
-    # local sanger CGP ensembl install
-    $registry->clear();
-    $registry->load_registry_from_db( -host => 'cgp-ensembl-db.internal.sanger.ac.uk',
-				      -user => 'cgpense-ro');
-
-    unless ($registry->get_adaptor($species,'core','slice')) {
-	if ($species eq 'CEREVISIAE') { $species = 'SACCHAROMYCES'; }
-	$registry->load_registry_from_db( -host => 'cgp-ensembl-db.internal.sanger.ac.uk',
-					  -user => 'cgpense-ro');
-    }
-    unless ($registry->get_adaptor($species,'core','slice')) {
-	print "use remote ensembl server\n";
-	if ($species eq 'CEREVISIAE') { $species = 'Saccharomyces cerevisiae'; }
-	$registry->clear();
-	$registry->load_registry_from_db( -host => 'ensembldb.ensembl.org',
-				          -user => 'anonymous');
-    }
-    unless ($registry->get_adaptor($species,'core','slice')) {
-	print "could not get connection to local or remote ensembl registry\n"; 
-	exit;
-    }
-    return($registry);
-}
 #------------------------------------------------------------------------------------------------#
 sub do_coord {
-    my ($within, $species, $coord, $list_between, $show_biotype) = @_;
+    my ($within, $species, $coord, $list_between, $show_biotype, $genome_data) = @_;
 
     my ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $shard) = parse_coords($coord);
     # set up the dataEntry object 
@@ -141,7 +106,7 @@ sub do_coord {
 						   -species  => $species,
 						   -list_between => $list_between,
 						   -show_biotype => $show_biotype,
-						   -registry => $registry);
+						   -genome_data => $genome_data);
     $rgann->getAnnotation();
     my $output_string = $rgann->format_for_printing();
 
@@ -157,7 +122,7 @@ sub do_coord {
 }
 #------------------------------------------------------------------------------------------------#
 sub do_file {
-    my ($within, $species, $infile, $outfile, $field, $is_refract, $list_between, $show_biotype) = @_;
+    my ($within, $species, $infile, $outfile, $field, $is_refract, $list_between, $show_biotype, $genome_data) = @_;
     unless ($outfile) { 
 	$outfile = $infile;
 	if ($outfile =~ /\./) { $outfile =~ s/\.(\D+)$/_ann.$1/; }
@@ -244,14 +209,14 @@ sub do_file {
 
         # get the results string for each coordinate pair
 	my ($out_string,$out_stringb,$out_stringc);
-	$out_string = process_file_coords($line, $name, $chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $shard, $within, $species, $list_between, $show_biotype);
+	$out_string = process_file_coords($line, $name, $chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $shard, $within, $species, $list_between, $show_biotype, $genome_data);
 
 	if ($is_refract) { # only get these extra coodinates with refract output.
 	    if ($pos1_startb) { 
-		$out_stringb = process_file_coords($line, $name, $chr1b, $strand1b, $pos1_startb, $pos1_endb, $chr2b, $strand2b, $pos2_startb, $pos2_endb, $shardb, $within, $species, 0, $show_biotype); 
+		$out_stringb = process_file_coords($line, $name, $chr1b, $strand1b, $pos1_startb, $pos1_endb, $chr2b, $strand2b, $pos2_startb, $pos2_endb, $shardb, $within, $species, 0, $show_biotype, $genome_data); 
 	    }
 	    if ($pos1_startc) { 
-		$out_stringc = process_file_coords($line, $name, $chr1c, $strand1c, $pos1_startc, $pos1_endc, $chr2c, $strand2c, $pos2_startc, $pos2_endc, $shardc, $within, $species, 0, $show_biotype); 
+		$out_stringc = process_file_coords($line, $name, $chr1c, $strand1c, $pos1_startc, $pos1_endc, $chr2c, $strand2c, $pos2_startc, $pos2_endc, $shardc, $within, $species, 0, $show_biotype, $genome_data); 
 	    }
 
 	    # merge the data from the compsite refract coordiate string. just use the first line of annotation
@@ -412,7 +377,7 @@ sub parse_element {
 }
 #------------------------------------------------------------------------------------------------#
 sub process_file_coords {
-    my ($line, $name, $chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $shard, $within, $species, $list_between, $show_biotype) = @_;
+    my ($line, $name, $chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $shard, $within, $species, $list_between, $show_biotype, $genome_data) = @_;
     my $out_string = '';
 
     # set up the dataEntry object 
@@ -435,7 +400,7 @@ sub process_file_coords {
 						   -species  => $species,
 						   -list_between => $list_between,
 						   -show_biotype => $show_biotype,
-						   -registry => $registry);
+						   -genome_data => $genome_data);
     $rgann->getAnnotation();
     my $string = $rgann->format_for_printing();
     my @results = split "\n", $string; 
@@ -466,7 +431,7 @@ options...
    -r_file        : filtered refract input file - format type: tab delimited: coord string in third column. 
                     coord format As for -coord or eg 10-:92877;13+:103483915 or eg 10-:92877;13+:1034-2000;13+:103483915  (double event)   
    -file          : input file - format type: tab delimited, coord string in first column. As for -coord or eg 10-:92877;13+:103483915 (refract file format)      
-   -ensembl_api   : Ensembl api to use (default is 58)
+   -ensembl_api   : path to Ensembl api (eg /software/pubseq/PerlModules/Ensembl/www_58_1)
    -remote        : use the remote ensembl server, do not try to use the local server
    -list_between  : list genes lying between a coordinate pair if they are one the same chromosome, on the same strand, and the distance between them is < 1MB
    -show_biotype  : shows the biotype (eg protein_coding) for each gene

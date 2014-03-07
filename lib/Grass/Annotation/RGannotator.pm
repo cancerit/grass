@@ -68,8 +68,7 @@ sub new {
     if ($args{-dataset})  { $self->dataset($args{-dataset}); }
     if ($args{-entry})    { $self->entry($args{-entry}); }
     if ($args{-within})   { $self->within($args{-within}); }
-    if ($args{-species})  { $self->species($args{-species}); }
-    if ($args{-registry}) { $self->registry($args{-registry}); }
+    if ($args{-genome_data}) { $self->genome_data($args{-genome_data}); }
     if (defined($args{-entrez_required})) { $self->entrez_required($args{-entrez_required}); }
     if (defined($args{-show_biotype})) { $self->show_biotype($args{-show_biotype}); }
     if (defined($args{-list_between})) { $self->list_between($args{-list_between}); }
@@ -131,6 +130,22 @@ sub registry {
 }
 #-----------------------------------------------------------------------#
 
+=head2 genome_data
+
+  Arg (0)    : $genome_data
+  Example    : $genome_data = $Object->genome_data($genome_data);
+  Description: get/set the genome_data object to use
+  Return     : genome_data object
+
+=cut
+
+sub genome_data {
+    my $self = shift;
+    $self->{genome_data} = shift if @_;
+    return $self->{genome_data};
+}
+#-----------------------------------------------------------------------#
+
 =head2 within
 
   Arg (0)    : $within
@@ -144,22 +159,6 @@ sub within {
     my $self = shift;
     $self->{within} = shift if @_;
     return $self->{within};
-}
-#-----------------------------------------------------------------------#
-
-=head2 species
-
-  Arg (0)    : $species
-  Example    : $species = $Object->species($species);
-  Description: which species to get from Ensembl
-  Return     : species object
-
-=cut
-
-sub species {
-    my $self = shift;
-    $self->{species} = shift if @_;
-    return $self->{species};
 }
 #-----------------------------------------------------------------------#
 
@@ -324,8 +323,8 @@ sub get_end_anns {
 
     my $rgend = new Grass::Annotation::RGendAnnotator(-entry    => $entry,
 						      -end      => $end,
-						      -species  => $self->{species},
 						      -registry => $self->{registry},
+						      -genome_cache => $self->{genome_cache},
 						      -entrez_required => $self->{entrez_required},
 						      -within   => $self->{within});
     my $anns = $rgend->annotate();
@@ -471,12 +470,11 @@ sub thin_end {
 
 sub get_list_between {
     my ($self) = @_;
-    my $registry = $self->{registry};
     my $dataset = $self->{dataset};
     my $within = $self->{within};
-    my $species = $self->{species};
 
-    my @genes = ();
+    my $gene_names = '';
+
     # only look for genes if this is a single chromosome deletion/insertion of < 1mb
     if (($dataset->[0]->chr1 eq $dataset->[0]->chr2) && ($dataset->[0]->strand1 eq $dataset->[0]->strand2)) {
 	my $distance = 0;
@@ -493,34 +491,14 @@ sub get_list_between {
 	    $start_coord = $dataset->[0]->pos2_end;
 	    $end_coord = $dataset->[0]->pos1_start;
 	}  
-	return("") if ($distance > 1000000); # only get list of genes if less than 1MB between coordinates
+	return('') if ($distance > 1000000); # only get list of genes if less than 1MB between coordinates
 
-	# get the slice adaptor
-	my $slice_ad = $registry->get_adaptor($species,'core','slice');
-	unless ($slice_ad) { print "could not get slice for $species core\n"; return(""); }
+	$gene_names = $self->{genome_data}->get_gene_list($chr, $start_coord, $end_coord);
 
-	my $slice = $slice_ad->fetch_by_region('chromosome', $chr, $start_coord, $end_coord);
-	unless ($slice) { $slice = $slice_ad->fetch_by_region(undef, chr, $start_coord, $end_coord); } # look at every type of structure, not just chromosomes
-
-	my $genes = $slice->get_all_Genes();
-	foreach my $gene(@$genes) {
-	    my $name = '';
-	    my @links = @{$gene->get_all_DBEntries};
-	    foreach my $link(@links){
-		if ($link->dbname =~ /^HGNC/) { $name = $link->display_id; 
-						last; 
-					    } # picks up 'HGNC' and 'HGNC_curated_gene' names
-	    }
-	    unless ($name) { $name = $gene->stable_id; }
-	    push @genes, $name;
-	}
     }
-    my $gene_string = '';
-    if (@genes) { $gene_string = join ',', @genes; }
+    $self->{between_genes} = $gene_names;
 
-    $self->{between_genes} = $gene_string;
-
-    return($gene_string);
+    return($gene_names);
 }
 #---------------------------------------------------------------------------------------------------------------#
 sub format_for_printing {
