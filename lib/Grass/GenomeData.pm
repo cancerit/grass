@@ -65,6 +65,8 @@ sub new {
 
     $self->{debug} = 0;
 
+    if (defined($args{-gene_id_required})) { $self->gene_id_required($args{-gene_id_required}); } # set this before setting genome_cache file
+    if (defined($args{-use_all_biotypes})) { $self->use_all_biotypes($args{-use_all_biotypes}); } # set this before setting genome_cache file
     if ($args{-genome_cache}) { $self->genome_cache($args{-genome_cache}); }
     if ($args{-species})      { $self->species($args{-species}); }
     if ($args{-ensembl_api})  { $self->ensembl_api($args{-ensembl_api}); }
@@ -73,6 +75,38 @@ sub new {
 }
 
 #-----------------------------------------------------------------------#
+#-----------------------------------------------------------------------#
+
+=head2 gene_id_required
+
+  Arg (0)    : 1/0
+  Example    : $gene_id_required = $Object->gene_id_required($gene_id_required);
+  Description: define whether gene_id id is required
+  Return     : 1/0
+
+=cut
+
+sub gene_id_required {
+    my $self = shift;
+    $self->{gene_id_required} = shift if @_;
+    return $self->{gene_id_required};
+}
+#-----------------------------------------------------------------------#
+
+=head2 use_all_biotypes
+
+  Arg (0)    : 1/0
+  Example    : $use_all_biotypes = $Object->use_all_biotypes($use_all_biotypes);
+  Description: define whether all transcript biotypes are required
+  Return     : 1/0
+
+=cut
+
+sub use_all_biotypes {
+    my $self = shift;
+    $self->{use_all_biotypes} = shift if @_;
+    return $self->{use_all_biotypes};
+}
 #-----------------------------------------------------------------------#
 
 =head2 genome_cache
@@ -88,7 +122,8 @@ sub genome_cache {
     my $self = shift;
     my $genome_cache = shift if @_;
     if ($genome_cache) {
-	$self->{cache} = new Grass::GenomeData::GenomeDataCache(-genome_cache => $genome_cache);
+	$self->{cache} = new Grass::GenomeData::GenomeDataCache(-genome_cache => $genome_cache,
+								-gene_id_required => $self->{gene_id_required});
     }
     return $self->{genome_cache};
 }
@@ -124,7 +159,9 @@ sub ensembl_api {
     my $ensembl_api = shift if @_;
     if ($ensembl_api) {
 	$self->{ensembl} = new Grass::GenomeData::GenomeDataEnsembl(-species     => $self->{species},
-								    -ensembl_api => $ensembl_api);
+								    -ensembl_api => $ensembl_api,
+								    -gene_id_required => $self->{gene_id_required},
+								    -use_all_biotypes => $self->{use_all_biotypes});
     }
     return $self->{ensembl}->{ensembl_api};
 }
