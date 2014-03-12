@@ -67,12 +67,29 @@ sub new {
 
     $self->{debug} = 0;
 
+    if (defined($args{-gene_id_required})) { $self->gene_id_required($args{-gene_id_required}); }
     if ($args{-genome_cache}) { $self->genome_cache($args{-genome_cache}); }
 
     return $self;
 }
 
 #-----------------------------------------------------------------------#
+#-----------------------------------------------------------------------#
+
+=head2 gene_id_required
+
+  Arg (0)    : 1/0
+  Example    : $gene_id_required = $Object->gene_id_required($gene_id_required);
+  Description: define whether gene_id id is required
+  Return     : 1/0
+
+=cut
+
+sub gene_id_required {
+    my $self = shift;
+    $self->{gene_id_required} = shift if @_;
+    return $self->{gene_id_required};
+}
 #-----------------------------------------------------------------------#
 
 =head2 genome_cache
@@ -195,6 +212,9 @@ sub populate_grass_transcripts {
 	    print "  cds end cache  : $coding_region_end\n";
 	}
 
+	my $gene_id = $vagrent_transcript->getGeneName;
+	if ($self->{gene_id_required} && ($vagrent_transcript->getGeneId)) { $gene_id = $vagrent_transcript->getGeneId; }
+
 	# populate the object (convert coordinates so they are relative to the coordinate slice requested) 
 	# Need to force strand to string form so its the same as for ensembl and can compare the two
 	my $grass_transcript = new Grass::GenomeData::Transcript(-display_id => $vagrent_transcript->getAccession,
@@ -209,7 +229,7 @@ sub populate_grass_transcripts {
 								 -entrez_id => '',
 								 -gene_name      => $vagrent_transcript->getGeneName,
 								 -gene_biotype   => $biotype,
-								 -gene_stable_id => $vagrent_transcript->getGeneName,
+								 -gene_stable_id => $gene_id,
 								 -translation_length => $translation_length,
 								 -accession          => $vagrent_transcript->getProteinAccession,
 								 -exons => $grass_exons);
@@ -273,6 +293,14 @@ sub process_exons {
             !$contains_cds_start && 
             !$contains_cds_end)  { $check_coding = 2; } # this is a mid coding exon
 
+	# treat exons that are start exons BUT the cds covers the full length as mids
+	if ($contains_cds_start && 
+	    $contains_cds_end && 
+	    ($exon_cDNA_start == $transcript_cds_start_on_cDNA) && 
+	    ($exon_cDNA_end == $transcript_cds_end_on_cDNA)) { $check_coding = 2; }
+	if ($contains_cds_start && !($contains_cds_end)   && ($exon_cDNA_start == $transcript_cds_start_on_cDNA)) { $check_coding = 2; }
+	if ($contains_cds_end   && !($contains_cds_start) && ($exon_cDNA_end == $transcript_cds_end_on_cDNA))     { $check_coding = 2; }
+
 	# get the transcript cds start/end coords relative to the slice
 	if ($contains_cds_start) {
 	    if    ($strand eq '1')  { $transcript_cds_start = $exon_start + ($transcript_cds_start_on_cDNA - $exon_cDNA_start); }
@@ -299,18 +327,23 @@ sub process_exons {
 
 	# the phase of the current exon is the same as the end phase of the previous exon
 	$exon_phase = $exon_end_phase;
+	# BUT if this is a 5' truncated transcript and the exon start and transcript start are the same, use the transcript cds phase as the start phase
+	if ($contains_cds_start && ($exon_cDNA_start == $transcript_cds_start_on_cDNA)) { $exon_phase = $transcript_cds_phase; }
 
 	# work out the end_phase for this exon
 	# if this is a coding exon, calc how many coding bases there are to the end of the exon, divide by 3, and get the remainder
 	#    this number is used for calculating phase of the NEXT exon, not this one.
 	if ($check_coding == 1) {
 	    $exon_end_phase = ($exon_cDNA_end - $transcript_cds_start_on_cDNA + 1) % 3;
+	    if ($self->{debug}) { print "first_exon: phase $exon_phase end_phase $exon_end_phase\n"; }
 	}
 	elsif ($check_coding == 2) {
 	    $exon_end_phase = ($exon_cDNA_end - ($exon_cDNA_start - $exon_phase) + 1) % 3;
+	    if ($self->{debug}) { print "mid_exon: phase $exon_phase end_phase $exon_end_phase\n"; }
 	}
 	elsif ($check_coding == 3) {
 	    $exon_end_phase = -1;
+	    if ($self->{debug}) { print "end_exon: phase $exon_phase end_phase $exon_end_phase\n"; }
 	}
 
 	if ($self->{debug}) { print "exon_coord |gstart $exon_genomic_start| |gend $exon_genomic_end| |start $exon_start| |end $exon_end| |cdcsstart $exon_cds_start| |cdsend $exon_cds_end| phases |$exon_phase| |$exon_end_phase|\n"; }
