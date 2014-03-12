@@ -62,8 +62,8 @@ sub new {
 
     $self->{debug} = 0;
 
-    if ($args{-phase})                { $self->phase($args{-phase}); }
-    if ($args{-end_phase})            { $self->end_phase($args{-end_phase}); }
+    if (defined($args{-phase}))       { $self->phase($args{-phase}); }
+    if (defined($args{-end_phase}))   { $self->end_phase($args{-end_phase}); }
     if ($args{-start})                { $self->start($args{-start}); }
     if ($args{-end})                  { $self->end($args{-end}); }
     if ($args{-coding_region_start})  { $self->coding_region_start($args{-coding_region_start}); }
