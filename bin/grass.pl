@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 
 # adds gene and mutational consequence annotation to bedpe formatted rearrangement data
 
@@ -46,6 +46,8 @@ my $file2 = '';
 my $outfile = '';
 my $list_between = 0;
 my $show_biotype = 0;
+my $use_all_biotypes = 0;
+my $gene_id_required = 0;
 
 my $genome_cache_file = '';
 
@@ -64,6 +66,8 @@ GetOptions( 'within:s'      => \$within,
 	    'species:s'     => \$species,
 	    'list_between'  => \$list_between,
 	    'show_biotype'  => \$show_biotype,
+	    'use_all_biotypes' => \$use_all_biotypes,
+	    'gene_id_required' => \$gene_id_required,
 	    'help'          => \$help,
          );
 
@@ -73,7 +77,9 @@ if ($help) { usage(); }
 # set up access to genome data  from EnsemblDB (if species/ensembl_api supplied) or a cached flat file version (if genome_cache supplied)
 my $genome_data = new Grass::GenomeData(-species      => $species,
 					-ensembl_api  => $ensembl_api,
-					-genome_cache => $genome_cache_file);
+					-genome_cache => $genome_cache_file,
+                                        -use_all_biotypes => $use_all_biotypes,
+					-gene_id_required => $gene_id_required);
 
 my $field = 0; # field of file that contains the coordinate string
 
