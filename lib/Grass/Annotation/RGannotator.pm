@@ -70,6 +70,7 @@ sub new {
     if ($args{-within})   { $self->within($args{-within}); }
     if ($args{-genome_data}) { $self->genome_data($args{-genome_data}); }
     if (defined($args{-entrez_required})) { $self->entrez_required($args{-entrez_required}); }
+    if (defined($args{-gene_id_required})) { $self->gene_id_required($args{-gene_id_required}); }
     if (defined($args{-show_biotype})) { $self->show_biotype($args{-show_biotype}); }
     if (defined($args{-list_between})) { $self->list_between($args{-list_between}); }
 
@@ -175,6 +176,22 @@ sub entrez_required {
     my $self = shift;
     $self->{entrez_required} = shift if @_;
     return $self->{entrez_required};
+}
+#-----------------------------------------------------------------------#
+
+=head2 gene_id_required
+
+  Arg (0)    : 1/0
+  Example    : $gene_id_required = $Object->gene_id_required($gene_id_required);
+  Description: define whether gene_id id is required
+  Return     : 1/0
+
+=cut
+
+sub gene_id_required {
+    my $self = shift;
+    $self->{gene_id_required} = shift if @_;
+    return $self->{gene_id_required};
 }
 #-----------------------------------------------------------------------#
 
@@ -324,8 +341,9 @@ sub get_end_anns {
     my $rgend = new Grass::Annotation::RGendAnnotator(-entry    => $entry,
 						      -end      => $end,
 						      -registry => $self->{registry},
-						      -genome_cache => $self->{genome_cache},
+						      -genome_data => $self->{genome_data},
 						      -entrez_required => $self->{entrez_required},
+						      -gene_id_required => $self->{gene_id_required},
 						      -within   => $self->{within});
     my $anns = $rgend->annotate();
 
@@ -388,9 +406,16 @@ sub thin_out_annos2 {
     foreach my $anno(sort {$b->id_fusion_flag <=> $a->id_fusion_flag} @$annos) {
 	if ($self->{debug}) { print "|" . $anno->L5->transcript . "| |" . $anno->H5->transcript . "| |" . $anno->Llength  . "| |" . $anno->Hlength . "|\n"; }
 	$current_flag = $anno->id_fusion_flag();
+
+#	print "" . $anno->L5->transcript . " $current_flag\n";
+#	print "   Llength: " . ($anno->Llength() || 0) . "\n";
+#	print "   Hlength: " . ($anno->Hlength() || 0) . "\n";
+#	print  "   L5 trans length: " . ($anno->L5->trans_length() || 0) . "\n";
+#	print  "   H5 trans length: " . ($anno->H5->trans_length() || 0) . "\n";
+
 	$current_length = ($anno->Llength() || 0) + ($anno->Hlength() || 0);
 	$current_trans_length = ($anno->L5->trans_length() || 0) + ($anno->H5->trans_length() || 0);
-	if ($self->{debug}) { print "    current $current_flag $current_length\n"; }
+	if ($self->{debug}) { print "    current $current_flag $current_length trans_length $current_trans_length\n"; }
 
 	# save the data for the previous flag value
 	if ($last_flag && !($current_flag eq $last_flag)) {
@@ -405,23 +430,28 @@ sub thin_out_annos2 {
 	}
 
 	if ($current_length > $longest_length) {
-	    $longest_length = $current_length;
-	    $best_anno4flag = $anno;
 	    if ($self->{debug}) { print "updating length $longest_length to $current_length\n"; }
-	}
-	elsif (($current_length == $longest_length) && ($current_trans_length > $longest_trans_length)) {
+#	    print "        this overlap is longer\n";
+	    $longest_length = $current_length;
 	    $longest_trans_length = $current_trans_length;
 	    $best_anno4flag = $anno;
+	}
+	elsif (($current_length == $longest_length) && ($current_trans_length > $longest_trans_length)) {
 	    if ($self->{debug}) { print "updating total trans_length $longest_trans_length to $current_trans_length\n"; }
+#	    print "        this overlap is same but transcript is longer (current $current_trans_length longest $longest_trans_length)\n";
+	    $longest_trans_length = $current_trans_length;
+	    $best_anno4flag = $anno;
 	}
 
 	unless ($best_anno4flag) { 
 	    $best_anno4flag = $anno; 
 	    $longest_length = $current_length; 
+#	    print "setting it for the first time\n";
 	}
 
 	$last_flag = $current_flag;
     }
+#    print "picked " . $best_anno4flag->L5->transcript . "\n";
 
     # save the data for the last flag value
     if ($self->{debug}) { print "saving $last_flag $longest_length\n"; }
@@ -447,20 +477,33 @@ sub thin_end {
     my $annos = shift;
     my @new_annos = ();
 
-    my $longest = 0;
     my $longest_trans = 0;
     my $best_anno;
     foreach my $anno(@$annos) {
+
 	$current_length = ($anno->Llength() || 0) + ($anno->Hlength() || 0);
 	$current_trans_length = 0;
+
+	# check the transcript length first and pick the longest
 	if ($anno->L5) { $current_trans_length = ($anno->L5->trans_length() || 0); }
 	if ($anno->H5) { $current_trans_length = ($anno->H5->trans_length() || 0); }
-	if ($current_length && ($current_length > $longest)) {
+	if ($current_trans_length && ($current_trans_length > $longest_trans)) {
 	    $best_anno = $anno;
+	    $longest_trans = $current_trans_length;
 	}
-	elsif (!$longest && $current_trans_length && (($current_trans_length > $longest_trans))) {
+	elsif (!$longest_trans && $current_trans_length && (($current_trans_length > $longest_trans))) {
 	    $best_anno = $anno;
+	    $longest_trans = $current_trans_length;
 	}
+	# translation products are the same length so use the longest transcript
+	elsif ($longest_trans && $current_trans_length && (($current_trans_length == $longest_trans))) {
+	    my $best_anno_length = 0;
+	    if ($best_anno) { $best_anno_length = ($best_anno->Llength() || 0) + ($best_anno->Hlength() || 0); }
+	    if ($current_length > $best_anno_length) {
+		$best_anno = $anno;
+	    }
+	}
+	if ($self->{debug}) { print "$current_length $current_trans_length. use $longest_trans\n"; }
     }
     push @new_annos, $best_anno;
     if (@new_annos) { return (\@new_annos); }
