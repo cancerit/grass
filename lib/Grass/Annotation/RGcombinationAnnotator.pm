@@ -289,7 +289,7 @@ sub getFlag {
 
     # if the gene is the same ( gene strand will always be the same but breakpoint strands may not be), and there's no stop codon formed
     if (!$self->{stop} && (($self->{anno}->{L5}->gene_id) eq ($self->{anno}->{H5}->gene_id))) {
-
+	if ($self->{debug}) { print "NO STOP. GENE SAME, " . $self->{anno}->{L5}->gene_id . " " . $self->{anno}->{H5}->gene_id . "\n"; }
 	# if the breaks both fall entirely within introns...
 	    #   (the 'intron' type is only set if L5/3 are the same number and H5/3 are the same, so only have to look are H5/L5)
 	if (($self->{anno}->Ltype eq Grass::Annotation::RGendAnnotator::REGION_TYPE_INTRON) &&
@@ -373,6 +373,7 @@ sub getFlag {
 
     # if the gene is different and no stop codon is formed
     elsif (!$self->{stop}) {
+	if ($self->{debug}) { print "NO STOP. GENE DIFF, " . $self->{anno}->{L5}->gene_id . " " . $self->{anno}->{H5}->gene_id . "\n"; }
 
 	# if the breaks both fall entirely within introns
 	#   (the 'intron' type is only set if L5/3 are the same number and H5/3 are the same, so only have to look are H5/L5)
