@@ -65,6 +65,8 @@ sub new {
 
     $self->{debug} = 0;
 
+    if (defined($args{-gene_id_required})) { $self->gene_id_required($args{-gene_id_required}); }
+    if (defined($args{-use_all_biotypes})) { $self->use_all_biotypes($args{-use_all_biotypes}); } # set this before setting genome_cache file
     if ($args{-species})      { $self->species($args{-species}); }
     if ($args{-ensembl_api})  { $self->ensembl_api($args{-ensembl_api}); }
 
@@ -72,6 +74,38 @@ sub new {
 }
 
 #-----------------------------------------------------------------------#
+#-----------------------------------------------------------------------#
+
+=head2 gene_id_required
+
+  Arg (0)    : 1/0
+  Example    : $gene_id_required = $Object->gene_id_required($gene_id_required);
+  Description: define whether gene_id id is required
+  Return     : 1/0
+
+=cut
+
+sub gene_id_required {
+    my $self = shift;
+    $self->{gene_id_required} = shift if @_;
+    return $self->{gene_id_required};
+}
+#-----------------------------------------------------------------------#
+
+=head2 use_all_biotypes
+
+  Arg (0)    : 1/0
+  Example    : $use_all_biotypes = $Object->use_all_biotypes($use_all_biotypes);
+  Description: define whether all transcript biotypes are required
+  Return     : 1/0
+
+=cut
+
+sub use_all_biotypes {
+    my $self = shift;
+    $self->{use_all_biotypes} = shift if @_;
+    return $self->{use_all_biotypes};
+}
 #-----------------------------------------------------------------------#
 
 =head2 species
@@ -260,6 +294,15 @@ sub populate_grass_transcripts {
 
     foreach my $ensembl_transcript(@$ensembl_transcripts) {
 
+	# if required, skip if the transcript biotype is only putative coding
+	unless ($self->{use_all_biotypes}) {
+	    if ($self->{debug}) { print "TRANS BIOTYPE: " . $ensembl_transcript->biotype . "\n"; }
+	    next unless (grep { $_ eq $ensembl_transcript->biotype } ('protein_coding', 'lincRNA', 'rRNA', 'snRNA', 'snoRNA', 'miRNA'));
+	    next unless (($ensembl_transcript->status()) eq 'KNOWN');
+	}
+
+	if ($self->{debug}) { print " DOIT\n"; }
+
 	# see if this has ccds/entrez names
 	$ccds_id = '';
 	$entrez_id = '';
@@ -271,13 +314,7 @@ sub populate_grass_transcripts {
 	}
 
 	# get gene info
-	my $gene = $self->{gene_ad}->fetch_by_transcript_stable_id($ensembl_transcript->stable_id);
-	my $gene_name = $gene->stable_id();
-	my @gene_links = @{$gene->get_all_DBEntries};
-	foreach my $gene_link(@gene_links){
-	    if ($gene_link->dbname =~ /^HGNC/) { $gene_name = $gene_link->display_id; last; } # picks up 'HGNC' and 'HGNC_curated_gene' names
-	}
-	$self->{gene_ad}->dbc->disconnect_if_idle();
+	my ($gene_name, $gene_id, $gene_biotype, $gene_status) = $self->getGeneInfoForTranscript($ensembl_transcript); 
 
 	# force translation of the transcript to get the translation length
 	my $aa_length = '';
@@ -311,8 +348,8 @@ sub populate_grass_transcripts {
 								 -ccds_id   => $ccds_id,
 								 -entrez_id => $entrez_id,
 								 -gene_name      => $gene_name,
-								 -gene_biotype   => $gene->biotype,
-								 -gene_stable_id => $gene_name,
+								 -gene_biotype   => $gene_biotype,
+								 -gene_stable_id => $gene_id,
 								 -translation_length => $aa_length,
 								 -accession          => $accession);
 
@@ -332,6 +369,42 @@ sub populate_grass_transcripts {
     return(\@grass_transcripts);
 }
 #--------------------------------------------------------------------------------------------#
+
+sub getGeneInfoForTranscript {
+	my ($self,$transcript) = @_;
+
+	my $ga = $self->{registry}->get_adaptor($self->{species},'core','gene');
+	my $gene = $ga->fetch_by_transcript_stable_id($transcript->stable_id);
+	my $biotype = $gene->biotype();
+	my @links = @{$gene->get_all_DBEntries};
+	my $gene_name_hgnc = '';
+	my $gene_name_vega = '';
+	my $gene_name_uniprot = '';
+	my $gene_name_ensembl = '';
+	my $gene_name_rfam = '';
+	foreach my $gene_link(@links){
+	    if ($gene_link->dbname =~ /^HGNC/) { $gene_name_hgnc = $gene_link->display_id; } # picks up 'HGNC' and 'HGNC_curated_gene' names
+	    if ($gene_link->dbname =~ /Clone_based_vega_gene/) { $gene_name_vega = $gene_link->display_id; } # picks up 'Vega' and 'Vega_curated_gene' names
+	    if ($gene_link->dbname =~ /Clone_based_ensembl/) { $gene_name_ensembl = $gene_link->display_id; } # picks up 'Ensembl' names
+	    if ($gene_link->dbname =~ /Uniprot_gn/) { $gene_name_uniprot = $gene_link->display_id; } # picks up 'Uniprot' names
+	    if ($gene_link->dbname =~ /RFAM/) { $gene_name_rfam = $gene_link->display_id; } # picks up 'Uniprot' names
+	}
+
+	my $gene_name = $gene->stable_id();
+	if ($gene_name_hgnc)       { $gene_name = $gene_name_hgnc; }
+	elsif ($gene_name_vega)    { $gene_name = $gene_name_vega; }
+	elsif ($gene_name_uniprot) { $gene_name = $gene_name_uniprot; }
+	elsif ($gene_name_ensembl) { $gene_name = $gene_name_ensembl; }
+	elsif ($gene_name_rfam)    { $gene_name = $gene_name_rfam; }
+	my $gene_id = $gene->stable_id();
+	my $gene_status = $gene->status();
+	$ga->dbc->disconnect_if_idle();
+
+	if ($self->{gene_id_required}) { return ($gene_name, $gene_id, $biotype, $gene_status); }
+	else                           { return ($gene_name, $gene_name, $biotype, $gene_status); }
+}
+#--------------------------------------------------------------------------------------------#
+#--------------------------------------------------------------------------------------------#
 sub populate_grass_exon {
     my ($self, $ensembl_exon, $ensembl_transcript) = @_;
 
@@ -339,6 +412,7 @@ sub populate_grass_exon {
     if ($ensembl_exon->seq) { $seq = $ensembl_exon->seq->seq; }
     # populate the object
     my $grass_exon = new Grass::GenomeData::Exon(-phase  => $ensembl_exon->phase,
+						 -end_phase => $ensembl_exon->end_phase,
 						 -start  => $ensembl_exon->start,
 						 -end    => $ensembl_exon->end,
 						 -coding_region_start => $ensembl_exon->coding_region_start($ensembl_transcript),
