@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 
 # for testing Grass::RGannotator class
 
@@ -95,14 +95,16 @@ my $ensembl_api = '/software/pubseq/PerlModules/Ensembl/www_58_1';
 
 # set up access to genome data  from EnsemblDB (if species/ensembl_api supplied) or a cached flat file version (if genome_cache supplied)
 my $genome_data_ensembl = new Grass::GenomeData(-species     => $species,
-						-ensembl_api => $ensembl_api);
+						-ensembl_api => $ensembl_api,
+                                                -gene_id_required => 1);
 
-my $genome_data_cache = new Grass::GenomeData(-genome_cache => $genome_cache);
+my $genome_data_cache = new Grass::GenomeData(-genome_cache => $genome_cache,
+					      -gene_id_required => 0);
 
 # results should be...
 my $res1 = "TMCC1\tENSG00000172765\tENST00000329333\t-1\t1\texon\t5\t7\t_\tTMCC1\tENSG00000172765\tENST00000329333\t-1\t1\texon\t5\t7\t_\t715\nTMCC1\tENSG00000172765\tENST00000307824\t-1\t1\texon\t5\t7\t_\tTMCC1\tENSG00000172765\tENST00000307824\t-1\t_\t5UTRexon\t5\t7\t_\t100\n";
 my $res2 = "TFPI\tENSG00000003436\tENST00000233156\t-1\t1\tintron\t2\t8\t_\tprotein_coding\tTFPI\tENSG00000003436\tENST00000233156\t-1\t_\t5UTRintron\t1\t8\t_\tprotein_coding\t200\tENSG00000224063,TFPI\n";
-my $res3 = "TFPI\tENSG00000003436\tENST00000233156\t-1\t1\tintron\t2\t8\t_\tprotein_coding\tTFPI\tENSG00000003436\tENST00000233156\t-1\t_\t5UTRintron\t1\t8\t_\tprotein_coding\t200\tTFPI\n";
+my $res3 = "TFPI\tTFPI\tENST00000233156\t-1\t1\tintron\t2\t8\t_\tprotein_coding\tTFPI\tTFPI\tENST00000233156\t-1\t_\t5UTRintron\t1\t8\t_\tprotein_coding\t200\tTFPI\n";
 
 # make a new object
 my $rgann1 = new Grass::Annotation::RGannotator(-dataset         => $dataset1,
@@ -127,19 +129,23 @@ my $rgann3 = new Grass::Annotation::RGannotator(-dataset         => $dataset2,
 						-show_biotype    => 1 );
 $rgann3->getAnnotation();
 
-ok($rgann1, 'object defined');
-ok($rgann2, 'object defined');
+ok($rgann1, 'object defined. ENSEMBL');
+ok($rgann2, '2object defined. ENSEMBL');
+ok($rgann3, 'object defined');
 
-is (($rgann1->within()), $within , "get within");
-is (($rgann1->list_between()), 0 , "get list_between");
-is (($rgann1->show_biotype()), 0 , "get show_biotype");
-is (($rgann1->format_for_printing()), $res1 , "get result");
+is (($rgann1->within()), $within , "get within. ENSEMBL");
+is (($rgann1->list_between()), 0 , "get list_between. ENSEMBL");
+is (($rgann1->show_biotype()), 0 , "get show_biotype. ENSEMBL");
+is (($rgann1->format_for_printing()), $res1 , "get result. ENSEMBL");
 
-is (($rgann2->within()), $within , "2get within");
-is (($rgann2->list_between()), 1 , "2get list_between");
-is (($rgann2->show_biotype()), 1 , "2get show_biotype");
-is (($rgann2->format_for_printing()), $res2 , "2get result");
+is (($rgann2->within()), $within , "2get within. ENSEMBL");
+is (($rgann2->list_between()), 1 , "2get list_between. ENSEMBL");
+is (($rgann2->show_biotype()), 1 , "2get show_biotype. ENSEMBL");
+is (($rgann2->format_for_printing()), $res2 , "2get result. ENSEMBL");
 
-is (($rgann3->format_for_printing()), $res3 , "3get result");
+is (($rgann3->within()), $within , "3get within. CACHE");
+is (($rgann3->list_between()), 1 , "3get list_between. CACHE");
+is (($rgann3->show_biotype()), 1 , "3get show_biotype. CACHE");
+is (($rgann3->format_for_printing()), $res3 , "3get result. CACHE");
 
 #------------------------------------------------------------------------------------------------#
