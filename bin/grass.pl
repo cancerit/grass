@@ -29,7 +29,6 @@ BEGIN {
 
 use strict;
 use warnings FATAL => 'all';
-use autodie qw(:all);
 
 use Grass::GenomeData;
 use Grass::DataEntry;
@@ -170,11 +169,17 @@ sub do_file {
         # decide what sort of file we have and get the coordinate details
 	my $name;
 	my $score;
-	my ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $shard);
+	my ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $shard, $microhom);
 	my ($chr1b, $strand1b, $pos1_startb, $pos1_endb, $chr2b, $strand2b, $pos2_startb, $pos2_endb, $shardb);
 	my ($chr1c, $strand1c, $pos1_startc, $pos1_endc, $chr2c, $strand2c, $pos2_startc, $pos2_endc, $shardc);
 
-	if (($line[0] =~ /^\S+$/) && ($line[1] =~ /^[+-]$/) && ($line[2] =~ /^\d+$/)&& ($line[3] =~ /^\d+$/)) { # brassI marked.rg format
+	if (($line[0] =~ /^\S+$/) && ($line[1] =~ /^[+-]$/) && ($line[2] =~ /^\d+$/) && ($line[3] =~ /^\d+$/) && ($line[4] =~ /^\S+$/) && ($line[5] =~ /^[+-]$/) && ($line[6] =~ /^\d+$/) && ($line[7] =~ /^\d+$/) && ($line[8] =~ /^[\.ATGCNatgcn]+$/) && ($line[9] =~ /^[\.ATGCNatgcn]+$/)) { # brassII marked.rg format
+	    ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $microhom, $shard) = ($line[0],$line[1],$line[2],$line[3],$line[4],$line[5],$line[6],$line[7],$line[8],$line[9]);
+	    $shard =~ s/\.//;
+	    if ($shard) { $name = $chr1 . ':' . $strand1 . ':' . $pos1_start . '-' . $pos1_end . ',' . $chr2 . ':' . $strand2 . ':' . $pos2_start . '-' . $pos2_end . ',' . $shard; }
+	    else        { $name = $chr1 . ':' . $strand1 . ':' . $pos1_start . '-' . $pos1_end . ',' . $chr2 . ':' . $strand2 . ':' . $pos2_start . '-' . $pos2_end; }
+	}
+	elsif (($line[0] =~ /^\S+$/) && ($line[1] =~ /^[+-]$/) && ($line[2] =~ /^\d+$/)&& ($line[3] =~ /^\d+$/)) { # brassI marked.rg format
 	    ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end) = ($line[0],$line[1],$line[2],$line[3],$line[4],$line[5],$line[6],$line[7]);
 	    $name = $chr1 . ':' . $strand1 . ':' . $pos1_start . '-' . $pos1_end . ',' . $chr2 . ':' . $strand2 . ':' . $pos2_start . '-' . $pos2_end;
 	}
