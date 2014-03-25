@@ -340,7 +340,7 @@ sub populate_grass_transcripts {
 	my $grass_transcript = new Grass::GenomeData::Transcript(-display_id => $ensembl_transcript->display_id,
 								 -stable_id  => $ensembl_transcript->stable_id,
 								 -length     => $ensembl_transcript->length,
-								 -strand     => $ensembl_transcript->strand,
+								 -strand     => ($ensembl_transcript->strand . ''),
 								 -start      => $ensembl_transcript->start,
 								 -end        => $ensembl_transcript->end,
 								 -coding_region_start => $ensembl_transcript->coding_region_start,
