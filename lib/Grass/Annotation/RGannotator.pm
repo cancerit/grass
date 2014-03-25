@@ -413,8 +413,8 @@ sub thin_out_annos2 {
 #	print  "   L5 trans length: " . ($anno->L5->trans_length() || 0) . "\n";
 #	print  "   H5 trans length: " . ($anno->H5->trans_length() || 0) . "\n";
 
-	$current_length = ($anno->Llength() || 0) + ($anno->Hlength() || 0);
-	$current_trans_length = ($anno->L5->trans_length() || 0) + ($anno->H5->trans_length() || 0);
+	$current_length = ($anno->Llength() || 0) + ($anno->Hlength() || 0); # putative fusion translation product length
+	$current_trans_length = ($anno->L5->trans_length() || 0) + ($anno->H5->trans_length() || 0); # transcript length
 	if ($self->{debug}) { print "    current $current_flag $current_length trans_length $current_trans_length\n"; }
 
 	# save the data for the previous flag value
@@ -426,9 +426,11 @@ sub thin_out_annos2 {
 
 	    # reset the variables for the next flag to be considered
 	    $longest_length = 0;
+	    $longest_trans_length = 0;
 	    $best_anno4flag = '';
 	}
 
+	# check putative fusion translation product length
 	if ($current_length > $longest_length) {
 	    if ($self->{debug}) { print "updating length $longest_length to $current_length\n"; }
 #	    print "        this overlap is longer\n";
@@ -436,6 +438,7 @@ sub thin_out_annos2 {
 	    $longest_trans_length = $current_trans_length;
 	    $best_anno4flag = $anno;
 	}
+	# check transcript length
 	elsif (($current_length == $longest_length) && ($current_trans_length > $longest_trans_length)) {
 	    if ($self->{debug}) { print "updating total trans_length $longest_trans_length to $current_trans_length\n"; }
 #	    print "        this overlap is same but transcript is longer (current $current_trans_length longest $longest_trans_length)\n";
@@ -446,6 +449,7 @@ sub thin_out_annos2 {
 	unless ($best_anno4flag) { 
 	    $best_anno4flag = $anno; 
 	    $longest_length = $current_length; 
+	    $longest_trans_length = $current_trans_length;
 #	    print "setting it for the first time\n";
 	}
 
@@ -471,39 +475,70 @@ sub thin_out_annos2 {
     else { print "thinning failed\n"; return ($annos); }
 }
 #---------------------------------------------------------------------------------------------------------------#
-# if only 1 end has annotations, keep only the longest 
+# if only 1 end has annotations, keep only the longest upstream/downstream, or translation product, or transcript
 sub thin_end {
     my $self = shift;
     my $annos = shift;
     my @new_annos = ();
 
+    my $longest = 0;
     my $longest_trans = 0;
+    my $longest_upstream = 0;
     my $best_anno;
     foreach my $anno(@$annos) {
-
-	$current_length = ($anno->Llength() || 0) + ($anno->Hlength() || 0);
+ 	$current_length = 0;
 	$current_trans_length = 0;
 
-	# check the transcript length first and pick the longest
+	# check the putative upstream/downstream translation product length 
+	my $current_upstream_length = ($anno->Llength() || 0) + ($anno->Hlength() || 0);
+	# check the translation product length
+	if ($anno->L5) { $current_length = ($anno->L5->translation_length() || 0); }
+	if ($anno->H5) { $current_length = ($anno->H5->translation_length() || 0); }
+	# check the transcript length
 	if ($anno->L5) { $current_trans_length = ($anno->L5->trans_length() || 0); }
 	if ($anno->H5) { $current_trans_length = ($anno->H5->trans_length() || 0); }
-	if ($current_trans_length && ($current_trans_length > $longest_trans)) {
+
+	# check upstream/downstream translation product length and if there is one, and it is the longest, pick this anno
+	if ($current_upstream_length && ($current_upstream_length > $longest_upstream)) {
+	    $best_anno = $anno;
+	    $longest = $current_length;
+	    $longest_trans = $current_trans_length;
+	    $longest_upstream = $current_upstream_length;
+	}
+	# check translation product length and if there is one, and it is the longest, pick this anno
+	elsif (!$current_upstream_length && !$longest_upstream && $current_length && ($current_length > $longest)) {
+	    $best_anno = $anno;
+	    $longest = $current_length;
+	    $longest_trans = $current_trans_length;
+	    $longest_upstream = $current_upstream_length;
+	}
+	# check translation product length and if there is None, check the transcript length instead and pick based on that
+	elsif (!$current_upstream_length && !$longest_upstream && !$current_length && !$longest && $current_trans_length  && ($current_trans_length > $longest_trans)) {
+	    $best_anno = $anno;
+	    $longest_trans = $current_trans_length;
+	    $longest_upstream = $current_upstream_length;
+	}
+	# if upstream products are the same length, use the longest translation product
+	elsif ($current_upstream_length && $longest_upstream && ($current_upstream_length == $longest_upstream) && ($current_length > $longest)) {
+	    $best_anno = $anno;
+	    $longest = $current_length;
+	    $longest_trans = $current_trans_length;
+	}
+	# if upstream products and translation products are the same length, use the longest transcript
+	elsif ($current_upstream_length && $longest_upstream && ($current_upstream_length == $longest_upstream) &&
+               $current_length && $longest && ($current_length == $longest) && ($current_trans_length > $longest_trans)) {
 	    $best_anno = $anno;
 	    $longest_trans = $current_trans_length;
 	}
-	elsif (!$longest_trans && $current_trans_length && (($current_trans_length > $longest_trans))) {
+	# set if currently unset
+	unless ($best_anno) {
 	    $best_anno = $anno;
+	    $longest = $current_length;
 	    $longest_trans = $current_trans_length;
+	    $longest_upstream = $current_upstream_length;
 	}
-	# translation products are the same length so use the longest transcript
-	elsif ($longest_trans && $current_trans_length && (($current_trans_length == $longest_trans))) {
-	    my $best_anno_length = 0;
-	    if ($best_anno) { $best_anno_length = ($best_anno->Llength() || 0) + ($best_anno->Hlength() || 0); }
-	    if ($current_length > $best_anno_length) {
-		$best_anno = $anno;
-	    }
-	}
-	if ($self->{debug}) { print "$current_length $current_trans_length. use $longest_trans\n"; }
+
+	if ($self->{debug}) { print "$current_upstream_length $current_length $current_trans_length. use $longest_upstream/$longest/$longest_trans\n"; }
     }
     push @new_annos, $best_anno;
     if (@new_annos) { return (\@new_annos); }
