@@ -118,86 +118,96 @@ my $combi_cache = new Grass::Annotation::RGcombinationAnnotator(-anno1   => $ann
 $combi_cache->combine(); 
 my $rganno_cache = $combi_cache->anno();
 
-#my $res = get_result_58();
-my $res = get_result_74();
+my $res = get_result_58();
+my $res_74 = get_result_74();
 
 ok($combi, 'object defined. ENSEMBL');
 is (($combi->strand1()), $strand1 , "get strand1. ENSEMBL");
 is (($combi->strand2()), $strand2 , "get strand2. ENSEMBL");
 is (($combi->shard()), $shard , "get shard. ENSEMBL");
 
-is ((Dumper($rganno)), $res , "get result. ENSEMBL");
+is ((Dumper($rganno)), $res_74 , "get result. ENSEMBL");
 
 ok($combi_cache, 'object defined. CACHE');
 is (($combi_cache->strand1()), $strand1 , "get strand1. CACHE");
 is (($combi_cache->strand2()), $strand2 , "get strand2. CACHE");
 is (($combi_cache->shard()), $shard , "get shard. CACHE");
 
-is ((Dumper($rganno_cache)), $res , "get result. CACHE");
+is ((Dumper($rganno_cache)), $res_74 , "get result. CACHE");
 
 #------------------------------------------------------------------------------------------------#
 sub get_result_58 {
     my $res = <<'END';
 $VAR1 = bless( {
                  'L5' => bless( {
-                                  'gene_id' => 'ENSG00000172765',
+                                  'gene_id' => 'TMCC1',
                                   'up2' => 'TT',
                                   'region' => 'exon',
                                   'gene' => 'TMCC1',
-                                  'transcript' => 'ENST00000432054',
-                                  'trans_length' => 5631,
+                                  'translation_length' => 653,
+                                  'transcript' => 'ENST00000329333',
+                                  'trans_length' => 6152,
                                   'biotype' => 'protein_coding',
                                   'down2' => 'AT',
-                                  'phase' => 1,
-                                  'region_number' => 2,
+                                  'phase' => '1',
+                                  'region_number' => 5,
                                   'strand' => '-1',
-                                  'trans_region_count' => 4,
-                                  'transcript_id' => 'ENST00000432054'
+                                  'trans_region_count' => 7,
+                                  'transcript_id' => 'ENST00000329333'
                                 }, 'Grass::AnnoPoint' ),
                  'Ltype' => 'exon',
                  'H5' => bless( {
-                                  'gene_id' => 'ENSG00000172765',
-                                  'region' => '5UTRexon',
+                                  'gene_id' => 'TMCC1',
+                                  'up2' => 'CG',
+                                  'region' => 'exon',
                                   'gene' => 'TMCC1',
-                                  'transcript' => 'ENST00000432054',
-                                  'trans_length' => 5631,
+                                  'translation_length' => 653,
+                                  'transcript' => 'ENST00000329333',
+                                  'trans_length' => 6152,
                                   'biotype' => 'protein_coding',
+                                  'down2' => 'AA',
+                                  'phase' => '1',
+                                  'region_number' => 5,
                                   'strand' => '-1',
-                                  'region_number' => 2,
-                                  'trans_region_count' => 4,
-                                  'transcript_id' => 'ENST00000432054'
+                                  'trans_region_count' => 7,
+                                  'transcript_id' => 'ENST00000329333'
                                 }, 'Grass::AnnoPoint' ),
-                 'Htype' => '5UTRexon',
-                 'id_fusion_flag' => '100',
+                 'Htype' => 'exon',
+                 'id_fusion_flag' => 510,
                  'id_rg' => 'TEST',
                  'L3' => bless( {
-                                  'gene_id' => 'ENSG00000172765',
+                                  'gene_id' => 'TMCC1',
                                   'up2' => 'TT',
                                   'region' => 'exon',
                                   'gene' => 'TMCC1',
-                                  'transcript' => 'ENST00000432054',
-                                  'trans_length' => 5631,
+                                  'translation_length' => 653,
+                                  'transcript' => 'ENST00000329333',
+                                  'trans_length' => 6152,
                                   'biotype' => 'protein_coding',
                                   'down2' => 'AT',
-                                  'phase' => 1,
-                                  'region_number' => 2,
+                                  'phase' => '1',
+                                  'region_number' => 5,
                                   'strand' => '-1',
-                                  'trans_region_count' => 4,
-                                  'transcript_id' => 'ENST00000432054'
+                                  'trans_region_count' => 7,
+                                  'transcript_id' => 'ENST00000329333'
                                 }, 'Grass::AnnoPoint' ),
                  'Llength' => 18901,
-                 'Hlength' => 17472,
+                 'Hlength' => 157118,
                  'H3' => bless( {
-                                  'gene_id' => 'ENSG00000172765',
-                                  'region' => '5UTRexon',
+                                  'gene_id' => 'TMCC1',
+                                  'up2' => 'CG',
+                                  'region' => 'exon',
                                   'gene' => 'TMCC1',
-                                  'transcript' => 'ENST00000432054',
-                                  'trans_length' => 5631,
+                                  'translation_length' => 653,
+                                  'transcript' => 'ENST00000329333',
+                                  'trans_length' => 6152,
                                   'biotype' => 'protein_coding',
+                                  'down2' => 'AA',
+                                  'phase' => '1',
+                                  'region_number' => 5,
                                   'strand' => '-1',
-                                  'region_number' => 2,
-                                  'trans_region_count' => 4,
-                                  'transcript_id' => 'ENST00000432054'
+                                  'trans_region_count' => 7,
+                                  'transcript_id' => 'ENST00000329333'
                                 }, 'Grass::AnnoPoint' )
                }, 'Grass::Anno' );
 END
@@ -212,11 +222,12 @@ $VAR1 = bless( {
                                   'up2' => 'TT',
                                   'region' => 'exon',
                                   'gene' => 'TMCC1',
+                                  'translation_length' => 653,
                                   'transcript' => 'ENST00000393238',
                                   'trans_length' => 5992,
                                   'biotype' => 'protein_coding',
                                   'down2' => 'AT',
-                                  'phase' => 1,
+                                  'phase' => '1',
                                   'region_number' => 4,
                                   'strand' => '-1',
                                   'trans_region_count' => 6,
@@ -228,11 +239,12 @@ $VAR1 = bless( {
                                   'up2' => 'CG',
                                   'region' => 'exon',
                                   'gene' => 'TMCC1',
+                                  'translation_length' => 653,
                                   'transcript' => 'ENST00000393238',
                                   'trans_length' => 5992,
                                   'biotype' => 'protein_coding',
                                   'down2' => 'AA',
-                                  'phase' => 1,
+                                  'phase' => '1',
                                   'region_number' => 4,
                                   'strand' => '-1',
                                   'trans_region_count' => 6,
@@ -246,11 +258,12 @@ $VAR1 = bless( {
                                   'up2' => 'TT',
                                   'region' => 'exon',
                                   'gene' => 'TMCC1',
+                                  'translation_length' => 653,
                                   'transcript' => 'ENST00000393238',
                                   'trans_length' => 5992,
                                   'biotype' => 'protein_coding',
                                   'down2' => 'AT',
-                                  'phase' => 1,
+                                  'phase' => '1',
                                   'region_number' => 4,
                                   'strand' => '-1',
                                   'trans_region_count' => 6,
@@ -263,11 +276,12 @@ $VAR1 = bless( {
                                   'up2' => 'CG',
                                   'region' => 'exon',
                                   'gene' => 'TMCC1',
+                                  'translation_length' => 653,
                                   'transcript' => 'ENST00000393238',
                                   'trans_length' => 5992,
                                   'biotype' => 'protein_coding',
                                   'down2' => 'AA',
-                                  'phase' => 1,
+                                  'phase' => '1',
                                   'region_number' => 4,
                                   'strand' => '-1',
                                   'trans_region_count' => 6,

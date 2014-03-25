@@ -134,7 +134,6 @@ my $res = get_result_74();
 
 #my $res_2 = get_result_58_2();
 my $res_2 = get_result_74_2();
-my $res_2_cache = get_result_74_2_cache();
 
 ok($End, 'object defined');
 is (($End->entry()), $entry , "get entry");
@@ -143,7 +142,7 @@ is (($End->within()), $within , "get within");
 is (($End->ccds_only()), 1 , "get ccds_only");
 is ((Dumper($anns)), $res , "get result ensembl");
 
-#is ((Dumper($anns2)), $res , "get result cache");
+is ((Dumper($anns2)), $res , "get result cache");
 
 
 # check on the plus strand
@@ -153,10 +152,8 @@ is (($End_2->end()), $end_2 , "get end (plus strand gene)");
 is (($End_2->within()), $within_2 , "get within (plus strand gene)");
 is (($End_2->ccds_only()), 1 , "get ccds_only (plus strand gene)");
 is ((Dumper($anns_2)), $res_2 , "get result ensembl (plus strand gene)"); # has a putative coding transcript as well that is missing from the cache version
-
-#print Dumper($anns_2);
-
-is ((Dumper($anns2_2)), $res_2_cache , "get result cache (plus strand gene)");
+is ((Dumper($anns2_2)), $res_2 , "get result cache (plus strand gene)");
+#print Dumper($anns2_2);
 
 #------------------------------------------------------------------------------------------------#
 sub get_result_58 {
@@ -198,11 +195,12 @@ $VAR1 = [
                                     'up2' => 'CG',
                                     'region' => 'exon',
                                     'gene' => 'TMCC1',
+                                    'translation_length' => 653,
                                     'transcript' => 'ENST00000393238',
                                     'trans_length' => 5992,
                                     'biotype' => 'protein_coding',
                                     'down2' => 'AA',
-                                    'phase' => 1,
+                                    'phase' => '1',
                                     'region_number' => 4,
                                     'strand' => '-1',
                                     'trans_region_count' => 6,
@@ -215,11 +213,12 @@ $VAR1 = [
                                     'up2' => 'CG',
                                     'region' => 'exon',
                                     'gene' => 'TMCC1',
+                                    'translation_length' => 653,
                                     'transcript' => 'ENST00000393238',
                                     'trans_length' => 5992,
                                     'biotype' => 'protein_coding',
                                     'down2' => 'AA',
-                                    'phase' => 1,
+                                    'phase' => '1',
                                     'region_number' => 4,
                                     'strand' => '-1',
                                     'trans_region_count' => 6,
@@ -237,7 +236,7 @@ $VAR1 = [
                                     'trans_length' => 6152,
                                     'biotype' => 'protein_coding',
                                     'down2' => 'AA',
-                                    'phase' => 1,
+                                    'phase' => '1',
                                     'region_number' => 5,
                                     'strand' => '-1',
                                     'trans_region_count' => 7,
@@ -254,7 +253,7 @@ $VAR1 = [
                                     'trans_length' => 6152,
                                     'biotype' => 'protein_coding',
                                     'down2' => 'AA',
-                                    'phase' => 1,
+                                    'phase' => '1',
                                     'region_number' => 5,
                                     'strand' => '-1',
                                     'trans_region_count' => 7,
@@ -306,11 +305,12 @@ $VAR1 = [
                                     'up2' => 'CG',
                                     'region' => 'exon',
                                     'gene' => 'TMCC1',
+                                    'translation_length' => 653,
                                     'transcript' => 'ENST00000393238',
                                     'trans_length' => 5992,
                                     'biotype' => 'protein_coding',
                                     'down2' => 'AA',
-                                    'phase' => 1,
+                                    'phase' => '1',
                                     'region_number' => 4,
                                     'strand' => '-1',
                                     'trans_region_count' => 6,
@@ -323,309 +323,17 @@ $VAR1 = [
                                     'up2' => 'CG',
                                     'region' => 'exon',
                                     'gene' => 'TMCC1',
+                                    'translation_length' => 653,
                                     'transcript' => 'ENST00000393238',
                                     'trans_length' => 5992,
                                     'biotype' => 'protein_coding',
                                     'down2' => 'AA',
-                                    'phase' => 1,
+                                    'phase' => '1',
                                     'region_number' => 4,
                                     'strand' => '-1',
                                     'trans_region_count' => 6,
                                     'transcript_id' => 'ENST00000393238'
                                   }, 'Grass::AnnoPoint' )
-                 }, 'Grass::Anno' )
-        ];
-END
-    return($res);
-}
-#------------------------------------------------------------------------------------------------#
-sub get_result_74_2_old {
-    my $res = <<'END';
-$VAR1 = [
-          bless( {
-                   'L5' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000520777',
-                                    'trans_length' => 3321,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => '2',
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 20,
-                                    'transcript_id' => 'ENST00000520777'
-                                  }, 'Grass::AnnoPoint' ),
-                   'Ltype' => 'intron',
-                   'L3' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000520777',
-                                    'trans_length' => 3321,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => '2',
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 20,
-                                    'transcript_id' => 'ENST00000520777'
-                                  }, 'Grass::AnnoPoint' ),
-                   'id_rg' => 'TEST_plus',
-                   'Llength' => 1401
-                 }, 'Grass::Anno' ),
-          bless( {
-                   'L5' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000355826',
-                                    'trans_length' => 3290,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => '2',
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 20,
-                                    'transcript_id' => 'ENST00000355826'
-                                  }, 'Grass::AnnoPoint' ),
-                   'Ltype' => 'intron',
-                   'L3' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000355826',
-                                    'trans_length' => 3290,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => '2',
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 20,
-                                    'transcript_id' => 'ENST00000355826'
-                                  }, 'Grass::AnnoPoint' ),
-                   'id_rg' => 'TEST_plus',
-                   'Llength' => 1401
-                 }, 'Grass::Anno' ),
-          bless( {
-                   'L5' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000518681',
-                                    'trans_length' => 3116,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => '2',
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 19,
-                                    'transcript_id' => 'ENST00000518681'
-                                  }, 'Grass::AnnoPoint' ),
-                   'Ltype' => 'intron',
-                   'L3' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000518681',
-                                    'trans_length' => 3116,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => '2',
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 19,
-                                    'transcript_id' => 'ENST00000518681'
-                                  }, 'Grass::AnnoPoint' ),
-                   'id_rg' => 'TEST_plus',
-                   'Llength' => 1401
-                 }, 'Grass::Anno' ),
-          bless( {
-                   'L5' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000505820',
-                                    'trans_length' => 3305,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => '2',
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 20,
-                                    'transcript_id' => 'ENST00000505820'
-                                  }, 'Grass::AnnoPoint' ),
-                   'Ltype' => 'intron',
-                   'L3' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000505820',
-                                    'trans_length' => 3305,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => '2',
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 20,
-                                    'transcript_id' => 'ENST00000505820'
-                                  }, 'Grass::AnnoPoint' ),
-                   'id_rg' => 'TEST_plus',
-                   'Llength' => 1401
-                 }, 'Grass::Anno' ),
-          bless( {
-                   'L5' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => '5UTRintron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000378712',
-                                    'trans_length' => 2890,
-                                    'biotype' => 'protein_coding',
-                                    'strand' => '1',
-                                    'region_number' => 2,
-                                    'trans_region_count' => 18,
-                                    'transcript_id' => 'ENST00000378712'
-                                  }, 'Grass::AnnoPoint' ),
-                   'Ltype' => '5UTRintron',
-                   'L3' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => '5UTRintron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000378712',
-                                    'trans_length' => 2890,
-                                    'biotype' => 'protein_coding',
-                                    'strand' => '1',
-                                    'region_number' => 2,
-                                    'trans_region_count' => 18,
-                                    'transcript_id' => 'ENST00000378712'
-                                  }, 'Grass::AnnoPoint' ),
-                   'id_rg' => 'TEST_plus',
-                   'Llength' => 956
-                 }, 'Grass::Anno' )
-        ];
-END
-    return($res);
-}
-#------------------------------------------------------------------------------------------------#
-sub get_result_74_2_cache {
-    my $res = <<'END';
-$VAR1 = [
-          bless( {
-                   'L5' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000520777',
-                                    'trans_length' => 3321,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => 2,
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 20,
-                                    'transcript_id' => 'ENST00000520777'
-                                  }, 'Grass::AnnoPoint' ),
-                   'Ltype' => 'intron',
-                   'L3' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000520777',
-                                    'trans_length' => 3321,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => 2,
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 20,
-                                    'transcript_id' => 'ENST00000520777'
-                                  }, 'Grass::AnnoPoint' ),
-                   'id_rg' => 'TEST_plus',
-                   'Llength' => 1401
-                 }, 'Grass::Anno' ),
-          bless( {
-                   'L5' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000355826',
-                                    'trans_length' => 3290,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => 2,
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 20,
-                                    'transcript_id' => 'ENST00000355826'
-                                  }, 'Grass::AnnoPoint' ),
-                   'Ltype' => 'intron',
-                   'L3' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000355826',
-                                    'trans_length' => 3290,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => 2,
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 20,
-                                    'transcript_id' => 'ENST00000355826'
-                                  }, 'Grass::AnnoPoint' ),
-                   'id_rg' => 'TEST_plus',
-                   'Llength' => 1401
-                 }, 'Grass::Anno' ),
-          bless( {
-                   'L5' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000518681',
-                                    'trans_length' => 3116,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => 2,
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 19,
-                                    'transcript_id' => 'ENST00000518681'
-                                  }, 'Grass::AnnoPoint' ),
-                   'Ltype' => 'intron',
-                   'L3' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000518681',
-                                    'trans_length' => 3116,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => 2,
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 19,
-                                    'transcript_id' => 'ENST00000518681'
-                                  }, 'Grass::AnnoPoint' ),
-                   'id_rg' => 'TEST_plus',
-                   'Llength' => 1401
-                 }, 'Grass::Anno' ),
-          bless( {
-                   'L5' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000505820',
-                                    'trans_length' => 3305,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => 2,
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 20,
-                                    'transcript_id' => 'ENST00000505820'
-                                  }, 'Grass::AnnoPoint' ),
-                   'Ltype' => 'intron',
-                   'L3' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000505820',
-                                    'trans_length' => 3305,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => 2,
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 20,
-                                    'transcript_id' => 'ENST00000505820'
-                                  }, 'Grass::AnnoPoint' ),
-                   'id_rg' => 'TEST_plus',
-                   'Llength' => 1401
                  }, 'Grass::Anno' )
         ];
 END
@@ -640,99 +348,7 @@ $VAR1 = [
                                     'gene_id' => 'MIB2',
                                     'region' => 'intron',
                                     'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000520777',
-                                    'trans_length' => 3321,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => '2',
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 20,
-                                    'transcript_id' => 'ENST00000520777'
-                                  }, 'Grass::AnnoPoint' ),
-                   'Ltype' => 'intron',
-                   'L3' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000520777',
-                                    'trans_length' => 3321,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => '2',
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 20,
-                                    'transcript_id' => 'ENST00000520777'
-                                  }, 'Grass::AnnoPoint' ),
-                   'id_rg' => 'TEST_plus',
-                   'Llength' => 1401
-                 }, 'Grass::Anno' ),
-          bless( {
-                   'L5' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000355826',
-                                    'trans_length' => 3290,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => '2',
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 20,
-                                    'transcript_id' => 'ENST00000355826'
-                                  }, 'Grass::AnnoPoint' ),
-                   'Ltype' => 'intron',
-                   'L3' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000355826',
-                                    'trans_length' => 3290,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => '2',
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 20,
-                                    'transcript_id' => 'ENST00000355826'
-                                  }, 'Grass::AnnoPoint' ),
-                   'id_rg' => 'TEST_plus',
-                   'Llength' => 1401
-                 }, 'Grass::Anno' ),
-          bless( {
-                   'L5' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000518681',
-                                    'trans_length' => 3116,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => '2',
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 19,
-                                    'transcript_id' => 'ENST00000518681'
-                                  }, 'Grass::AnnoPoint' ),
-                   'Ltype' => 'intron',
-                   'L3' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
-                                    'transcript' => 'ENST00000518681',
-                                    'trans_length' => 3116,
-                                    'biotype' => 'protein_coding',
-                                    'phase' => '2',
-                                    'region_number' => 2,
-                                    'strand' => '1',
-                                    'trans_region_count' => 19,
-                                    'transcript_id' => 'ENST00000518681'
-                                  }, 'Grass::AnnoPoint' ),
-                   'id_rg' => 'TEST_plus',
-                   'Llength' => 1401
-                 }, 'Grass::Anno' ),
-          bless( {
-                   'L5' => bless( {
-                                    'gene_id' => 'MIB2',
-                                    'region' => 'intron',
-                                    'gene' => 'MIB2',
+                                    'translation_length' => 1070,
                                     'transcript' => 'ENST00000505820',
                                     'trans_length' => 3305,
                                     'biotype' => 'protein_coding',
@@ -747,6 +363,7 @@ $VAR1 = [
                                     'gene_id' => 'MIB2',
                                     'region' => 'intron',
                                     'gene' => 'MIB2',
+                                    'translation_length' => 1070,
                                     'transcript' => 'ENST00000505820',
                                     'trans_length' => 3305,
                                     'biotype' => 'protein_coding',
@@ -755,6 +372,105 @@ $VAR1 = [
                                     'strand' => '1',
                                     'trans_region_count' => 20,
                                     'transcript_id' => 'ENST00000505820'
+                                  }, 'Grass::AnnoPoint' ),
+                   'id_rg' => 'TEST_plus',
+                   'Llength' => 1401
+                 }, 'Grass::Anno' ),
+          bless( {
+                   'L5' => bless( {
+                                    'gene_id' => 'MIB2',
+                                    'region' => 'intron',
+                                    'gene' => 'MIB2',
+                                    'translation_length' => 1066,
+                                    'transcript' => 'ENST00000520777',
+                                    'trans_length' => 3321,
+                                    'biotype' => 'protein_coding',
+                                    'phase' => '2',
+                                    'region_number' => 2,
+                                    'strand' => '1',
+                                    'trans_region_count' => 20,
+                                    'transcript_id' => 'ENST00000520777'
+                                  }, 'Grass::AnnoPoint' ),
+                   'Ltype' => 'intron',
+                   'L3' => bless( {
+                                    'gene_id' => 'MIB2',
+                                    'region' => 'intron',
+                                    'gene' => 'MIB2',
+                                    'translation_length' => 1066,
+                                    'transcript' => 'ENST00000520777',
+                                    'trans_length' => 3321,
+                                    'biotype' => 'protein_coding',
+                                    'phase' => '2',
+                                    'region_number' => 2,
+                                    'strand' => '1',
+                                    'trans_region_count' => 20,
+                                    'transcript_id' => 'ENST00000520777'
+                                  }, 'Grass::AnnoPoint' ),
+                   'id_rg' => 'TEST_plus',
+                   'Llength' => 1401
+                 }, 'Grass::Anno' ),
+          bless( {
+                   'L5' => bless( {
+                                    'gene_id' => 'MIB2',
+                                    'region' => 'intron',
+                                    'gene' => 'MIB2',
+                                    'translation_length' => 1056,
+                                    'transcript' => 'ENST00000355826',
+                                    'trans_length' => 3290,
+                                    'biotype' => 'protein_coding',
+                                    'phase' => '2',
+                                    'region_number' => 2,
+                                    'strand' => '1',
+                                    'trans_region_count' => 20,
+                                    'transcript_id' => 'ENST00000355826'
+                                  }, 'Grass::AnnoPoint' ),
+                   'Ltype' => 'intron',
+                   'L3' => bless( {
+                                    'gene_id' => 'MIB2',
+                                    'region' => 'intron',
+                                    'gene' => 'MIB2',
+                                    'translation_length' => 1056,
+                                    'transcript' => 'ENST00000355826',
+                                    'trans_length' => 3290,
+                                    'biotype' => 'protein_coding',
+                                    'phase' => '2',
+                                    'region_number' => 2,
+                                    'strand' => '1',
+                                    'trans_region_count' => 20,
+                                    'transcript_id' => 'ENST00000355826'
+                                  }, 'Grass::AnnoPoint' ),
+                   'id_rg' => 'TEST_plus',
+                   'Llength' => 1401
+                 }, 'Grass::Anno' ),
+          bless( {
+                   'L5' => bless( {
+                                    'gene_id' => 'MIB2',
+                                    'region' => 'intron',
+                                    'gene' => 'MIB2',
+                                    'translation_length' => 1005,
+                                    'transcript' => 'ENST00000518681',
+                                    'trans_length' => 3116,
+                                    'biotype' => 'protein_coding',
+                                    'phase' => '2',
+                                    'region_number' => 2,
+                                    'strand' => '1',
+                                    'trans_region_count' => 19,
+                                    'transcript_id' => 'ENST00000518681'
+                                  }, 'Grass::AnnoPoint' ),
+                   'Ltype' => 'intron',
+                   'L3' => bless( {
+                                    'gene_id' => 'MIB2',
+                                    'region' => 'intron',
+                                    'gene' => 'MIB2',
+                                    'translation_length' => 1005,
+                                    'transcript' => 'ENST00000518681',
+                                    'trans_length' => 3116,
+                                    'biotype' => 'protein_coding',
+                                    'phase' => '2',
+                                    'region_number' => 2,
+                                    'strand' => '1',
+                                    'trans_region_count' => 19,
+                                    'transcript_id' => 'ENST00000518681'
                                   }, 'Grass::AnnoPoint' ),
                    'id_rg' => 'TEST_plus',
                    'Llength' => 1401
