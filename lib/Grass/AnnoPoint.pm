@@ -82,6 +82,7 @@ sub new {
     if ($args{-end_base}) { $self->end_base($args{-end_base}); }
     if ($args{-trans_region_count}) { $self->trans_region_count($args{-trans_region_count}); }
     if ($args{-trans_length}) { $self->trans_length($args{-trans_length}); }
+    if ($args{-translation_length}) { $self->translation_length($args{-translation_length}); }
 
     return $self;
 }
@@ -376,6 +377,22 @@ sub trans_length {
     my $self = shift;
     $self->{trans_length} = shift if @_;
     return $self->{trans_length};
+}
+#-----------------------------------------------------------------------#
+
+=head2 translation_length
+
+  Arg (0)    :
+  Example    : $translation_length = $pair->translation_length($translation_length);
+  Description: length of this transcript's translation product
+  Return     : $translation_length
+
+=cut
+
+sub translation_length {
+    my $self = shift;
+    $self->{translation_length} = shift if @_;
+    return $self->{translation_length};
 }
 #-----------------------------------------------------------------------#
 #-----------------------------------------------------------------------#
