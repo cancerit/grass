@@ -284,7 +284,9 @@ sub annotate {
 	# changed to 1 since want ccds if there is one
 	if ((scalar(@$transList)) > 1) { ($transList, $self->{ccds_only}) = $self->{genome_data}->thin_out_translist($transList); }
 	
-  	foreach my $trans(@$transList){
+  	foreach my $trans(sort { $b->{translation_length} <=> $a->{translation_length}
+                                                       || 
+                                         $b->{length} <=> $a->{length} } @$transList){
 	    my $name = $trans->gene_name;
 	    my $id = $trans->gene_stable_id;
 	    my $biotype = $trans->gene_biotype;
@@ -313,7 +315,6 @@ sub getTranscripts {
     # get the transcripts overlapping this region
     if ($self->{debug}) { print "\nSLICE " . $self->{chr} . ':' . $self->{pos_start} . '-' . $self->{pos_end} . "\n"; }
     my $transcripts = $self->{genome_data}->fetch_transcripts_by_region($self->{chr}, ($self->{pos_start}), ($self->{pos_end}));
-
     return($transcripts);
 }
 
@@ -330,26 +331,50 @@ sub getEndCoords {
     my $strand1 = $self->{entry}->strand1();
     my $strand2 = $self->{entry}->strand2();
     
-    if    (($end == 1) && ($strand1 eq '+')) { 
+    if    (($end == 1) && ($strand1 eq '+') && ($self->{entry}->pos1_end() >= $self->{entry}->pos1_start())) { 
 	$chr = ($self->{entry}->chr1());
 	$pos_start =  $self->{entry}->pos1_start();
 	$pos_end   = ($self->{entry}->pos1_end()) + ($self->{within});
     }
-    elsif (($end == 2) && ($strand2 eq '+')) { 
+    elsif (($end == 2) && ($strand2 eq '+') && ($self->{entry}->pos2_end() >= $self->{entry}->pos2_start())) { 
 	$chr = ($self->{entry}->chr2());
 	$pos_start =  $self->{entry}->pos2_start();
 	$pos_end   = ($self->{entry}->pos2_end()) + ($self->{within});
     }
-    elsif (($end == 1) && ($strand1 eq '-')) { 
+    elsif (($end == 1) && ($strand1 eq '-') && ($self->{entry}->pos1_end() >= $self->{entry}->pos1_start())) { 
 	$chr = ($self->{entry}->chr1());
 	$pos_start = ($self->{entry}->pos1_start()) - ($self->{within});
 	$pos_end   =  $self->{entry}->pos1_end();
     }
-    elsif (($end == 2) && ($strand2 eq '-')) { 
+    elsif (($end == 2) && ($strand2 eq '-') && ($self->{entry}->pos2_end() >= $self->{entry}->pos2_start())) { 
 	$chr = ($self->{entry}->chr2());
 	$pos_start = ($self->{entry}->pos2_start()) - ($self->{within});
 	$pos_end   =  $self->{entry}->pos2_end();
     }
+    
+    
+    # this is to deal with brassII coordinates which are sometimes flipped over
+    if    (($end == 1) && ($strand1 eq '+') && ($self->{entry}->pos1_start() > $self->{entry}->pos1_end())) { 
+	$chr = ($self->{entry}->chr1());
+	$pos_end   =  $self->{entry}->pos1_start();
+	$pos_start = ($self->{entry}->pos1_end()) + ($self->{within});
+    }
+    elsif (($end == 2) && ($strand2 eq '+') && ($self->{entry}->pos2_start() > $self->{entry}->pos2_end())) { 
+	$chr = ($self->{entry}->chr2());
+	$pos_end   =  $self->{entry}->pos2_start();
+	$pos_start = ($self->{entry}->pos2_end()) + ($self->{within});
+    }
+    elsif (($end == 1) && ($strand1 eq '-') && ($self->{entry}->pos1_start() > $self->{entry}->pos1_end())) { 
+	$chr = ($self->{entry}->chr1());
+	$pos_end   = ($self->{entry}->pos1_start()) - ($self->{within});
+	$pos_start =  $self->{entry}->pos1_end();
+    }
+    elsif (($end == 2) && ($strand2 eq '-') && ($self->{entry}->pos2_start() > $self->{entry}->pos2_end())) { 
+	$chr = ($self->{entry}->chr2());
+	$pos_end   = ($self->{entry}->pos2_start()) - ($self->{within});
+	$pos_start =  $self->{entry}->pos2_end();
+    }
+
     
     $self->{chr} = $chr;
     $self->{pos_start} = $pos_start;
@@ -389,6 +414,7 @@ sub buildRGanno {
     my $ccds = ($tran->ccds_id() || ''); 
     my $acc = ($tran->accession() || ''); 
     my $length = int($tran->length); 
+    my $translation_length = int($tran->translation_length); 
 
     # make half an RGanno object and populate it with the RGannoPoint objects (L5/L3 or H5/H3) for this end
     my $annopoint1 = undef;
@@ -400,9 +426,10 @@ sub buildRGanno {
 				       -transcript_id => $transcript_id,
 				       -trans_region_count => $region_count,
 				       -trans_length  => $length,
+				       -translation_length => $translation_length,
 				       -entrez_id     => $entrez_id,
 				       -strand        => $strand,
-				       -phase         => $phase,
+				       -phase         => ($phase . ''),
 				       -up2           => $upstream_seq,
 				       -down2         => $downstream_seq,
 				       -region        => $start_region,
@@ -417,9 +444,10 @@ sub buildRGanno {
 				       -transcript_id => $transcript_id,
 				       -trans_region_count => $region_count,
 				       -trans_length  => $length,
+				       -translation_length => $translation_length,
 				       -entrez_id     => $entrez_id,
 				       -strand        => $strand,
-				       -phase         => $phase,
+				       -phase         => ($phase . ''),
 				       -up2           => $upstream_seq,
 				       -down2         => $downstream_seq,
 				       -region        => $end_region,
@@ -684,7 +712,6 @@ sub getIntronExon {
     if ($self->{debug} &&
         $tran->coding_region_start() &&
 	$tran->coding_region_end()) {
-	print "TESTING " . $tran->coding_region_start() . " " . $tran->coding_region_end() . "\n";
     }
     if (defined($tran->coding_region_start()) &&
 	defined($tran->coding_region_end()) &&
