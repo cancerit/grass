@@ -1,25 +1,6 @@
 #!/usr/bin/perl
 
-# for testing Grass::Anno class
-
-##########LICENCE##########
-# PCAP - NGS reference implementations and helper code for the ICGC/TCGA Pan-Cancer Analysis Project
-# Copyright (C) 2014 ICGC PanCancer Project
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not see:
-#   http://www.gnu.org/licenses/gpl-2.0.html
-##########LICENCE##########
+# for testing Sanger::CGP::Grass::Anno class
 
 BEGIN {
   use Cwd qw(abs_path);
@@ -30,8 +11,8 @@ BEGIN {
 use strict;
 use warnings FATAL => 'all';
 
-use Grass::Anno;
-use Grass::AnnoPoint;
+use Sanger::CGP::Grass::Anno;
+use Sanger::CGP::Grass::AnnoPoint;
 
 use Test::More 'no_plan';
 
@@ -44,14 +25,14 @@ my $Htype = 'exon';
 my $Llength = 100;
 my $Hlength = 150;
 
-my $apl5 = new Grass::AnnoPoint();
-my $apl3 = new Grass::AnnoPoint();
-my $aph5 = new Grass::AnnoPoint();
-my $aph3 = new Grass::AnnoPoint();
+my $apl5 = new Sanger::CGP::Grass::AnnoPoint();
+my $apl3 = new Sanger::CGP::Grass::AnnoPoint();
+my $aph5 = new Sanger::CGP::Grass::AnnoPoint();
+my $aph3 = new Sanger::CGP::Grass::AnnoPoint();
 
 
 # make a new object
-my $Anno = new Grass::Anno(-id_rg => $id_rg,
+my $Anno = new Sanger::CGP::Grass::Anno(-id_rg => $id_rg,
                            -id_fusion_flag => $id_fusion_flag,
 			   -L5 => $apl5,
 			   -L3 => $apl3,

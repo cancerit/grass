@@ -1,25 +1,6 @@
 #!/usr/bin/perl
 
-# for testing Grass::RGannotator class
-
-##########LICENCE##########
-# PCAP - NGS reference implementations and helper code for the ICGC/TCGA Pan-Cancer Analysis Project
-# Copyright (C) 2014 ICGC PanCancer Project
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not see:
-#   http://www.gnu.org/licenses/gpl-2.0.html
-##########LICENCE##########
+# for testing Sanger::CGP::Grass::RGannotator class
 
 BEGIN {
   use Cwd qw(abs_path);
@@ -30,9 +11,9 @@ BEGIN {
 use strict;
 use warnings FATAL => 'all';
 
-use Grass::GenomeData;
-use Grass::DataEntry;
-use Grass::Annotation::RGannotator;
+use Sanger::CGP::Grass::GenomeData;
+use Sanger::CGP::Grass::DataEntry;
+use Sanger::CGP::Grass::Annotation::RGannotator;
 
 use Test::More 'no_plan';
 
@@ -48,7 +29,7 @@ my $pos2_start = 129390103;
 my $pos2_end = 129390103;
 my $shard = 'AA';
 my $count = 6;
-my $entry = new Grass::DataEntry(-name       => $name,
+my $entry = new Sanger::CGP::Grass::DataEntry(-name       => $name,
 				 -chr1       => $chr1,
 				 -strand1    => $strand1,
 				 -pos1_start => $pos1_start,
@@ -73,7 +54,7 @@ my $pos2_start_2 = 188417763;
 my $pos2_end_2 = 188418155;
 my $shard_2 = '';
 my $count_2 = 4;
-my $entry_2 = new Grass::DataEntry(-name       => $name_2,
+my $entry_2 = new Sanger::CGP::Grass::DataEntry(-name       => $name_2,
 				 -chr1       => $chr1_2,
 				 -strand1    => $strand1_2,
 				 -pos1_start => $pos1_start_2,
@@ -94,11 +75,11 @@ my $species = 'HUMAN';
 my $ensembl_api = '/software/pubseq/PerlModules/Ensembl/www_58_1';
 
 # set up access to genome data  from EnsemblDB (if species/ensembl_api supplied) or a cached flat file version (if genome_cache supplied)
-my $genome_data_ensembl = new Grass::GenomeData(-species     => $species,
+my $genome_data_ensembl = new Sanger::CGP::Grass::GenomeData(-species     => $species,
 						-ensembl_api => $ensembl_api,
                                                 -gene_id_required => 1);
 
-my $genome_data_cache = new Grass::GenomeData(-genome_cache => $genome_cache,
+my $genome_data_cache = new Sanger::CGP::Grass::GenomeData(-genome_cache => $genome_cache,
 					      -gene_id_required => 0);
 
 # results should be...
@@ -107,7 +88,7 @@ my $res2 = "TFPI\tENSG00000003436\tENST00000233156\t-1\t1\tintron\t2\t8\t_\tprot
 my $res3 = "TFPI\tTFPI\tENST00000233156\t-1\t1\tintron\t2\t8\t_\tprotein_coding\tTFPI\tTFPI\tENST00000233156\t-1\t_\t5UTRintron\t1\t8\t_\tprotein_coding\t200\tTFPI\n";
 
 # make a new object
-my $rgann1 = new Grass::Annotation::RGannotator(-dataset         => $dataset1,
+my $rgann1 = new Sanger::CGP::Grass::Annotation::RGannotator(-dataset         => $dataset1,
 						-within          => $within,
 						-genome_data     => $genome_data_ensembl,
 						-list_between    => 0,
@@ -115,14 +96,14 @@ my $rgann1 = new Grass::Annotation::RGannotator(-dataset         => $dataset1,
 $rgann1->getAnnotation();
 
 # make a new object
-my $rgann2 = new Grass::Annotation::RGannotator(-dataset         => $dataset2,
+my $rgann2 = new Sanger::CGP::Grass::Annotation::RGannotator(-dataset         => $dataset2,
 						-within          => $within,
 						-genome_data     => $genome_data_ensembl,
 						-list_between    => 1,
 						-show_biotype    => 1 );
 $rgann2->getAnnotation();
 
-my $rgann3 = new Grass::Annotation::RGannotator(-dataset         => $dataset2,
+my $rgann3 = new Sanger::CGP::Grass::Annotation::RGannotator(-dataset         => $dataset2,
 						-within          => $within,
 						-genome_data    => $genome_data_cache,
 						-list_between    => 1,

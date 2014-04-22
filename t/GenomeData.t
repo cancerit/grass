@@ -1,25 +1,6 @@
 #!/usr/bin/perl
 
-# for testing Grass::GenomeData class
-
-##########LICENCE##########
-# PCAP - NGS reference implementations and helper code for the ICGC/TCGA Pan-Cancer Analysis Project
-# Copyright (C) 2014 ICGC PanCancer Project
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not see:
-#   http://www.gnu.org/licenses/gpl-2.0.html
-##########LICENCE##########
+# for testing Sanger::CGP::Grass::GenomeData class
 
 BEGIN {
   use Cwd qw(abs_path);
@@ -32,7 +13,7 @@ use warnings FATAL => 'all';
 
 use Data::Dumper;
 
-use Grass::GenomeData;
+use Sanger::CGP::Grass::GenomeData;
 
 use Test::More 'no_plan';
 
@@ -53,12 +34,12 @@ my $species = 'HUMAN';
 my $ensembl_api_58 = '/software/pubseq/PerlModules/Ensembl/www_58_1';
 my $ensembl_api_74 = '/software/pubseq/PerlModules/Ensembl/www_74_1';
 
-my $genome_data_ensembl = new Grass::GenomeData(-species     => $species,
+my $genome_data_ensembl = new Sanger::CGP::Grass::GenomeData(-species     => $species,
 						-ensembl_api => $ensembl_api_74,
 						-gene_id_required => 0,
 						-use_all_biotypes => 0);
 
-my $genome_data_cache = new Grass::GenomeData(-genome_cache => $genome_cache,
+my $genome_data_cache = new Sanger::CGP::Grass::GenomeData(-genome_cache => $genome_cache,
 					      -gene_id_required => 0);
 
 ok($genome_data_ensembl, 'object defined');
@@ -82,10 +63,10 @@ sub test_ensembl {
 sub test_cache {
     my ($genome_data) = @_;
 
-    #test_between_cache($genome_data);
-    #test_fetch_transcript_by_region_cache($genome_data);
-    #test_thin_out_translist_cache($genome_data);
-    test_5prime_truncated_cache($genome_data);
+    test_between_cache($genome_data);
+    test_fetch_transcript_by_region_cache($genome_data);
+    test_thin_out_translist_cache($genome_data);
+    #test_5prime_truncated_cache($genome_data);
 }
 #------------------------------------------------------------------------------------------------#
 #------------------------------------------------------------------------------------------------#
@@ -125,15 +106,14 @@ sub test_fetch_transcript_by_region_ensembl {
     my $pos_start = 129389225;
     my $pos_end = 129389230;
 
-    my $fetch_region = 'Grass::GenomeData::Transcript';
+    my $fetch_region = 'Sanger::CGP::Grass::GenomeData::Transcript';
 
     my $all_count = 5;
     if ($version eq '74') {
-	$all_count = 4;
+	$all_count = 3;
    }
     my $fetch_region_out = $genome_data->fetch_transcripts_by_region($chr, $pos_start, $pos_end);
     my $translist_count = scalar(@$fetch_region_out);
-
     ok($genome_data->trans_ad(), 'transcript adaptor object defined. ENSEMBL');
     is (ref($fetch_region_out->[0]), $fetch_region , "get fetch_region transcript object. ENSEMBL");
     is ($translist_count , $all_count , "get fetch_region transcript count. ENSEMBL");
@@ -146,7 +126,7 @@ sub test_fetch_transcript_by_region_cache {
     my $pos_start = 129389225;
     my $pos_end = 129389230;
 
-    my $fetch_region = 'Grass::GenomeData::Transcript';
+    my $fetch_region = 'Sanger::CGP::Grass::GenomeData::Transcript';
     my $all_count = 3;
 
     my $fetch_region_out = $genome_data->fetch_transcripts_by_region($chr, $pos_start, $pos_end);
@@ -168,7 +148,7 @@ sub test_thin_out_translist_ensembl {
     my $is_ccds = 1;
 
     if ($version eq '74') {
-	$all_count = 4;
+	$all_count = 3;
 	$thinned_count = 1;
    }
 
@@ -220,13 +200,13 @@ sub test_5prime_truncated_cache {
 #    print "TEST: " . $full_translist->[0]->stable_id . " " . $full_translist->[0]->exons->[0]->phase . "\n";
 
 
-#    my ($thinned_translist, $ccds_only) = $genome_data->thin_out_translist($full_translist);
-#    my $thinned_count_out = scalar(@$thinned_translist);
+    my ($thinned_translist, $ccds_only) = $genome_data->thin_out_translist($full_translist);
+    my $thinned_count_out = scalar(@$thinned_translist);
 
     is (($all_count_out), $all_count , "get 5prime_truncated all count. CACHE");
 
     # this one should work but there might be an issue with start phase on 5' truncated transcripts
-#    is (($full_translist->[0]->exons->[0]->phase), $phase , "get start phase. CACHE");
+    is (($full_translist->[0]->exons->[0]->phase), $phase , "get start phase. CACHE");
 }
 #------------------------------------------------------------------------------------------------#
 sub get_result {

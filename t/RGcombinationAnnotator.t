@@ -1,25 +1,6 @@
 #!/usr/bin/perl
 
-# for testing Grass::Annotation::RGcombinationAnnotator class
-
-##########LICENCE##########
-# PCAP - NGS reference implementations and helper code for the ICGC/TCGA Pan-Cancer Analysis Project
-# Copyright (C) 2014 ICGC PanCancer Project
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not see:
-#   http://www.gnu.org/licenses/gpl-2.0.html
-##########LICENCE##########
+# for testing Sanger::CGP::Grass::Annotation::RGcombinationAnnotator class
 
 BEGIN {
   use Cwd qw(abs_path);
@@ -32,10 +13,10 @@ use warnings FATAL => 'all';
 
 use Data::Dumper;
 
-use Grass::GenomeData;
-use Grass::DataEntry;
-use Grass::Annotation::RGendAnnotator;
-use Grass::Annotation::RGcombinationAnnotator;
+use Sanger::CGP::Grass::GenomeData;
+use Sanger::CGP::Grass::DataEntry;
+use Sanger::CGP::Grass::Annotation::RGendAnnotator;
+use Sanger::CGP::Grass::Annotation::RGcombinationAnnotator;
 
 use Test::More 'no_plan';
 
@@ -50,7 +31,7 @@ my $pos2_start = 129390103;
 my $pos2_end = 129390103;
 my $shard = 'AA';
 my $count = 6;
-my $entry = new Grass::DataEntry(-name       => $name,
+my $entry = new Sanger::CGP::Grass::DataEntry(-name       => $name,
 				 -chr1       => $chr1,
 				 -strand1    => $strand1,
 				 -pos1_start => $pos1_start,
@@ -67,28 +48,28 @@ my $species = 'HUMAN';
 #my $ensembl_api = '/software/pubseq/PerlModules/Ensembl/www_58_1';
 my $ensembl_api = '/software/pubseq/PerlModules/Ensembl/www_74_1';
 
-my $genome_data_ensembl = new Grass::GenomeData(-species     => $species,
+my $genome_data_ensembl = new Sanger::CGP::Grass::GenomeData(-species     => $species,
 						-ensembl_api => $ensembl_api,
 						-gene_id_required => 0);
 
-my $genome_data_cache = new Grass::GenomeData(-genome_cache => $genome_cache,
+my $genome_data_cache = new Sanger::CGP::Grass::GenomeData(-genome_cache => $genome_cache,
 					      -gene_id_required => 0);
 
 
 
-my $rgend1 = new Grass::Annotation::RGendAnnotator(-entry    => $entry,
+my $rgend1 = new Sanger::CGP::Grass::Annotation::RGendAnnotator(-entry    => $entry,
 						   -end      => 1,
 						   -genome_data => $genome_data_ensembl,
 						   -within   => $within );
 my $ann1 = $rgend1->annotate();
 
-my $rgend2 = new Grass::Annotation::RGendAnnotator(-entry    => $entry,
+my $rgend2 = new Sanger::CGP::Grass::Annotation::RGendAnnotator(-entry    => $entry,
 						   -end      => 2,
 						   -genome_data => $genome_data_ensembl,
 						   -within   => $within );
 my $ann2 = $rgend2->annotate();
 
-my $combi = new Grass::Annotation::RGcombinationAnnotator(-anno1   => $ann1->[0],
+my $combi = new Sanger::CGP::Grass::Annotation::RGcombinationAnnotator(-anno1   => $ann1->[0],
 							  -anno2   => $ann2->[0],
 							  -strand1 => $strand1,
 							  -strand2 => $strand2,
@@ -98,19 +79,19 @@ my $rganno = $combi->anno();
 
 
 
-my $rgend1_cache = new Grass::Annotation::RGendAnnotator(-entry    => $entry,
+my $rgend1_cache = new Sanger::CGP::Grass::Annotation::RGendAnnotator(-entry    => $entry,
 							 -end      => 1,
 							 -genome_data => $genome_data_cache,
 							 -within   => $within );
 my $ann1_cache = $rgend1_cache->annotate();
 
-my $rgend2_cache = new Grass::Annotation::RGendAnnotator(-entry    => $entry,
+my $rgend2_cache = new Sanger::CGP::Grass::Annotation::RGendAnnotator(-entry    => $entry,
 							 -end      => 2,
 							 -genome_data => $genome_data_cache,
 							 -within   => $within );
 my $ann2_cache = $rgend2_cache->annotate();
 
-my $combi_cache = new Grass::Annotation::RGcombinationAnnotator(-anno1   => $ann1_cache->[0],
+my $combi_cache = new Sanger::CGP::Grass::Annotation::RGcombinationAnnotator(-anno1   => $ann1_cache->[0],
 								-anno2   => $ann2_cache->[0],
 								-strand1 => $strand1,
 								-strand2 => $strand2,
@@ -154,7 +135,7 @@ $VAR1 = bless( {
                                   'strand' => '-1',
                                   'trans_region_count' => 7,
                                   'transcript_id' => 'ENST00000329333'
-                                }, 'Grass::AnnoPoint' ),
+                                }, 'Sanger::CGP::Grass::AnnoPoint' ),
                  'Ltype' => 'exon',
                  'H5' => bless( {
                                   'gene_id' => 'TMCC1',
@@ -171,7 +152,7 @@ $VAR1 = bless( {
                                   'strand' => '-1',
                                   'trans_region_count' => 7,
                                   'transcript_id' => 'ENST00000329333'
-                                }, 'Grass::AnnoPoint' ),
+                                }, 'Sanger::CGP::Grass::AnnoPoint' ),
                  'Htype' => 'exon',
                  'id_fusion_flag' => 510,
                  'id_rg' => 'TEST',
@@ -190,7 +171,7 @@ $VAR1 = bless( {
                                   'strand' => '-1',
                                   'trans_region_count' => 7,
                                   'transcript_id' => 'ENST00000329333'
-                                }, 'Grass::AnnoPoint' ),
+                                }, 'Sanger::CGP::Grass::AnnoPoint' ),
                  'Llength' => 18901,
                  'Hlength' => 157118,
                  'H3' => bless( {
@@ -208,8 +189,8 @@ $VAR1 = bless( {
                                   'strand' => '-1',
                                   'trans_region_count' => 7,
                                   'transcript_id' => 'ENST00000329333'
-                                }, 'Grass::AnnoPoint' )
-               }, 'Grass::Anno' );
+                                }, 'Sanger::CGP::Grass::AnnoPoint' )
+               }, 'Sanger::CGP::Grass::Anno' );
 END
     return($res);
 }
@@ -232,7 +213,7 @@ $VAR1 = bless( {
                                   'strand' => '-1',
                                   'trans_region_count' => 6,
                                   'transcript_id' => 'ENST00000393238'
-                                }, 'Grass::AnnoPoint' ),
+                                }, 'Sanger::CGP::Grass::AnnoPoint' ),
                  'Ltype' => 'exon',
                  'H5' => bless( {
                                   'gene_id' => 'TMCC1',
@@ -249,7 +230,7 @@ $VAR1 = bless( {
                                   'strand' => '-1',
                                   'trans_region_count' => 6,
                                   'transcript_id' => 'ENST00000393238'
-                                }, 'Grass::AnnoPoint' ),
+                                }, 'Sanger::CGP::Grass::AnnoPoint' ),
                  'Htype' => 'exon',
                  'id_fusion_flag' => 510,
                  'id_rg' => 'TEST',
@@ -268,7 +249,7 @@ $VAR1 = bless( {
                                   'strand' => '-1',
                                   'trans_region_count' => 6,
                                   'transcript_id' => 'ENST00000393238'
-                                }, 'Grass::AnnoPoint' ),
+                                }, 'Sanger::CGP::Grass::AnnoPoint' ),
                  'Llength' => 18901,
                  'Hlength' => 157118,
                  'H3' => bless( {
@@ -286,8 +267,8 @@ $VAR1 = bless( {
                                   'strand' => '-1',
                                   'trans_region_count' => 6,
                                   'transcript_id' => 'ENST00000393238'
-                                }, 'Grass::AnnoPoint' )
-               }, 'Grass::Anno' );
+                                }, 'Sanger::CGP::Grass::AnnoPoint' )
+               }, 'Sanger::CGP::Grass::Anno' );
 END
     return($res);
 }

@@ -1,25 +1,6 @@
 #!/usr/bin/perl
 
-# for testing Grass::Annotation::RGendAnnotator class
-
-##########LICENCE##########
-# PCAP - NGS reference implementations and helper code for the ICGC/TCGA Pan-Cancer Analysis Project
-# Copyright (C) 2014 ICGC PanCancer Project
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not see:
-#   http://www.gnu.org/licenses/gpl-2.0.html
-##########LICENCE##########
+# for testing Sanger::CGP::Grass::Annotation::RGendAnnotator class
 
 BEGIN {
   use Cwd qw(abs_path);
@@ -32,9 +13,9 @@ use warnings FATAL => 'all';
 
 use Data::Dumper;
 
-use Grass::GenomeData;
-use Grass::DataEntry;
-use Grass::Annotation::RGendAnnotator;
+use Sanger::CGP::Grass::GenomeData;
+use Sanger::CGP::Grass::DataEntry;
+use Sanger::CGP::Grass::Annotation::RGendAnnotator;
 
 use Test::More 'no_plan';
 
@@ -50,7 +31,7 @@ my $pos2_start = 129390103;
 my $pos2_end = 129390103;
 my $shard = 'AA';
 my $count = 6;
-my $entry = new Grass::DataEntry(-name       => $name,
+my $entry = new Sanger::CGP::Grass::DataEntry(-name       => $name,
 				 -chr1       => $chr1,
 				 -strand1    => $strand1,
 				 -pos1_start => $pos1_start,
@@ -76,7 +57,7 @@ my $pos2_start_2 = 1558398;
 my $pos2_end_2 = 1558410;
 my $shard_2 = '';
 my $count_2 = 4;
-my $entry_2 = new Grass::DataEntry(-name       => $name_2,
+my $entry_2 = new Sanger::CGP::Grass::DataEntry(-name       => $name_2,
 				 -chr1       => $chr1_2,
 				 -strand1    => $strand1_2,
 				 -pos1_start => $pos1_start_2,
@@ -96,34 +77,34 @@ my $species = 'HUMAN';
 #my $ensembl_api = '/software/pubseq/PerlModules/Ensembl/www_58_1';
 my $ensembl_api = '/software/pubseq/PerlModules/Ensembl/www_74_1';
 
-my $genome_data_ensembl = new Grass::GenomeData(-species     => $species,
+my $genome_data_ensembl = new Sanger::CGP::Grass::GenomeData(-species     => $species,
 						-ensembl_api => $ensembl_api,
 						-gene_id_required => 0,
                                                 -use_putative_coding => 0);
 
-my $genome_data_cache = new Grass::GenomeData(-genome_cache => $genome_cache,
+my $genome_data_cache = new Sanger::CGP::Grass::GenomeData(-genome_cache => $genome_cache,
 						-gene_id_required => 0,
                                                 -use_putative_coding => 0);
 
 # make a new object
-my $End = new Grass::Annotation::RGendAnnotator(-entry   => $entry,
+my $End = new Sanger::CGP::Grass::Annotation::RGendAnnotator(-entry   => $entry,
 						-end     => $end,
 						-within  => $within,
 						-genome_data => $genome_data_ensembl);
 my $anns = $End->annotate();
-my $End2 = new Grass::Annotation::RGendAnnotator(-entry   => $entry,
+my $End2 = new Sanger::CGP::Grass::Annotation::RGendAnnotator(-entry   => $entry,
 						 -end     => $end,
 						 -within  => $within,
 						 -genome_data => $genome_data_cache);
 my $anns2 = $End2->annotate();
 
 # make a new object - plus strand
-my $End_2 = new Grass::Annotation::RGendAnnotator(-entry   => $entry_2,
+my $End_2 = new Sanger::CGP::Grass::Annotation::RGendAnnotator(-entry   => $entry_2,
 						-end     => $end_2,
 						-within  => $within_2,
 						-genome_data => $genome_data_ensembl);
 my $anns_2 = $End_2->annotate();
-my $End2_2 = new Grass::Annotation::RGendAnnotator(-entry   => $entry_2,
+my $End2_2 = new Sanger::CGP::Grass::Annotation::RGendAnnotator(-entry   => $entry_2,
 						 -end     => $end_2,
 						 -within  => $within_2,
 						 -genome_data => $genome_data_cache);
@@ -172,7 +153,7 @@ $VAR1 = [
                                     'region_number' => 2,
                                     'trans_region_count' => 4,
                                     'transcript_id' => 'ENST00000432054'
-                                  }, 'Grass::AnnoPoint' ),
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' ),
                    'Htype' => '5UTRexon',
                    'Hlength' => 17472,
                    'H3' => bless( {
@@ -186,8 +167,8 @@ $VAR1 = [
                                     'region_number' => 2,
                                     'trans_region_count' => 4,
                                     'transcript_id' => 'ENST00000432054'
-                                  }, 'Grass::AnnoPoint' )
-                 }, 'Grass::Anno' ),
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' )
+                 }, 'Sanger::CGP::Grass::Anno' ),
           bless( {
                    'id_rg' => 'TEST',
                    'H5' => bless( {
@@ -205,7 +186,7 @@ $VAR1 = [
                                     'strand' => '-1',
                                     'trans_region_count' => 6,
                                     'transcript_id' => 'ENST00000393238'
-                                  }, 'Grass::AnnoPoint' ),
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' ),
                    'Htype' => 'exon',
                    'Hlength' => 157118,
                    'H3' => bless( {
@@ -223,8 +204,8 @@ $VAR1 = [
                                     'strand' => '-1',
                                     'trans_region_count' => 6,
                                     'transcript_id' => 'ENST00000393238'
-                                  }, 'Grass::AnnoPoint' )
-                 }, 'Grass::Anno' ),
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' )
+                 }, 'Sanger::CGP::Grass::Anno' ),
           bless( {
                    'id_rg' => 'TEST',
                    'H5' => bless( {
@@ -241,7 +222,7 @@ $VAR1 = [
                                     'strand' => '-1',
                                     'trans_region_count' => 7,
                                     'transcript_id' => 'ENST00000329333'
-                                  }, 'Grass::AnnoPoint' ),
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' ),
                    'Htype' => 'exon',
                    'Hlength' => 157118,
                    'H3' => bless( {
@@ -258,8 +239,8 @@ $VAR1 = [
                                     'strand' => '-1',
                                     'trans_region_count' => 7,
                                     'transcript_id' => 'ENST00000329333'
-                                  }, 'Grass::AnnoPoint' )
-                 }, 'Grass::Anno' ),
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' )
+                 }, 'Sanger::CGP::Grass::Anno' ),
           bless( {
                    'id_rg' => 'TEST',
                    'H5' => bless( {
@@ -273,7 +254,7 @@ $VAR1 = [
                                     'region_number' => 5,
                                     'trans_region_count' => 7,
                                     'transcript_id' => 'ENST00000307824'
-                                  }, 'Grass::AnnoPoint' ),
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' ),
                    'Htype' => '5UTRexon',
                    'Hlength' => 222300,
                    'H3' => bless( {
@@ -287,8 +268,8 @@ $VAR1 = [
                                     'region_number' => 5,
                                     'trans_region_count' => 7,
                                     'transcript_id' => 'ENST00000307824'
-                                  }, 'Grass::AnnoPoint' )
-                 }, 'Grass::Anno' )
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' )
+                 }, 'Sanger::CGP::Grass::Anno' )
         ];
 END
     return($res);
@@ -315,7 +296,7 @@ $VAR1 = [
                                     'strand' => '-1',
                                     'trans_region_count' => 6,
                                     'transcript_id' => 'ENST00000393238'
-                                  }, 'Grass::AnnoPoint' ),
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' ),
                    'Htype' => 'exon',
                    'Hlength' => 157118,
                    'H3' => bless( {
@@ -333,8 +314,8 @@ $VAR1 = [
                                     'strand' => '-1',
                                     'trans_region_count' => 6,
                                     'transcript_id' => 'ENST00000393238'
-                                  }, 'Grass::AnnoPoint' )
-                 }, 'Grass::Anno' )
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' )
+                 }, 'Sanger::CGP::Grass::Anno' )
         ];
 END
     return($res);
@@ -357,7 +338,7 @@ $VAR1 = [
                                     'strand' => '1',
                                     'trans_region_count' => 20,
                                     'transcript_id' => 'ENST00000505820'
-                                  }, 'Grass::AnnoPoint' ),
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' ),
                    'Ltype' => 'intron',
                    'L3' => bless( {
                                     'gene_id' => 'MIB2',
@@ -372,10 +353,10 @@ $VAR1 = [
                                     'strand' => '1',
                                     'trans_region_count' => 20,
                                     'transcript_id' => 'ENST00000505820'
-                                  }, 'Grass::AnnoPoint' ),
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' ),
                    'id_rg' => 'TEST_plus',
                    'Llength' => 1401
-                 }, 'Grass::Anno' ),
+                 }, 'Sanger::CGP::Grass::Anno' ),
           bless( {
                    'L5' => bless( {
                                     'gene_id' => 'MIB2',
@@ -390,7 +371,7 @@ $VAR1 = [
                                     'strand' => '1',
                                     'trans_region_count' => 20,
                                     'transcript_id' => 'ENST00000520777'
-                                  }, 'Grass::AnnoPoint' ),
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' ),
                    'Ltype' => 'intron',
                    'L3' => bless( {
                                     'gene_id' => 'MIB2',
@@ -405,10 +386,10 @@ $VAR1 = [
                                     'strand' => '1',
                                     'trans_region_count' => 20,
                                     'transcript_id' => 'ENST00000520777'
-                                  }, 'Grass::AnnoPoint' ),
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' ),
                    'id_rg' => 'TEST_plus',
                    'Llength' => 1401
-                 }, 'Grass::Anno' ),
+                 }, 'Sanger::CGP::Grass::Anno' ),
           bless( {
                    'L5' => bless( {
                                     'gene_id' => 'MIB2',
@@ -423,7 +404,7 @@ $VAR1 = [
                                     'strand' => '1',
                                     'trans_region_count' => 20,
                                     'transcript_id' => 'ENST00000355826'
-                                  }, 'Grass::AnnoPoint' ),
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' ),
                    'Ltype' => 'intron',
                    'L3' => bless( {
                                     'gene_id' => 'MIB2',
@@ -438,10 +419,10 @@ $VAR1 = [
                                     'strand' => '1',
                                     'trans_region_count' => 20,
                                     'transcript_id' => 'ENST00000355826'
-                                  }, 'Grass::AnnoPoint' ),
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' ),
                    'id_rg' => 'TEST_plus',
                    'Llength' => 1401
-                 }, 'Grass::Anno' ),
+                 }, 'Sanger::CGP::Grass::Anno' ),
           bless( {
                    'L5' => bless( {
                                     'gene_id' => 'MIB2',
@@ -456,7 +437,7 @@ $VAR1 = [
                                     'strand' => '1',
                                     'trans_region_count' => 19,
                                     'transcript_id' => 'ENST00000518681'
-                                  }, 'Grass::AnnoPoint' ),
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' ),
                    'Ltype' => 'intron',
                    'L3' => bless( {
                                     'gene_id' => 'MIB2',
@@ -471,10 +452,10 @@ $VAR1 = [
                                     'strand' => '1',
                                     'trans_region_count' => 19,
                                     'transcript_id' => 'ENST00000518681'
-                                  }, 'Grass::AnnoPoint' ),
+                                  }, 'Sanger::CGP::Grass::AnnoPoint' ),
                    'id_rg' => 'TEST_plus',
                    'Llength' => 1401
-                 }, 'Grass::Anno' )
+                 }, 'Sanger::CGP::Grass::Anno' )
         ];
 END
     return($res);
