@@ -1,5 +1,4 @@
-#!/usr/bin/env perl
-# Author: las (copied from wholegenomepipeline)
+#!/usr/bin/perl
 
 use strict;
 use TAP::Harness;
