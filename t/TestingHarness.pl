@@ -4,8 +4,6 @@ use strict;
 use TAP::Harness;
 use Cwd 'abs_path';
 
-use Sanger::CGP::Config::Config ('RGapi');
-
 ## locate the absolute path to the root of the project
 my $abs_exe_path = abs_path($0);
 my $abs_project_root_path = $abs_exe_path;
