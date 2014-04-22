@@ -1,4 +1,11 @@
 #!/usr/bin/perl
+# Author: las (copied from wholegenomepipeline)
+
+BEGIN {
+  use Cwd qw(abs_path);
+  use File::Basename;
+  push (@INC,dirname(abs_path($0)).'/../lib');
+};
 
 use strict;
 use TAP::Harness;
@@ -11,13 +18,8 @@ $abs_project_root_path =~ s/\/TestingHarness\.pl$//;
 
 ## setup the environment to point to local code base
 
-my $adapt_path = $abs_project_root_path.'/../modules';
+my $adapt_path = $abs_project_root_path.'/../lib';
 unshift @INC, $adapt_path;
-
-# do this until I've converted all the tests
-#my@test_files = ("$abs_project_root_path/IntProject.t"
-#                 ,"$abs_project_root_path/SampleIntProject.t" );
-
 
 ## locate all the test files in the project.
 my $dh;
