@@ -10,11 +10,21 @@ BEGIN {
 
 use strict;
 use warnings FATAL => 'all';
+use autodie qw(:all);
 
 use Sanger::CGP::Grass::GenomeData;
 use Sanger::CGP::Grass::DataEntry;
+use Sanger::CGP::Grass::FlankingBases;
 use Sanger::CGP::Grass::Annotation::RGannotator;
- 
+use Sanger::CGP::Grass::VcfContigs;
+use Sanger::CGP::Grass::VcfConverter;
+use Sanger::CGP::Vcf::Contig;
+use Sanger::CGP::Vcf::Sample;
+use Sanger::CGP::Vcf::VcfProcessLog;
+
+use Carp;
+use Pod::Usage qw(pod2usage);
+use Data::Dumper;
 use Getopt::Long;
 
 $| = 1;
@@ -29,10 +39,28 @@ my $show_biotype = 0;
 my $use_all_biotypes = 0;
 my $gene_id_required = 0;
 
+# if using the genome cache
 my $genome_cache_file = '';
 
+# if using the ensembl api
 my $ensembl_api = ''; # path to ensembl_api install eg /software/pubseq/PerlModules/Ensembl/www_58_1
+
+# if using ensembl api and for vcf generation
 my $species = ''; # eg HUMAN
+
+# for generating vcf format
+my $ref = '';
+my $assembly = '';
+my $platform = '';
+my $protocol = '';
+my $tumor = '';
+my $acc_tumor = '';
+my $acc_source_tumor = '';
+my $study_tumor = '';
+my $normal = '';
+my $acc_normal = '';
+my $acc_source_normal = '';
+my $study_normal = '';
 
 my $help = 0;
 
@@ -44,6 +72,18 @@ GetOptions( 'within:s'      => \$within,
 	    'genome_cache:s'=> \$genome_cache_file,
 	    'ensembl_api:s' => \$ensembl_api,
 	    'species:s'     => \$species,
+	    'ref:s'         => \$ref,
+	    'assembly:s'    => \$assembly,
+	    'platform:s'    => \$platform,
+	    'protocol:s'    => \$protocol,
+	    'tumor:s'            => \$tumor,
+	    'acc_tumor:s'        => \$acc_tumor,
+	    'acc_source_tumor:s' => \$acc_source_tumor,
+	    'study_tumor:s'      => \$study_tumor,
+	    'normal:s'           => \$normal,
+	    'acc_normal:s'       => \$acc_normal,
+	    'acc_source_normal:s'=> \$acc_source_normal,
+	    'study_normal:s'     => \$study_normal,
 	    'list_between'  => \$list_between,
 	    'show_biotype'  => \$show_biotype,
 	    'use_all_biotypes' => \$use_all_biotypes,
@@ -64,25 +104,27 @@ my $genome_data = new Sanger::CGP::Grass::GenomeData(-species      => $species,
 my $field = 0; # field of file that contains the coordinate string
 
 if ($coord) { do_coord($within, $species, $coord, $list_between, $show_biotype, $genome_data); }
-elsif ($file)   { $field = 0; do_file($within, $species, $file,    $outfile, $field, '', $list_between, $show_biotype, $genome_data); }
-elsif ($file2)  { $field = 2; do_file($within, $species, $file2,   $outfile, $field, 'refract', $list_between, $show_biotype, $genome_data); } # 2 is the field array index that contains the refract coordinate string
+elsif ($file)   { $field = 0; $outfile = do_file($within, $species, $file,    $outfile, $field, '', $list_between, $show_biotype, $genome_data); }
+elsif ($file2)  { $field = 2; $outfile = do_file($within, $species, $file2,   $outfile, $field, 'refract', $list_between, $show_biotype, $genome_data); } # 2 is the field array index that contains the refract coordinate string
+
+# get the flanking bases for use in vcf conversion (appends the up and downstream bases to the end of each line)
+if ($file || $file2) {
+    my $FlankingBases = new Sanger::CGP::Grass::FlankingBases(-infile => $outfile,
+							      -ref    => $ref );
+    $FlankingBases->process();
+}
+
+# $outfile = 'HCC1395_191535.v1_ann.bedpe';
+
+make_vcf_file($outfile, $ref, $species, $assembly, $platform, $protocol, $tumor, $acc_tumor, $acc_source_tumor, $study_tumor, $normal, $acc_normal, $acc_source_normal, $study_normal);
 
 #------------------------------------------------------------------------------------------------#
 sub do_coord {
     my ($within, $species, $coord, $list_between, $show_biotype, $genome_data) = @_;
 
-    my ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $shard) = parse_coords($coord);
     # set up the dataEntry object 
-    my $entry = new Sanger::CGP::Grass::DataEntry(-name       => $coord,
-				     -chr1       => $chr1,
-				     -strand1    => $strand1,
-				     -pos1_start => $pos1_start,
-				     -pos1_end   => $pos1_end,
-				     -chr2       => $chr2,
-				     -strand2    => $strand2,
-				     -pos2_start => $pos2_start,
-				     -pos2_end   => $pos2_end,
-				     -shard      => $shard);
+    my $entry = new Sanger::CGP::Grass::DataEntry(-coord => $coord);
+
     # get fusion prediction
     my $dataset = [];
     push @$dataset, $entry;
@@ -124,172 +166,125 @@ sub do_file {
 	chomp $line;
 
 	# do any headers
-	if ($line =~ /k?e?y?\s*EXPECTED/i) { 
-	    if ($show_biotype) {
-		print $fh_out "$line\tgene\tgene_id\ttranscript_id\tstrand\tend_phase\tregion\tregion_number\ttotal_region_count\tfirst/last\tbiotype\tgene\tgene_id\ttranscript_id\tstrand\tphase\tregion\tregion_number\ttotal_region_count\tfirst/last\tbiotype\tfusion_flag\n";
-	    }
-	    else {
-		print $fh_out "$line\tgene\tgene_id\ttranscript_id\tstrand\tend_phase\tregion\tregion_number\ttotal_region_count\tfirst/last\tgene\tgene_id\ttranscript_id\tstrand\tphase\tregion\tregion_number\ttotal_region_count\tfirst/last\tfusion_flag\n";
-	    }
-	    next;
-	}
-	elsif ($line =~ /study\tsample/i) { 
-	    if ($show_biotype) {
-		print $fh_out "$line\tgene\tgene_id\ttranscript_id\tstrand\tend_phase\tregion\tregion_number\ttotal_region_count\tfirst/last\tbiotype\tgene\tgene_id\ttranscript_id\tstrand\tphase\tregion\tregion_number\ttotal_region_count\tfirst/last\tbiotype\tfusion_flag\n";
-	    }
-	    else {
-		print $fh_out "$line\tgene\tgene_id\ttranscript_id\tstrand\tend_phase\tregion\tregion_number\ttotal_region_count\tfirst/last\tgene\tgene_id\ttranscript_id\tstrand\tphase\tregion\tregion_number\ttotal_region_count\tfirst/last\tfusion_flag\n";
-	    }
-	    next;
-	}
-	next if ($line =~ /^#/);
-
-	# process main data line
-	my @line = split "\t", $line;
-
-        # decide what sort of file we have and get the coordinate details
-	my $name;
-	my $score;
-	my ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $shard, $microhom);
-	my ($chr1b, $strand1b, $pos1_startb, $pos1_endb, $chr2b, $strand2b, $pos2_startb, $pos2_endb, $shardb);
-	my ($chr1c, $strand1c, $pos1_startc, $pos1_endc, $chr2c, $strand2c, $pos2_startc, $pos2_endc, $shardc);
-
-	if (($line[0] =~ /^\S+$/) && ($line[1] =~ /^[+-]$/) && ($line[2] =~ /^\d+$/) && ($line[3] =~ /^\d+$/) && ($line[4] =~ /^\S+$/) && ($line[5] =~ /^[+-]$/) && ($line[6] =~ /^\d+$/) && ($line[7] =~ /^\d+$/) && ($line[8] =~ /^[\.ATGCNatgcn]+$/) && ($line[9] =~ /^[\.ATGCNatgcn]+$/)) { # brassII marked.rg format
-	    ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $microhom, $shard) = ($line[0],$line[1],$line[2],$line[3],$line[4],$line[5],$line[6],$line[7],$line[8],$line[9]);
-	    $shard =~ s/\.//;
-	    if ($shard) { $name = $chr1 . ':' . $strand1 . ':' . $pos1_start . '-' . $pos1_end . ',' . $chr2 . ':' . $strand2 . ':' . $pos2_start . '-' . $pos2_end . ',' . $shard; }
-	    else        { $name = $chr1 . ':' . $strand1 . ':' . $pos1_start . '-' . $pos1_end . ',' . $chr2 . ':' . $strand2 . ':' . $pos2_start . '-' . $pos2_end; }
-	}
-	elsif (($line[0] =~ /^\S+$/) && ($line[1] =~ /^[+-]$/) && ($line[2] =~ /^\d+$/)&& ($line[3] =~ /^\d+$/)) { # brassI marked.rg format
-	    ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end) = ($line[0],$line[1],$line[2],$line[3],$line[4],$line[5],$line[6],$line[7]);
-	    $name = $chr1 . ':' . $strand1 . ':' . $pos1_start . '-' . $pos1_end . ',' . $chr2 . ':' . $strand2 . ':' . $pos2_start . '-' . $pos2_end;
-	}
-	elsif (($line[0] =~ /^\S+$/) && ($line[1] =~ /^\d+$/)&& ($line[2] =~ /^\d+$/) && ($line[3] =~ /^\S+$/) && ($line[4] =~ /^\d+$/)&& ($line[5] =~ /^\d+$/) && ($line[6] =~ /^\S+$/) && ($line[7] =~ /^\S+$/) && ($line[8] =~ /^[+-]$/) && ($line[9] =~ /^[+-]$/) ) { # brassI filter bedpe format
-	    ($chr1, $pos1_start, $pos1_end, $chr2, $pos2_start, $pos2_end, $score, $name, $strand1, $strand2) = ($line[0],$line[1],$line[2],$line[3],$line[4],$line[5],$line[6],$line[7],$line[8],$line[9]);
-	    $name = $chr1 . ':' . $strand1 . ':' . $pos1_start . '-' . $pos1_end . ',' . $chr2 . ':' . $strand2 . ':' . $pos2_start . '-' . $pos2_end;
-	}
-	elsif ($is_refract) { # refract format - coordinate usually in second field, possibly more than one pair of coordinates, ?? in place of shards or unknown coordinate
-	    $name = $line[$field];
-	    my ($coord1,$coord2,$coord3) = split_refract_string($line[$field]);
-	    if ($coord1) { 
-		($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end,$shard) = parse_coords($coord1); 
-	    }
-	    if ($coord2) { 
-		($chr1b, $strand1b, $pos1_startb, $pos1_endb, $chr2b, $strand2b, $pos2_startb, $pos2_endb,$shardb) = parse_coords($coord2);
-	    }
-	    if ($coord3) { 
-		($chr1c, $strand1c, $pos1_startc, $pos1_endc, $chr2c, $strand2c, $pos2_startc, $pos2_endc,$shardc) = parse_coords($coord3);
-	    }
-	    unless ($coord1) {	    
-		print $fh_out "$line\n";
-		next;
-	    }
-	}
-	elsif ($field)  { # standard format coordinate pair in specified field
-	    ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end,$shard) = parse_coords($line[$field]); 
-	    $name = $line[$field];
-	}
-	else  { # standard format coordinate pair in first field
-	    ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end,$shard) = parse_coords($line[0]); 
-	    $name = $line[0];
-	}
-
-	unless ($chr1 && $strand1 && $pos1_start && $pos1_end && $chr2 && $strand2 && $pos2_start && $pos2_end) {
-	    print $fh_out "$line\n";
+	if (($line =~ /k?e?y?\s*EXPECTED/i) || ($line =~ /study\tsample/i) || ($line =~ /^#/)) {
+	    do_header_line($fh_out, $show_biotype, $line);
 	    next;
 	}
 
-        # get the results string for each coordinate pair
-	my ($out_string,$out_stringb,$out_stringc);
-	$out_string = process_file_coords($line, $name, $chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $shard, $within, $species, $list_between, $show_biotype, $genome_data);
+	do_data_line($fh_out, $line, $field, $is_refract, $list_between, $show_biotype, $genome_data);
 
-	if ($is_refract) { # only get these extra coodinates with refract output.
-	    if ($pos1_startb) { 
-		$out_stringb = process_file_coords($line, $name, $chr1b, $strand1b, $pos1_startb, $pos1_endb, $chr2b, $strand2b, $pos2_startb, $pos2_endb, $shardb, $within, $species, 0, $show_biotype, $genome_data); 
-	    }
-	    if ($pos1_startc) { 
-		$out_stringc = process_file_coords($line, $name, $chr1c, $strand1c, $pos1_startc, $pos1_endc, $chr2c, $strand2c, $pos2_startc, $pos2_endc, $shardc, $within, $species, 0, $show_biotype, $genome_data); 
-	    }
+    }
+    return($outfile);
+}
+#------------------------------------------------------------------------------------------------#
+sub do_header_line {
+    my ($fh_out, $show_biotype, $line) = @_;
 
-	    # merge the data from the compsite refract coordiate string. just use the first line of annotation
-	    my @out_string = ();
-	    my @out_stringb = ();
-	    my @out_stringc = ();
-	    if ($out_string =~ /^([^\n]+)\n?/)                    {  $out_string = $1;   @out_string  = split "\t", $out_string; }
-	    if ($out_stringb && ($out_stringb =~ /^([^\n]+)\n?/)) {  $out_stringb = $1;  @out_stringb = split "\t", $out_stringb; }
-	    if ($out_stringc && ($out_stringc =~ /^([^\n]+)\n?/)) {  $out_stringc = $1;  @out_stringc = split "\t", $out_stringc; }
-
-	    my $count = 0;
-	    foreach my $element(@out_string) {
-		if ($out_stringb[$count] && ($out_stringb[$count] ne $element)) { $out_string[$count] .= '/' . $out_stringb[$count]; }
-		if ($out_stringc[$count] && ($out_stringc[$count] ne $element)) { $out_string[$count] .= '/' . $out_stringc[$count]; }
-		$count++;
-	    }
-	    $out_string = join "\t", @out_string;
-	    $out_string .= "\n";
+    if ($line =~ /k?e?y?\s*EXPECTED/i) { 
+	if ($show_biotype) {
+	    print $fh_out "$line\tgene\tgene_id\ttranscript_id\tstrand\tend_phase\tregion\tregion_number\ttotal_region_count\tfirst/last\tbiotype\tgene\tgene_id\ttranscript_id\tstrand\tphase\tregion\tregion_number\ttotal_region_count\tfirst/last\tbiotype\tfusion_flag\tUpstream_base\tDownstream_base(rev_strand)\n";
 	}
-
-	print $fh_out $out_string;
+	else {
+	    print $fh_out "$line\tgene\tgene_id\ttranscript_id\tstrand\tend_phase\tregion\tregion_number\ttotal_region_count\tfirst/last\tgene\tgene_id\ttranscript_id\tstrand\tphase\tregion\tregion_number\ttotal_region_count\tfirst/last\tfusion_flag\tUpstream_base\tDownstream_base(rev_strand)\n";
+	}
+    }
+    elsif ($line =~ /\tsample\t/i) { 
+	if ($show_biotype) {
+	    print $fh_out "$line\tgene\tgene_id\ttranscript_id\tstrand\tend_phase\tregion\tregion_number\ttotal_region_count\tfirst/last\tbiotype\tgene\tgene_id\ttranscript_id\tstrand\tphase\tregion\tregion_number\ttotal_region_count\tfirst/last\tbiotype\tfusion_flag\tUpstream_base\tDownstream_base(rev_strand)\n";
+	}
+	else {
+	    print $fh_out "$line\tgene\tgene_id\ttranscript_id\tstrand\tend_phase\tregion\tregion_number\ttotal_region_count\tfirst/last\tgene\tgene_id\ttranscript_id\tstrand\tphase\tregion\tregion_number\ttotal_region_count\tfirst/last\tfusion_flag\tUpstream_base\tDownstream_base(rev_strand)\n";
+	}
+    }
+    elsif ($line =~ /^#/) {
+	print $fh_out "$line\n";
     }
 }
 #------------------------------------------------------------------------------------------------#
-sub parse_coords {
-    my $coord_string = shift;
+sub do_data_line {
+    my ($fh_out, $line, $field, $is_refract, $list_between, $show_biotype, $genome_data) = @_;
 
-    my ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $shard);
-    my ($coord1, $coord2);
+    return unless ($line);
+    
+    # process main data line
+    my @line = split "\t", $line;
 
-    if ($coord_string =~ /;/) {
-	# parse coordinate - formats 1-:123-456;2+:345-678 or 1-:123;2+:345
-	($coord1, $coord2, $shard) = split ';', $coord_string;
-	return(0) unless ($coord1 && $coord2);
-	
-	my ($chr_strand1,$pos_string1) = split ':', $coord1;
-	my ($chr_strand2,$pos_string2) = split ':', $coord2;
-	($chr1, $strand1) = ($chr_strand1 =~ /(\S+?)(\S)$/);
-	($chr2, $strand2) = ($chr_strand2 =~ /(\S+?)(\S)$/);
-	return(0) unless ($chr1 && $strand1 && $pos_string1 && $chr2 && $strand2 && $pos_string2);
+    my ($entry1, $entry2, $entry3);
 
-	$pos_string1 =~ s/[,\s]//g; # take out commas and spaces in the coordinates
-	$pos1_start = $pos_string1;
-	$pos1_end = $pos_string1;
-	if ($pos_string1 =~ /(\d+)-(\d+)/) { $pos1_start = $1; $pos1_end = $2; }
-	
-	$pos_string2 =~ s/[,\s]//g;
-	$pos2_start = $pos_string2;
-	$pos2_end = $pos_string2;
-	if ($pos_string2 =~ /(\d+)-(\d+)/) { $pos2_start = $1; $pos2_end = $2; }
-
-	unless ($chr1 && $strand1 && $pos1_start && $pos1_end && $chr2 && $strand2 && $pos2_start && $pos2_end) {
-	    print "$coord_string not parsed correctly. skip\n";
-	    return(0); 
+    # decide what sort of file we have and get the coordinate details into a DataEntry object
+    
+    # brassII .tab format
+    if (($line[0] =~ /^\S+$/) && ($line[1] =~ /^[+-]$/) && ($line[2] =~ /^\d+$/) && ($line[3] =~ /^\d+$/) && ($line[4] =~ /^\S+$/) && ($line[5] =~ /^[+-]$/) && ($line[6] =~ /^\d+$/) && ($line[7] =~ /^\d+$/) && ($line[8] =~ /^[\.ATGCNatgcn]+$/) && ($line[9] =~ /^[\.ATGCNatgcn]+$/)) {
+	$entry1 = new Sanger::CGP::Grass::DataEntry(-chr1       => $line[0],
+						    -strand1    => $line[1],
+						    -pos1_start => $line[2],
+						    -pos1_end   => $line[3],
+						    -chr2       => $line[4],
+						    -strand2    => $line[5],
+						    -pos2_start => $line[6],
+						    -pos2_end   => $line[7],
+						    -shard      => $line[9]);
+    }
+    # brassI marked.rg format - need to flip the second strand orientation
+    elsif (($line[0] =~ /^\S+$/) && ($line[1] =~ /^[+-]$/) && ($line[2] =~ /^\d+$/)&& ($line[3] =~ /^\d+$/)) {
+	if ($line[5] eq '+') { $line[5] = '-'; }
+	elsif ($line[5] eq '-') { $line[5] = '+'; }
+	$entry1 = new Sanger::CGP::Grass::DataEntry(-chr1       => $line[0],
+						    -strand1    => $line[1],
+						    -pos1_start => $line[2],
+						    -pos1_end   => $line[3],
+						    -chr2       => $line[4],
+						    -strand2    => $line[5],
+						    -pos2_start => $line[6],
+						    -pos2_end   => $line[7]);
+    }
+    # brassI filter bedpe format - need to flip the second strand orientation
+    elsif (($line[0] =~ /^\S+$/) && ($line[1] =~ /^\d+$/)&& ($line[2] =~ /^\d+$/) && ($line[3] =~ /^\S+$/) && ($line[4] =~ /^\d+$/)&& ($line[5] =~ /^\d+$/) && ($line[6] =~ /^\S+$/) && ($line[7] =~ /^\S+$/) && ($line[8] =~ /^[+-]$/) && ($line[9] =~ /^[+-]$/) ) {
+	if ($line[9] eq '+') { $line[9] = '-'; }
+	elsif ($line[9] eq '-') { $line[9] = '+'; }
+	$entry1 = new Sanger::CGP::Grass::DataEntry(-chr1       => $line[0],
+						    -strand1    => $line[8],
+						    -pos1_start => $line[1],
+						    -pos1_end   => $line[2],
+						    -chr2       => $line[3],
+						    -strand2    => $line[9],
+						    -pos2_start => $line[4],
+						    -pos2_end   => $line[5]);
+    }
+    # refract format - coordinate usually in second field, possibly more than one pair of coordinates, ?? in place of shards or unknown coordinate
+    elsif ($is_refract) {
+	my ($coord1,$coord2,$coord3) = split_refract_string($line[$field]);
+	if ($coord1) { $entry1 = new Sanger::CGP::Grass::DataEntry(-coord => $coord1); }
+	if ($coord2) { $entry2 = new Sanger::CGP::Grass::DataEntry(-coord => $coord2); } 
+	if ($coord3) { $entry3 = new Sanger::CGP::Grass::DataEntry(-coord => $coord3); } 
+	unless ($coord1) {	    
+	    print $fh_out "$line\n";
+	    return;
 	}
     }
-    elsif ($coord_string =~ /,/) {
-	# parse coordinate - formats 1:-:123-456,2:+:345-678 or 1:-:123,2:+:345
-	($coord1, $coord2, $shard) = split ',', $coord_string;
-	
-	my ($pos_string1,$pos_string2);
-	($chr1,$strand1,$pos_string1) = split ':', $coord1;
-	($chr2,$strand2,$pos_string2) = split ':', $coord2;
-	
-	$pos_string1 =~ s/[,\s]//g; # take out commas and spaces in the coordinates
-	$pos1_start = $pos_string1;
-	$pos1_end = $pos_string1;
-	if ($pos_string1 =~ /(\d+)-(\d+)/) { $pos1_start = $1; $pos1_end = $2; }
-	
-	$pos_string2 =~ s/[,\s]//g;
-	$pos2_start = $pos_string2;
-	$pos2_end = $pos_string2;
-	if ($pos_string2 =~ /(\d+)-(\d+)/) { $pos2_start = $1; $pos2_end = $2; }
+    # standard format coordinate pair in specified field
+    elsif ($field) { $entry1 = new Sanger::CGP::Grass::DataEntry(-coord => $line[$field]); }
+    # standard format coordinate pair in first field
+    else           { $entry1 = new Sanger::CGP::Grass::DataEntry(-coord => $line[0]); }
+    
+    # skip it if we couldn't get an interpretable coord string
+    unless ($entry1->chr1 && $entry1->strand1 && $entry1->pos1_start && $entry1->pos1_end && $entry1->chr2 && $entry1->strand2 && $entry1->pos2_start && $entry1->pos2_end) {
+	print $fh_out "$line\n";
+	return;
     }
 
-    if ($shard) {
-	$shard =~ s/ //g;
-	unless ($shard =~ /^[aAtTgGcCnN]+$/) { print "WARN: shard sequence $shard is not valid. Can not use it\n"; $shard = undef; }
+    # get the annotation results string for each coordinate pair
+    my ($out_string, $out_stringb, $out_stringc);
+    $out_string = process_file_coords($line, $entry1, $within, $species, $list_between, $show_biotype, $genome_data);
+    
+    if ($is_refract) { # only get these extra coodinates with refract output.
+	if ($entry2) { $out_stringb = process_file_coords($line, $entry2, $within, $species, 0, $show_biotype, $genome_data); }
+	if ($entry3) { $out_stringc = process_file_coords($line, $entry3, $within, $species, 0, $show_biotype, $genome_data); }
+	# merge the data from the compsite refract coordiate string. just use the first line of annotation
+        $out_string = merge_refract($out_string, $out_stringb, $out_stringc);
     }
-
-    return($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $shard);
+    
+    print $fh_out $out_string;
 }
 #------------------------------------------------------------------------------------------------#
 sub  split_refract_string {
@@ -368,22 +363,33 @@ sub parse_element {
     }
 }
 #------------------------------------------------------------------------------------------------#
+sub merge_refract {
+    my ($out_string, $out_stringb, $out_stringc) = @_;
+
+    my @out_string = ();
+    my @out_stringb = ();
+    my @out_stringc = ();
+
+    if ($out_string =~ /^([^\n]+)\n?/)                    {  $out_string = $1;   @out_string  = split "\t", $out_string; }
+    if ($out_stringb && ($out_stringb =~ /^([^\n]+)\n?/)) {  $out_stringb = $1;  @out_stringb = split "\t", $out_stringb; }
+    if ($out_stringc && ($out_stringc =~ /^([^\n]+)\n?/)) {  $out_stringc = $1;  @out_stringc = split "\t", $out_stringc; }
+
+    my $count = 0;
+    foreach my $element(@out_string) {
+	if ($out_stringb[$count] && ($out_stringb[$count] ne $element)) { $out_string[$count] .= '/' . $out_stringb[$count]; }
+	if ($out_stringc[$count] && ($out_stringc[$count] ne $element)) { $out_string[$count] .= '/' . $out_stringc[$count]; }
+	$count++;
+    }
+    $out_string = join "\t", @out_string;
+    $out_string .= "\n";
+    return($out_string);
+}
+#------------------------------------------------------------------------------------------------#
 sub process_file_coords {
-    my ($line, $name, $chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $shard, $within, $species, $list_between, $show_biotype, $genome_data) = @_;
+    my ($line, $entry, $within, $species, $list_between, $show_biotype, $genome_data) = @_;
     my $out_string = '';
 
-    # set up the dataEntry object 
-    my $entry = new Sanger::CGP::Grass::DataEntry(-name       => $name,
-				     -chr1       => $chr1,
-				     -strand1    => $strand1,
-				     -pos1_start => $pos1_start,
-				     -pos1_end   => $pos1_end,
-				     -chr2       => $chr2,
-				     -strand2    => $strand2,
-				     -pos2_start => $pos2_start,
-				     -shard      => $shard,
-				     -pos2_end   => $pos2_end);
-    # get fusion prediction
+   # get fusion prediction
     my $dataset = [];
     push @$dataset, $entry;
 
@@ -404,7 +410,54 @@ sub process_file_coords {
     return($out_string);
 }
 #------------------------------------------------------------------------------------------------------------#
-#------------------------------------------------------------------------------------------------------------#
+sub make_vcf_file {
+    my ($file, $ref, $species, $assembly, $platform, $protocol, $tumor, $acc_tumor, $acc_source_tumor, $study_tumor, $normal, $acc_normal, $acc_source_normal, $study_normal) = @_;
+
+    # could get out the bam header and get the contig and sample vcf objects
+    #$header = `samtools view -H /nfs/cancer_trk0003/00000009/191035.v1.brm.bam`;
+
+    # ...or just create the contig objects from the fai file and the wt and tumor sample objects here...
+
+    my $contigs = [];
+    if ($ref && $species && $assembly) {
+	my $contig_o = new Sanger::CGP::Grass::VcfContigs(-fai => ($ref . '.fai'),
+							  -species => $species,
+							  -assembly => $assembly);
+	$contigs = $contig_o->generate();
+    }
+
+    my $mt_sample = new Sanger::CGP::Vcf::Sample( -name => $tumor,
+						  -study => $study_tumor,
+						  -platform => $platform,
+						  -seq_protocol => $protocol,
+						  -accession => $acc_tumor,
+						  -accession_source => $acc_source_tumor,
+						  -description => 'Mutant' );
+
+    my $wt_sample = new Sanger::CGP::Vcf::Sample( -name => $normal,
+						  -study => $study_normal,
+						  -platform => $platform,
+						  -seq_protocol => $protocol,
+						  -accession => $acc_normal,
+						  -accession_source => $acc_source_normal,
+						  -description => 'Normal' );
+
+    # make the process logs to put in the vcf header
+    my $opts = join " ", $0, @ARGV;
+    my @process_logs = ();
+    push @process_logs, new Sanger::CGP::Vcf::VcfProcessLog( -input_vcf_source => basename($0),
+							     -input_vcf_ver => Sanger::CGP::Grass->VERSION,
+							     -input_vcf_param => $opts );
+
+    my $source = basename($0). '_v'. Sanger::CGP::Grass->VERSION;
+
+    if ($file) {
+	my $VcfConverter = new Sanger::CGP::Grass::VcfConverter(-infile  => $file,
+								-contigs => $contigs );
+	$VcfConverter->convert($wt_sample, $mt_sample, \@process_logs, $ref, $source);
+    }
+}
+#----------------------------------------------------------------------------------------#
 #------------------------------------------------------------------------------------------------------------#
 sub usage {
 
@@ -425,13 +478,27 @@ options...
    -file          : input file - format type: tab delimited, coord string in first column. As for -coord or eg 10-:92877;13+:103483915 (refract file format)      
    -outfile       : what file to print output to. Default is input_file.bedpe
    -ensembl_api   : path to Ensembl api (eg /software/pubseq/PerlModules/Ensembl/www_58_1)
-   -genome_cache  : Ensembl genome cacche file - generated by Vagrent
+   -genome_cache  : Ensembl genome cache file - generated by Vagrent
    -list_between  : list genes lying between a coordinate pair if they are one the same chromosome, on the same strand, and the distance between them is < 1MB
    -show_biotype  : shows the biotype (eg protein_coding) for each gene
    -use_all_biotypes : 1 or 0. Use all biotypes, not just protein_coding (default). 
                        Only relevant when using an Ensembl remote server since non-protein_coding entries are filtered out by Vagrent.
    -gene_id_required : get the gene_id not just its name.
                        Only relevant when using an Ensembl remote server since Vagrent currently does not supply this information.
+
+   -ref           : fasta reference file (with associated fai file). For vcf out file generation.
+   -assembly      : sequence assembly used (eg GRCh37). For vcf out file generation.
+   -platform      : sequencing platform used (eg HiSeq). For vcf out file generation.
+   -protocol      : sequencing experimental design (eg genomic, pulldown). For vcf out file generation.
+   -tumor         : name of tumor sample. For vcf out file generation.
+   -acc_tumor     : name of tumor sample accession id. For vcf out file generation.
+   -acc_source_tumor : source of tumor sample accession id. For vcf out file generation.
+   -study_tumor   : study id associated with tumor sample. For vcf out file generation.
+   -normal         : name of normal sample. For vcf out file generation.
+   -acc_normal     : name of normal sample accession id. For vcf out file generation.
+   -acc_source_normal : source of normal sample accession id. For vcf out file generation.
+   -study_normal   : study id associated with normal sample. For vcf out file generation.
+
    -help          : Print this message
 
 examples...
@@ -441,6 +508,9 @@ grass.pl -genome_cache Homo_sapiens.GRCh37.74.vagrent.cache.gz -coord  3:-:12938
 grass.pl -species HUMAN -ensembl_api www_74_1-r_file PD4107a.AllDisruptions.txt
 
 grass.pl -genome_cache Homo_sapiens.GRCh37.74.vagrent.cache.gz -coord 2:+:188365485-188365837,2:+:188417763-188418155 -list_between
+
+grass.pl -genome_cache Homo_sapiens.GRCh37.74.vagrent.cache.gz -species HUMAN -ref /nfs/cancer_ref01/human/37/genome.fa -assembly GRCh37 -platform HiSeq -protocol genomic -tumor HCC1395 -acc_tumor 1234 -acc_source_tumor COSMIC_SAMPLE_ID -study_tumor 111 -normal 1395BL -acc_normal 1235 -acc_source_normal COSMIC_SAMPLE_ID -study_normal 222 -file HCC1395_191535.v1.bedpe
+
 
 
 Author : las
