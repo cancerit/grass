@@ -1,0 +1,78 @@
+##fileformat=VCFv4.1
+##fileDate=20140512
+##source_20140512.1=VcfConverter.t_v1.0.0
+##reference=/nfs/cancer_ref01/human/37/genome.fa
+##contig=<ID=1,assembly=GRC37,length=249250621,species=HUMAN>
+##contig=<ID=2,assembly=GRC37,length=243199373,species=HUMAN>
+##contig=<ID=3,assembly=GRC37,length=198022430,species=HUMAN>
+##contig=<ID=4,assembly=GRC37,length=191154276,species=HUMAN>
+##contig=<ID=5,assembly=GRC37,length=180915260,species=HUMAN>
+##contig=<ID=6,assembly=GRC37,length=171115067,species=HUMAN>
+##contig=<ID=7,assembly=GRC37,length=159138663,species=HUMAN>
+##contig=<ID=8,assembly=GRC37,length=146364022,species=HUMAN>
+##contig=<ID=9,assembly=GRC37,length=141213431,species=HUMAN>
+##contig=<ID=10,assembly=GRC37,length=135534747,species=HUMAN>
+##contig=<ID=11,assembly=GRC37,length=135006516,species=HUMAN>
+##contig=<ID=12,assembly=GRC37,length=133851895,species=HUMAN>
+##contig=<ID=13,assembly=GRC37,length=115169878,species=HUMAN>
+##contig=<ID=14,assembly=GRC37,length=107349540,species=HUMAN>
+##contig=<ID=15,assembly=GRC37,length=102531392,species=HUMAN>
+##contig=<ID=16,assembly=GRC37,length=90354753,species=HUMAN>
+##contig=<ID=17,assembly=GRC37,length=81195210,species=HUMAN>
+##contig=<ID=18,assembly=GRC37,length=78077248,species=HUMAN>
+##contig=<ID=19,assembly=GRC37,length=59128983,species=HUMAN>
+##contig=<ID=20,assembly=GRC37,length=63025520,species=HUMAN>
+##contig=<ID=21,assembly=GRC37,length=48129895,species=HUMAN>
+##contig=<ID=22,assembly=GRC37,length=51304566,species=HUMAN>
+##contig=<ID=MT,assembly=GRC37,length=16569,species=HUMAN>
+##contig=<ID=X,assembly=GRC37,length=155270560,species=HUMAN>
+##contig=<ID=Y,assembly=GRC37,length=59373566,species=HUMAN>
+##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
+##INFO=<ID=MATEID,Number=1,Type=String,Description="ID of mate breakend">
+##INFO=<ID=HOMSEQ,Number=1,Type=String,Description="Sequence of base pair identical micro-homology at event breakpoints">
+##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise structural variation">
+##INFO=<ID=CIPOS,Number=2,Type=Integer,Description="Confidence interval around POS for imprecise variants">
+##INFO=<ID=CIEND,Number=2,Type=Integer,Description="Confidence interval around END for imprecise variants">
+##INFO=<ID=HOMLEN,Number=1,Type=Integer,Description="Length of base pair identical micro-homology at event breakpoints">
+##INFO=<ID=REPS,Number=.,Type=String,Description="Repeat features that may contribute to rearrangement">
+##INFO=<ID=NPSNO,Number=1,Type=Integer,Description="Number of normal panel samples with sequencing reads for this rearrangement">
+##INFO=<ID=NPRNO,Number=1,Type=Integer,Description="Number of sequencing reads from normal panel samples for this rearrangement">
+##INFO=<ID=RBLAT,Number=1,Type=Integer,Description="Blat score for first bkpt range versus second bkpt range">
+##INFO=<ID=BKDIST,Number=1,Type=Integer,Description="Distance between breakpoints (-1 if difference chromosomes)">
+##INFO=<ID=BALS,Number=.,Type=String,Description="IDs of complementary rearrangements involved in balanced translocations">
+##INFO=<ID=INVS,Number=.,Type=String,Description="IDs of complementary rearrangements involved in inversion events">
+##INFO=<ID=FFV,Number=1,Type=Integer,Description="Fusion Flag value. Best one reported.">
+##INFO=<ID=CNCH,Number=1,Type=String,Description="Copynumber changepoints lie within CN_WITHIN of breakpoint (A=ASCAT,B=BATTENBERG,N=NGS_PICNIC). Only reported if both rearrangement breakpoints have adjacent changepoints">
+##INFO=<ID=OCC,Number=1,Type=Integer,Description="How many time the breakpoint appears in this dataset">
+##INFO=<ID=SID,Number=1,Type=String,Description="Unique identifier from gene annotation source or unknown">
+##INFO=<ID=GENE,Number=1,Type=String,Description="HUGO gene symbol or Unknown">
+##INFO=<ID=TID,Number=1,Type=String,Description="Transcript id for transcript associated with breakpoint">
+##INFO=<ID=AS,Number=1,Type=String,Description="Breakpoint annotation on this strand (+ or -)">
+##INFO=<ID=EPH,Number=1,Type=Integer,Description="End phase - phase of the first coding base following the breakpoint">
+##INFO=<ID=PH,Number=1,Type=Integer,Description="Phase at the breakpoint">
+##INFO=<ID=FL,Number=1,Type=String,Description="If the breakpoint is at the first or last base of an exon (common in RNAseq data)">
+##INFO=<ID=RGN,Number=1,Type=String,Description="Region where nucleotide variant (breakpoint) occurs in relation to a gene">
+##INFO=<ID=RGNNO,Number=1,Type=Integer,Description="Number of intron/exon where nucleotide variant (breakpoint) occurs in relation to a gene">
+##INFO=<ID=RGNC,Number=1,Type=Integer,Description="Count of total number of introns/exons in stated transcript">
+##FORMAT=<ID=RC,Number=1,Type=Integer,Description="Count of countributing reads">
+##vcfProcessLog=<InputVCFSource=<VcfConverter.t>,InputVCFVer=<1.0.0>>
+##SAMPLE=<ID=NORMAL,Description="Normal",Accession=45,Platform=HiSeq,Protocol=genomic,SampleName=PD1234b,Source=ID_SAMPLE_COSMIC,Study=12346>
+##SAMPLE=<ID=TUMOUR,Description="Mutant",Accession=123,Platform=HiSeq,Protocol=genomic,SampleName=PD1234a,Source=ID_SAMPLE_COSMIC,Study=12345>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NORMAL	TUMOUR
+
+1	1053002	1_1	G	]22:20259436]G	15	.	SVTYPE=BND;MATEID=1_2;IMPRECISE;CIPOS=0,302;CIEND=0,357;NPSNO=0;NPRNO=0;RBLAT=0;BKDIST=-1;BALS=2;OCC=1;	RC	0	15
+22	20259436	1_2	G	]1:1053002]G	15	.	SVTYPE=BND;MATEID=1_1;IMPRECISE;CIPOS=0,357;CIEND=0,302;NPSNO=0;NPRNO=0;RBLAT=0;BKDIST=-1;BALS=2;OCC=1;	RC	0	15
+1	1054809	2_1	G	G[22:20290394[	12	.	SVTYPE=BND;MATEID=2_2;IMPRECISE;CIPOS=0,391;CIEND=0,308;NPSNO=0;NPRNO=0;RBLAT=0;BKDIST=-1;BALS=1;OCC=1;	RC	0	12
+22	20290394	2_2	G	G[1:1054809[	12	.	SVTYPE=BND;MATEID=2_1;IMPRECISE;CIPOS=0,308;CIEND=0,391;NPSNO=0;NPRNO=0;RBLAT=0;BKDIST=-1;BALS=1;OCC=1;	RC	0	12
+1	1786279	3_1	C	]1:1795740]C	7	.	SVTYPE=BND;MATEID=3_2;IMPRECISE;CIPOS=0,465;CIEND=0,443;NPSNO=0;NPRNO=0;RBLAT=0;BKDIST=9461;FFV=350;OCC=1;GENE=GNB1;SID=GNB1;TID=ENST00000378609;AS=-1;RGN=5UTRintron;RGNNO=1;RGNC=12;	RC	0	7
+1	1795740	3_2	T	]1:1786279]T	7	.	SVTYPE=BND;MATEID=3_1;IMPRECISE;CIPOS=0,443;CIEND=0,465;NPSNO=0;NPRNO=0;RBLAT=0;BKDIST=9461;FFV=350;OCC=1;GENE=GNB1;SID=GNB1;TID=ENST00000378609;AS=-1;RGN=5UTRintron;RGNNO=1;RGNC=12;	RC	0	7
+1	9417613	4_1	C	C]1:9436879]	22	.	SVTYPE=BND;MATEID=4_2;IMPRECISE;CIPOS=0,372;CIEND=0,349;NPSNO=0;NPRNO=0;RBLAT=0;BKDIST=19266;CNCH=A;OCC=1;GENE=SPSB1;SID=SPSB1;TID=ENST00000328089;AS=1;EPH=1;RGN=intron;RGNNO=2;RGNC=3;	RC	0	22
+1	9436879	4_2	A	[1:9417613[A	22	.	SVTYPE=BND;MATEID=4_1;IMPRECISE;CIPOS=0,349;CIEND=0,372;NPSNO=0;NPRNO=0;RBLAT=0;BKDIST=19266;CNCH=A;OCC=1;	RC	0	22
+1	9555390	5_1	C	[1:37131058[C	15	.	SVTYPE=BND;MATEID=5_2;IMPRECISE;CIPOS=0,340;CIEND=0,343;NPSNO=0;NPRNO=0;RBLAT=0;BKDIST=27575668;CNCH=N;OCC=1;	RC	0	15
+1	37131058	5_2	C	C]1:9555390]	15	.	SVTYPE=BND;MATEID=5_1;IMPRECISE;CIPOS=0,343;CIEND=0,340;NPSNO=0;NPRNO=0;RBLAT=0;BKDIST=27575668;CNCH=N;OCC=1;	RC	0	15
+1	11514185	6_1	T	T]12:22029278]	4	.	SVTYPE=BND;MATEID=6_2;IMPRECISE;CIPOS=0,447;CIEND=0,416;NPSNO=0;NPRNO=0;RBLAT=0;BKDIST=-1;OCC=1;	RC	0	4
+12	22029278	6_2	G	[1:11514185[G	4	.	SVTYPE=BND;MATEID=6_1;IMPRECISE;CIPOS=0,416;CIEND=0,447;NPSNO=0;NPRNO=0;RBLAT=0;BKDIST=-1;OCC=1;GENE=ABCC9;SID=ABCC9;TID=ENST00000261200;AS=-1;RGN=intron;RGNNO=14;RGNC=38;	RC	0	4
+1	13180718	7_1	T	T]3:72078136]	4	.	SVTYPE=BND;MATEID=7_2;IMPRECISE;CIPOS=0,524;CIEND=0,632;NPSNO=0;NPRNO=0;RBLAT=0;BKDIST=-1;OCC=1;	RC	0	4
+3	72078136	7_2	A	[1:13180718[A	4	.	SVTYPE=BND;MATEID=7_1;IMPRECISE;CIPOS=0,632;CIEND=0,524;NPSNO=0;NPRNO=0;RBLAT=0;BKDIST=-1;OCC=1;	RC	0	4
+1	16750598	8_1	T	T]2:104235959]	4	.	SVTYPE=BND;MATEID=8_2;IMPRECISE;CIPOS=0,518;CIEND=0,631;NPSNO=0;NPRNO=0;RBLAT=101;BKDIST=-1;OCC=1;GENE=SPATA21;SID=SPATA21;TID=ENST00000335496;AS=-1;EPH=1;RGN=intron;RGNNO=3;RGNC=13;	RC	0	4
+2	104235959	8_2	T	[1:16750598[T	4	.	SVTYPE=BND;MATEID=8_1;IMPRECISE;CIPOS=0,631;CIEND=0,518;NPSNO=0;NPRNO=0;RBLAT=101;BKDIST=-1;OCC=1;	RC	0	4
