@@ -59,7 +59,10 @@ sub new {
     my $self = {};
     bless $self,$class;
 
+    $self->{debug} = 0;
+
     if ($args{-name}) { $self->name($args{-name}) }
+    if ($args{-coord}) { $self->coord($args{-coord}) }
     if ($args{-chr1}) { $self->chr1($args{-chr1}) }
     if ($args{-strand1}) { $self->strand1($args{-strand1}) }
     if ($args{-pos1_start}) { $self->pos1_start($args{-pos1_start}) }
@@ -70,6 +73,9 @@ sub new {
     if ($args{-pos2_end}) { $self->pos2_end($args{-pos2_end}) }
     if ($args{-shard}) { $self->shard($args{-shard}) }
     if ($args{-count}) { $self->count($args{-count}) }
+
+    $self->name; # get it to generate a name/coord string if not provided
+    if ($self->{debug}) { print "Use coord: " . $self->coord . "\n"; }
 
     return $self;
 }
@@ -94,7 +100,31 @@ sub new {
 sub name {
     my $self = shift;
     $self->{name} = shift if @_;
+    if ($self->{chr1} && !($self->{name})) { $self->_create_name(); }
     return($self->{name});
+}
+#-----------------------------------------------------------------------#
+
+=head2 coord 
+
+    Arg (1)    : coord
+    Example    : $coord = $object->coord($coord);
+    Description: coord of the entry
+    Return     : coord
+
+=cut
+
+sub coord {
+    my $self = shift;
+    my $coord =  shift if @_;
+    if ($coord) {
+	if ($self->_parse_coords($coord)) { $self->{coord} = $coord; }
+	else {
+	    print "ERROR parsing coordinate $coord\n";
+	    return;
+	}
+    }
+    return($self->{coord});
 }
 #-----------------------------------------------------------------------#
 
@@ -239,7 +269,7 @@ sub pos2_end {
 sub shard {
     my $self = shift;
     $self->{shard} = shift if @_;
-    if ($self->{shard}) { $self->{shard} =~ s/ //g; }
+    if ($self->{shard}) { $self->{shard} =~ s/[ \.]+//g; }
     return($self->{shard});
 }
 #-----------------------------------------------------------------------#
@@ -259,5 +289,85 @@ sub count {
     return($self->{count});
 }
 #-----------------------------------------------------------------------#
+sub _create_name {
+    my $self = shift;
+
+    $self->{name} =  $self->{chr1} . ':' . $self->{strand1} . ':' . $self->{pos1_start} . '-' . $self->{pos1_end} . ',' . $self->{chr2} . ':' . $self->{strand2} . ':' . $self->{pos2_start} . '-' . $self->{pos2_end};
+
+    if ($self->{shard}) { $self->{name} .= ',' . $self->{shard}; }
+
+    unless ($self->{coord}) { $self->{coord} = $self->{name}; }
+}
+#-----------------------------------------------------------------------#
+
+sub _parse_coords {
+    my ($self, $coord_string) = @_;
+
+    my ($chr1, $strand1, $pos1_start, $pos1_end, $chr2, $strand2, $pos2_start, $pos2_end, $shard);
+    my ($coord1, $coord2);
+
+    if ($coord_string =~ /;/) {
+	# parse coordinate - formats 1-:123-456;2+:345-678 or 1-:123;2+:345
+	($coord1, $coord2, $shard) = split ';', $coord_string;
+	return(0) unless ($coord1 && $coord2);
+	
+	my ($chr_strand1,$pos_string1) = split ':', $coord1;
+	my ($chr_strand2,$pos_string2) = split ':', $coord2;
+	($chr1, $strand1) = ($chr_strand1 =~ /(\S+?)(\S)$/);
+	($chr2, $strand2) = ($chr_strand2 =~ /(\S+?)(\S)$/);
+	return(0) unless ($chr1 && $strand1 && $pos_string1 && $chr2 && $strand2 && $pos_string2);
+
+	$pos_string1 =~ s/[,\s]//g; # take out commas and spaces in the coordinates
+	$pos1_start = $pos_string1;
+	$pos1_end = $pos_string1;
+	if ($pos_string1 =~ /(\d+)-(\d+)/) { $pos1_start = $1; $pos1_end = $2; }
+	
+	$pos_string2 =~ s/[,\s]//g;
+	$pos2_start = $pos_string2;
+	$pos2_end = $pos_string2;
+	if ($pos_string2 =~ /(\d+)-(\d+)/) { $pos2_start = $1; $pos2_end = $2; }
+
+	unless ($chr1 && $strand1 && $pos1_start && $pos1_end && $chr2 && $strand2 && $pos2_start && $pos2_end) {
+	    print "$coord_string not parsed correctly. skip\n";
+	    return(0); 
+	}
+    }
+    elsif ($coord_string =~ /,/) {
+	# parse coordinate - formats 1:-:123-456,2:+:345-678 or 1:-:123,2:+:345
+	($coord1, $coord2, $shard) = split ',', $coord_string;
+	
+	my ($pos_string1,$pos_string2);
+	($chr1,$strand1,$pos_string1) = split ':', $coord1;
+	($chr2,$strand2,$pos_string2) = split ':', $coord2;
+	
+	$pos_string1 =~ s/[,\s]//g; # take out commas and spaces in the coordinates
+	$pos1_start = $pos_string1;
+	$pos1_end = $pos_string1;
+	if ($pos_string1 =~ /(\d+)-(\d+)/) { $pos1_start = $1; $pos1_end = $2; }
+	
+	$pos_string2 =~ s/[,\s]//g;
+	$pos2_start = $pos_string2;
+	$pos2_end = $pos_string2;
+	if ($pos_string2 =~ /(\d+)-(\d+)/) { $pos2_start = $1; $pos2_end = $2; }
+    }
+
+    if ($shard) {
+	$shard =~ s/ //g;
+	unless ($shard =~ /^[aAtTgGcCnN]+$/) { print "WARN: shard sequence $shard is not valid. Can not use it\n"; $shard = undef; }
+    }
+
+    $self->{chr1} = $chr1;
+    $self->{strand1} = $strand1;
+    $self->{pos1_start} = $pos1_start;
+    $self->{pos1_end} = $pos1_end;
+    $self->{chr2} = $chr2;
+    $self->{strand2} = $strand2;
+    $self->{pos2_start} = $pos2_start;
+    $self->{pos2_end} = $pos2_end;
+    $self->{shard} = $shard;
+
+    return(1);
+}
+#------------------------------------------------------------------------------------------------#
 
 1;
