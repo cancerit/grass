@@ -19,7 +19,6 @@ use Test::More 'no_plan';
 
 # got to do something about this...
 my $genome_cache = '/lustre/scratch104/sanger/am3/vagrent/Homo_sapiens.GRCh37.74.vagrent.cache.gz';
-my $vagrent = '/software/CGP/projects/vagrent_vcf/perl/modules/';
 
 my $script = dirname(abs_path($0)).'/../bin/' . 'grass.pl';
 
@@ -34,8 +33,7 @@ sub test_coord_input {
 ZNF711	ZNF711	ENST00000373165	1	_	5UTRintron	1	9	_	ZNF711	ZNF711	ENST00000373165	1	1	exon	4	9	first_base	570
 ';
 
-    my ($test_coord_out, @result) = capture { system("perl -I $vagrent $script -genome_cache $genome_cache -coord $test_coord"); };
-    #my $test_coord_out = `perl -I $vagrent $script -genome_cache $genome_cache -coord $test_coord`;
+    my ($test_coord_out, @result) = capture { system("perl $script -genome_cache $genome_cache -coord $test_coord"); };
 
     is ($test_coord_out, $test_coord_res, "check supply coord");
 
@@ -48,17 +46,17 @@ sub test_file_input {
 
     my $testfile = 'testout_Brass_I_and_II';
     my $testfile_out = 'testout_Brass_I_and_II_ann';
+    my $testfile_out_vcf = 'testout_Brass_I_and_II_ann.vcf';
 
     copy $infile, $testfile;
 
-    my ($test_file_res, @result) = capture { system("perl -I $vagrent $script -genome_cache $genome_cache -file $testfile"); };
-    #my $test_file_res = `perl -I $vagrent $script -genome_cache $genome_cache -file $testfile`;
+    my ($test_file_res, @result) = capture { system("perl $script -genome_cache $genome_cache -file $testfile"); };
 
     my $diff = diff "$testfile_out", "$outfile";
 
     ok(!$diff, 'correct file created');
     
-    unless ($diff) { unlink $testfile; unlink $testfile_out; }
+    unless ($diff) { unlink $testfile; unlink $testfile_out; unlink $testfile_out_vcf; }
 
 }
 #----------------------------------------------------------------------------------------#
