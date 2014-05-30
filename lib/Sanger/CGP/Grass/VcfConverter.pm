@@ -161,7 +161,7 @@ sub gen_header{
 	{key => 'INFO', ID => 'RGNC',      Number => 1, Type => 'Integer',  Description => 'Count of total number of introns/exons in stated transcript'},
 	];
 	
-    # details info layout for the tumor and the normal column
+    # details info layout for the tumour and the normal column
     my $format = [
 #	{key => 'FORMAT', ID => 'GT', Number => 1, Type => 'String', Description => 'Genotype'},
 	{key => 'FORMAT', ID => 'RC', Number => 1, Type => 'Integer', Description => 'Count of countributing reads'},
@@ -178,7 +178,7 @@ sub gen_record {
     chomp $line;
 
     my $non_templated = '';
-    my ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $repeats, $np_sample_count, $tumor_count, $normal_count, $np_count, $distance, $sample, $sample_type, $names, $count, $bal_trans, $inv, $occL, $occH, $copynumber_flag, $range_blat, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag, $up, $down, $microhom);
+    my ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $repeats, $np_sample_count, $tumour_count, $normal_count, $np_count, $distance, $sample, $sample_type, $names, $count, $bal_trans, $inv, $occL, $occH, $copynumber_flag, $range_blat, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag, $up, $down, $microhom);
 
     # each line splits into 2 records
     my $rec1 = '';
@@ -187,13 +187,13 @@ sub gen_record {
     # check if its a brassI or brassII linev (for brassII start and end pos may need swapping over)
     if ($brassIorII eq 'Ibedpe') {
 # brass I:
-# chr1  start1  end1    chr2    start2  end2    id/name brass_score     strand1 strand2 repeats np_sample_count tumor_count     normal_count    np_count        bkpt_distance   sample  sample_type     names   count   bal_trans inv     occL    occH    copynumber_flag range_blat      gene    gene_id transcript_id   strand  end_phase       region  region_number   total_region_count      first/last      gene    gene_id transcript_id   strand  phase region  region_number   total_region_count      first/last      fusion_flag     Upstream_base   Downstream_base(rev_strand)
+# chr1  start1  end1    chr2    start2  end2    id/name brass_score     strand1 strand2 repeats np_sample_count tumour_count     normal_count    np_count        bkpt_distance   sample  sample_type     names   count   bal_trans inv     occL    occH    copynumber_flag range_blat      gene    gene_id transcript_id   strand  end_phase       region  region_number   total_region_count      first/last      gene    gene_id transcript_id   strand  phase region  region_number   total_region_count      first/last      fusion_flag     Upstream_base   Downstream_base(rev_strand)
 	my @entries = split "\t", $line;
 	foreach (@entries) {
 	    if ($_ eq '_') { $_ = ''; }
 	    if ($_ eq '.') { $_ = ''; }
 	}
-	($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $repeats, $np_sample_count, $tumor_count, $normal_count, $np_count, $distance, $sample, $sample_type, $names, $count, $bal_trans, $inv, $occL, $occH, $copynumber_flag, $range_blat, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag, $up, $down) = @entries;
+	($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $repeats, $np_sample_count, $tumour_count, $normal_count, $np_count, $distance, $sample, $sample_type, $names, $count, $bal_trans, $inv, $occL, $occH, $copynumber_flag, $range_blat, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag, $up, $down) = @entries;
     }
 
     # set the name for each breakpoint end
@@ -324,8 +324,8 @@ sub gen_record {
     # in format put read counts for: normal, tumour
 	
 	# FORMAT
-	$rec1 .= SEP.$self->{_format}.SEP.$normal_count.SEP.$tumor_count;
-	$rec2 .= SEP.$self->{_format}.SEP.$normal_count.SEP.$tumor_count;
+	$rec1 .= SEP.$self->{_format}.SEP.$normal_count.SEP.$tumour_count;
+	$rec2 .= SEP.$self->{_format}.SEP.$normal_count.SEP.$tumour_count;
 	
 	return ($rec1,$rec2);
 }
