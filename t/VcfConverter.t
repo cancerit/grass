@@ -63,10 +63,10 @@ sub get_support_objects {
 
     my ($ref) = @_;
 
-    my $tumor = 'PD1234a';
-    my $acc_tumor = 123;
-    my $acc_source_tumor = 'ID_SAMPLE_COSMIC';
-    my $study_tumor = 12345;
+    my $tumour = 'PD1234a';
+    my $acc_tumour = 123;
+    my $acc_source_tumour = 'ID_SAMPLE_COSMIC';
+    my $study_tumour = 12345;
     my $normal = 'PD1234b';
     my $acc_normal = 45;
     my $acc_source_normal = 'ID_SAMPLE_COSMIC';
@@ -79,19 +79,19 @@ sub get_support_objects {
     # could get out the bam header and get the contig and sample vcf objects
     #$header = `samtools view -H /nfs/cancer_trk0003/00000009/191035.v1.brm.bam`;
 
-    # ...or just create the contig objects from the fai file and the wt and tumor sample objects here...
+    # ...or just create the contig objects from the fai file and the wt and tumour sample objects here...
 
     my $contig_o = new Sanger::CGP::Grass::VcfContigs(-fai => ($ref . '.fai'),
 						     -species => $species,
 						     -assembly => $assembly);
     my $contigs = $contig_o->generate();
 
-    my $mt_sample = new Sanger::CGP::Vcf::Sample( -name => $tumor,
-						  -study => $study_tumor,
+    my $mt_sample = new Sanger::CGP::Vcf::Sample( -name => $tumour,
+						  -study => $study_tumour,
 						  -platform => $platform,
 						  -seq_protocol => $protocol,
-						  -accession => $acc_tumor,
-						  -accession_source => $acc_source_tumor,
+						  -accession => $acc_tumour,
+						  -accession_source => $acc_source_tumour,
 						  -description => 'Mutant' );
 
     my $wt_sample = new Sanger::CGP::Vcf::Sample( -name => $normal,
