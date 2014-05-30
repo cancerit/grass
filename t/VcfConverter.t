@@ -16,6 +16,7 @@ use Sanger::CGP::Vcf::VcfProcessLog;
 use Sanger::CGP::Grass::VcfConverter;
 use Sanger::CGP::Grass::VcfContigs;
 
+use Time::localtime;
 use File::Copy qw(copy);
 use Text::Diff;
 use Capture::Tiny qw(capture);
@@ -48,6 +49,16 @@ sub test_brassI_bedpe_file_input {
     ok($VcfConverter, 'object defined');
 
     $VcfConverter->convert($wt_sample, $mt_sample, $process_logs, $ref, $source);
+
+    # the current file date is put in the output vcf file so it will always differ to the 'correct' file in testData unless updated
+    my $date_in_correct_testfile = '20140512';
+    my $tm = localtime;
+    my $today = ($tm->year() + 1900) . sprintf("%02d",($tm->mon() + 1)) . sprintf("%02d",($tm->mday()));
+    # do an inline substitution
+    my $command1 = "perl -pi -e \'s/##fileDate=$today/##fileDate=$date_in_correct_testfile/g\' $testoutfile";
+    my $command2 = "perl -pi -e \'s/##source_$today/##source_$date_in_correct_testfile/g\' $testoutfile";
+    `$command1`;
+    `$command2`;
 
     my $diff = diff "$testoutfile", "$outfile";
 
