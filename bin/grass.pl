@@ -53,10 +53,10 @@ my $ref = '';
 my $assembly = '';
 my $platform = '';
 my $protocol = '';
-my $tumor = '';
-my $acc_tumor = '';
-my $acc_source_tumor = '';
-my $study_tumor = '';
+my $tumour = '';
+my $acc_tumour = '';
+my $acc_source_tumour = '';
+my $study_tumour = '';
 my $normal = '';
 my $acc_normal = '';
 my $acc_source_normal = '';
@@ -76,10 +76,10 @@ GetOptions( 'within:s'      => \$within,
 	    'assembly:s'    => \$assembly,
 	    'platform:s'    => \$platform,
 	    'protocol:s'    => \$protocol,
-	    'tumor:s'            => \$tumor,
-	    'acc_tumor:s'        => \$acc_tumor,
-	    'acc_source_tumor:s' => \$acc_source_tumor,
-	    'study_tumor:s'      => \$study_tumor,
+	    'tumour:s'            => \$tumour,
+	    'acc_tumour:s'        => \$acc_tumour,
+	    'acc_source_tumour:s' => \$acc_source_tumour,
+	    'study_tumour:s'      => \$study_tumour,
 	    'normal:s'           => \$normal,
 	    'acc_normal:s'       => \$acc_normal,
 	    'acc_source_normal:s'=> \$acc_source_normal,
@@ -116,7 +116,7 @@ if ($file || $file2) {
 
 # $outfile = 'HCC1395_191535.v1_ann.bedpe';
 
-make_vcf_file($outfile, $ref, $species, $assembly, $platform, $protocol, $tumor, $acc_tumor, $acc_source_tumor, $study_tumor, $normal, $acc_normal, $acc_source_normal, $study_normal);
+make_vcf_file($outfile, $ref, $species, $assembly, $platform, $protocol, $tumour, $acc_tumour, $acc_source_tumour, $study_tumour, $normal, $acc_normal, $acc_source_normal, $study_normal);
 
 #------------------------------------------------------------------------------------------------#
 sub do_coord {
@@ -411,12 +411,12 @@ sub process_file_coords {
 }
 #------------------------------------------------------------------------------------------------------------#
 sub make_vcf_file {
-    my ($file, $ref, $species, $assembly, $platform, $protocol, $tumor, $acc_tumor, $acc_source_tumor, $study_tumor, $normal, $acc_normal, $acc_source_normal, $study_normal) = @_;
+    my ($file, $ref, $species, $assembly, $platform, $protocol, $tumour, $acc_tumour, $acc_source_tumour, $study_tumour, $normal, $acc_normal, $acc_source_normal, $study_normal) = @_;
 
     # could get out the bam header and get the contig and sample vcf objects
     #$header = `samtools view -H /nfs/cancer_trk0003/00000009/191035.v1.brm.bam`;
 
-    # ...or just create the contig objects from the fai file and the wt and tumor sample objects here...
+    # ...or just create the contig objects from the fai file and the wt and tumour sample objects here...
 
     my $contigs = [];
     if ($ref && $species && $assembly) {
@@ -426,12 +426,12 @@ sub make_vcf_file {
 	$contigs = $contig_o->generate();
     }
 
-    my $mt_sample = new Sanger::CGP::Vcf::Sample( -name => $tumor,
-						  -study => $study_tumor,
+    my $mt_sample = new Sanger::CGP::Vcf::Sample( -name => $tumour,
+						  -study => $study_tumour,
 						  -platform => $platform,
 						  -seq_protocol => $protocol,
-						  -accession => $acc_tumor,
-						  -accession_source => $acc_source_tumor,
+						  -accession => $acc_tumour,
+						  -accession_source => $acc_source_tumour,
 						  -description => 'Mutant' );
 
     my $wt_sample = new Sanger::CGP::Vcf::Sample( -name => $normal,
@@ -490,10 +490,10 @@ options...
    -assembly      : sequence assembly used (eg GRCh37). For vcf out file generation.
    -platform      : sequencing platform used (eg HiSeq). For vcf out file generation.
    -protocol      : sequencing experimental design (eg genomic, pulldown). For vcf out file generation.
-   -tumor         : name of tumor sample. For vcf out file generation.
-   -acc_tumor     : name of tumor sample accession id. For vcf out file generation.
-   -acc_source_tumor : source of tumor sample accession id. For vcf out file generation.
-   -study_tumor   : study id associated with tumor sample. For vcf out file generation.
+   -tumour         : name of tumour sample. For vcf out file generation.
+   -acc_tumour     : name of tumour sample accession id. For vcf out file generation.
+   -acc_source_tumour : source of tumour sample accession id. For vcf out file generation.
+   -study_tumour   : study id associated with tumour sample. For vcf out file generation.
    -normal         : name of normal sample. For vcf out file generation.
    -acc_normal     : name of normal sample accession id. For vcf out file generation.
    -acc_source_normal : source of normal sample accession id. For vcf out file generation.
@@ -509,7 +509,7 @@ grass.pl -species HUMAN -ensembl_api www_74_1-r_file PD4107a.AllDisruptions.txt
 
 grass.pl -genome_cache Homo_sapiens.GRCh37.74.vagrent.cache.gz -coord 2:+:188365485-188365837,2:+:188417763-188418155 -list_between
 
-grass.pl -genome_cache Homo_sapiens.GRCh37.74.vagrent.cache.gz -species HUMAN -ref /nfs/cancer_ref01/human/37/genome.fa -assembly GRCh37 -platform HiSeq -protocol genomic -tumor HCC1395 -acc_tumor 1234 -acc_source_tumor COSMIC_SAMPLE_ID -study_tumor 111 -normal 1395BL -acc_normal 1235 -acc_source_normal COSMIC_SAMPLE_ID -study_normal 222 -file HCC1395_191535.v1.bedpe
+grass.pl -genome_cache Homo_sapiens.GRCh37.74.vagrent.cache.gz -species HUMAN -ref /nfs/cancer_ref01/human/37/genome.fa -assembly GRCh37 -platform HiSeq -protocol genomic -tumour HCC1395 -acc_tumour 1234 -acc_source_tumour COSMIC_SAMPLE_ID -study_tumour 111 -normal 1395BL -acc_normal 1235 -acc_source_normal COSMIC_SAMPLE_ID -study_normal 222 -file HCC1395_191535.v1.bedpe
 
 
 
