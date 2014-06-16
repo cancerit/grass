@@ -112,8 +112,10 @@ sub _check_genome_cache {
     $root_file_name =~ s/.cache.gz\s*//;
 
     my $cache_tbi_file = $root_file_name . '.cache.gz.tbi';
-    my $transcript_file = $root_file_name . '.transcript.fa';
-    my $transcript_fai_file = $root_file_name . '.transcript.fa.fai';
+#    my $transcript_file = $root_file_name . '.transcript.fa';
+#    my $transcript_fai_file = $root_file_name . '.transcript.fa.fai';
+    my $transcript_file = $root_file_name . '.fa';
+    my $transcript_fai_file = $root_file_name . '.fa.fai';
 
     unless (-e "$cache_file") { print "genome cache file $cache_file not found\n"; exit; }
     unless (-e "$cache_tbi_file") { print "genome cache tbi file $cache_tbi_file not found\n"; exit; }
@@ -381,7 +383,8 @@ sub _get_seq {
 
     unless ($self->{fai}) { 
 	my $fasta_ref = $self->{genome_cache};
-	$fasta_ref =~ s/cache.gz/transcript.fa/;
+#	$fasta_ref =~ s/cache.gz/transcript.fa/;
+	$fasta_ref =~ s/cache.gz/fa/;
 	$self->{fai} = Bio::DB::Sam::Fai->load( $fasta_ref ); 
     }
     my $seq = $self->{fai}->fetch($transcript);
