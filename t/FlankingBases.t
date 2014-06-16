@@ -31,7 +31,7 @@ sub test_file_input {
     my $infile = dirname(abs_path($0)).'/../testData/' . 'test_FlankingBases_ann.in';
     my $outfile = dirname(abs_path($0)).'/../testData/' . 'test_FlankingBases_ann.out';
 
-    my $testfile = 'test_FlankingBases_ann';
+    my $testfile = 'test_FlankingBases_ann.bedpe';
 
     copy $infile, $testfile;
 

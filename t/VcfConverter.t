@@ -57,8 +57,10 @@ sub test_brassI_bedpe_file_input {
     # do an inline substitution
     my $command1 = "perl -pi -e \'s/##fileDate=$today/##fileDate=$date_in_correct_testfile/g\' $testoutfile";
     my $command2 = "perl -pi -e \'s/##source_$today/##source_$date_in_correct_testfile/g\' $testoutfile";
+    my $command3 = "perl -pi -e \'s/##vcfProcessLog_$today/##vcfProcessLog_$date_in_correct_testfile/g\' $testoutfile";
     `$command1`;
     `$command2`;
+    `$command3`;
 
     my $diff = diff "$testoutfile", "$outfile";
 
