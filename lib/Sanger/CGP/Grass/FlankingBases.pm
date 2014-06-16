@@ -11,16 +11,19 @@ FlankingBases
 
 use Sanger::CGP::Grass::FlankingBases;
 
-my $FlankingBases = new Sanger::CGP::Grass::FlankingBases(-infile => $testfile,
-					 -ref     => $ref );
+my $FlankingBases = new Sanger::CGP::Grass::FlankingBases(-infile => $testfile, -ref => $ref );
+
 # process file
 $FlankingBases->process();
 
 =head1 DESCRIPTION
 
 Class that gets the bases upstream and downstream of the rearrangement (needed for vcf file generation).
-Takes in an input file of coordinates in bedpe format.
+Takes in an input file of coordinates in bedpe format (zero-based start coordinate, one-based end coordinate).
+With brassI entries, the 2nd strand should have already been flipped to brassII-like constructed orientation.
+
 Takes in a reference in fasta format, and associated fai index file.
+
 2 output fields are appended to end of line, upstream then downstream.
 
 =head1 CONTACT
@@ -130,7 +133,6 @@ sub process {
     $ok = $self->_read_data();
     unless ($ok) { print "FlankingBases: Read data failed\n"; return; }
  
-
     $self->_print_file();
 }
 #-----------------------------------------------------------------------#
@@ -163,9 +165,19 @@ sub _check_line {
 
     my ($chr1,$start1,$end1,$chr2,$start2,$end2,$name,$score,$strand1,$strand2);
 
-    if ($line =~ /^(\S+)\t(\d+)\t(\d+)\t(\S+)\t(\d+)\t(\d+)\t(\S+)\t(\S+)\t([\+-]?1?)\t([\+-]?1?)/) {
+    # where there are digits in the end 2 fields, these are tumour/normal read counts and it means this is a brassI entry
+    if ($line =~ /^(\S+)\t(\d+)\t(\d+)\t(\S+)\t(\d+)\t(\d+)\t(\S+)\t(\S+)\t([\+-]?1?)\t([\+-]?1?)\t\S*\t\d+\t\d+/) {
 	($chr1,$start1,$end1,$chr2,$start2,$end2,$name,$score,$strand1,$strand2) = ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10);
-	return($chr1,$start1,$end1,$chr2,$start2,$end2,$name,$score,$strand1,$strand2);
+	$self->{brassI} = 1;
+	my $is_brass1 = 1;
+	return($chr1,$start1,$end1,$chr2,$start2,$end2,$name,$score,$strand1,$strand2,$is_brass1);
+    }
+    # where there are not digits in the end 2 fields, these are tumour/normal read counts and it means this is a brassII entry
+    elsif ($line =~ /^(\S+)\t(\d+)\t(\d+)\t(\S+)\t(\d+)\t(\d+)\t(\S+)\t(\S+)\t([\+-]?1?)\t([\+-]?1?)/) {
+	($chr1,$start1,$end1,$chr2,$start2,$end2,$name,$score,$strand1,$strand2) = ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10);
+	$self->{brassII} = 1;
+	my $is_brass1 = 0;
+	return($chr1,$start1,$end1,$chr2,$start2,$end2,$name,$score,$strand1,$strand2,$is_brass1);
     }
     else {
 	print "entry: $line\nNot in bedpe format (chr1<TAB>start1<TAB>end1<TAB>chr2<TAB>start2<TAB>end2<TAB>name<TAB>score<TAB>strand1<TAB>strand2)\n";
@@ -195,47 +207,57 @@ sub _read_data {
 	next if ($line =~ /^\s*#/);
 	next unless ($line);
 	
-	my ($chr1,$start1,$end1,$chr2,$start2,$end2,$name,$score,$strand1,$strand2) = $self->_check_line($line);
+	my ($chr1,$start1,$end1,$chr2,$start2,$end2,$name,$score,$strand1,$strand2,$is_brass1) = $self->_check_line($line);
 	return(0) unless ($chr1);
 	#print "HERE: $chr1,$start1,$end1,$chr2,$start2,$end2,$name,$score,$strand1,$strand2\n";
 	my ($Lbase_pos, $Hbase_pos);
-	if ($chr1 eq $chr2) {
-	    #print "Chrs same\n";
-	    if ($start1 <= $end1) { $Lbase_pos = $start1 - 1; }
-	    else                  { $Lbase_pos = $end1 - 1; }
-	    if ($start2 <= $end2) { $Hbase_pos = $end2 + 1; }
-	    else                  { $Hbase_pos = $start2 + 1; }	    
-	}
-	else {
-	    #print "Chrs different\n";
-	    if    ($strand1 eq '+') { 
-		if ($start1 <= $end1) { $Lbase_pos = $start1 - 1; }
-		else                  { $Lbase_pos = $end1 - 1; }
-	    }
-	    elsif ($strand1 eq '-') { 
-		if ($start1 <= $end1) { $Lbase_pos = $end1 + 1; }
-		else                  { $Lbase_pos = $start1 + 1; }
-	    }
 
-	    if    ($strand2 eq '+') { 
-		if ($start2 <= $end2) { $Hbase_pos = $end2 + 1; }
-		else                  { $Hbase_pos = $start2 + 1; }
-	    }
-	    elsif ($strand2 eq '-') { 
-		if ($start2 <= $end2) { $Hbase_pos = $start2 - 1; }
-		else                  { $Hbase_pos = $end2 - 1; }
-	    }
+	# brassI coordinates - input is a bedpe file so zero based start for each range 
+        #                      assuming coordinates are the base either side of potential rearrangement range... 
+        #      ...can't find in docs anywhere
+	#     *---------
+	#                   -----------
+	if    ($strand1 eq '+') { 
+	    if ($start1 <= $end1) { $Lbase_pos = $start1 + 1; }
+	    else                  { $Lbase_pos = $end1; }
+	    if ($self->{debug}) { print "plus strand,  L base $Lbase_pos\n"; }
 	}
+	#     ---------*
+	#                   -----------
+	elsif ($strand1 eq '-') { 
+	    if ($start1 <= $end1) { $Lbase_pos = $end1; }
+	    else                  { $Lbase_pos = $start1 + 1; }
+	    if ($self->{debug}) { print "minus strand,  L base $Lbase_pos\n"; }
+	}
+	
+	#     ---------
+	#                   -----------*
+	if    ($strand2 eq '+') { 
+	    if ($start2 <= $end2) { $Hbase_pos = $end2; }
+	    else                  { $Hbase_pos = $start2 + 1; }
+	    if ($self->{debug}) { print "plus strand,  H base $Hbase_pos\n"; }
+	}
+	#     ---------
+	#                   *-----------
+	elsif ($strand2 eq '-') { 
+	    if ($start2 <= $end2) { $Hbase_pos = $start2 + 1; }
+	    else                  { $Hbase_pos = $end2; }
+	    if ($self->{debug}) { print "minus strand,  H base $Hbase_pos\n"; }
+	}
+
 	my $Lstring = "$chr1:" . $Lbase_pos . "-" . $Lbase_pos;
 	my $Hstring = "$chr2:" . $Hbase_pos . "-" . $Hbase_pos;
-	#print "L $Lstring, H $Hstring\n";
+	if ($self->{debug}) { print "L $Lstring, H $Hstring\n"; }
+
+	if ($self->{data}->{$name}->{1}) { die "duplicate entry $name in infile. Exiting.\n $!"; }
+	if ($self->{data}->{$name}->{2}) { die "duplicate entry $name in infile. Exiting.\n $!"; }
 
 	$self->{data}->{$name}->{1} = $fai->fetch("$Lstring");
 	$self->{data}->{$name}->{2} = $fai->fetch("$Hstring");
 
-	# reverse complement for end2 ()
-	$self->{data}->{$name}->{2} = _revcomp($self->{data}->{$name}->{2});
-	#print " |" . $self->{data}->{$name}->{1} . "| |" . $self->{data}->{$name}->{2} . "|\n"; exit;
+	# reverse complement if on the negative strand
+	if ($strand1 eq '-') { $self->{data}->{$name}->{1} = _revcomp($self->{data}->{$name}->{1}); }
+	if ($strand2 eq '-') { $self->{data}->{$name}->{2} = _revcomp($self->{data}->{$name}->{2}); }
     }
     close($fh);
 
@@ -292,7 +314,7 @@ sub _print_file {
     if ($outfile_size >= $infile_size) {
 	move $temp_file, $infile;
     }
-    else { print "WARN: Blat flagging failed!\n"; }
+    else { print "WARN: FlankingBase addition failed!\n"; }
 }
 
 #-----------------------------------------------------------------------#
