@@ -51,10 +51,10 @@ sub test_between_cache {
     my $pos_end = 188417763;
     
     my $between = 'TFPI';
-    
+
     my $between_out = $genome_data->get_gene_list($chr, $pos_start, $pos_end);
     
-    is (($between), $between_out , "get between genes. CACHE");
+    is (($between_out), $between , "get between genes. CACHE");
 }
 #------------------------------------------------------------------------------------------------#
 sub test_fetch_transcript_by_region_cache {
