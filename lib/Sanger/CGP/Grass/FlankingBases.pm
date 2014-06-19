@@ -20,7 +20,7 @@ $FlankingBases->process();
 
 Class that gets the bases upstream and downstream of the rearrangement (needed for vcf file generation).
 Takes in an input file of coordinates in bedpe format (zero-based start coordinate, one-based end coordinate).
-With brassI entries, the 2nd strand should have already been flipped to brassII-like constructed orientation.
+With brassI entries, the 2nd strand may have already been flipped to brassII-like constructed orientation. If not, use flip_strand option.
 
 Takes in a reference in fasta format, and associated fai index file.
 
@@ -68,6 +68,7 @@ sub new {
 
     if ($args{-infile})  { $self->infile($args{-infile}); }
     if ($args{-ref})     { $self->ref($args{-ref}); }
+    if ($args{-flip_strand}) { $self->{-flip_strand} = $args{-flip_strand}; }
    
     return $self;
 }
@@ -104,6 +105,22 @@ sub ref {
     my $self = shift;
     $self->{ref} = shift if @_;
     return $self->{ref};
+}
+#-----------------------------------------------------------------------#
+
+=head2 flip_strand
+
+  Arg (1)    : 1/0
+  Example    : $flip_strand = $object->flip_strand($flip_strand);
+  Description: Whether to flip the second strand or not
+  Return     : 1/0
+
+=cut
+
+sub flip_strand {
+    my $self = shift;
+    $self->{flip_strand} = shift if @_;
+    return $self->{flip_strand};
 }
 #-----------------------------------------------------------------------#
 #-----------------------------------------------------------------------#
@@ -170,6 +187,10 @@ sub _check_line {
 	($chr1,$start1,$end1,$chr2,$start2,$end2,$name,$score,$strand1,$strand2) = ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10);
 	$self->{brassI} = 1;
 	my $is_brass1 = 1;
+	if ($self->{flip_strand}) {
+	    if ($strand2 eq '+') { $strand2 = '-'; }
+	    elsif ($strand2 eq '-') { $strand2 = '+'; }
+	}
 	return($chr1,$start1,$end1,$chr2,$start2,$end2,$name,$score,$strand1,$strand2,$is_brass1);
     }
     # where there are not digits in the end 2 fields, these are tumour/normal read counts and it means this is a brassII entry
@@ -212,20 +233,20 @@ sub _read_data {
 	#print "HERE: $chr1,$start1,$end1,$chr2,$start2,$end2,$name,$score,$strand1,$strand2\n";
 	my ($Lbase_pos, $Hbase_pos);
 
-	# brassI coordinates - input is a bedpe file so zero based start for each range 
+	# brassI coordinates - input is a bedpe file so zero based start range 
         #                      assuming coordinates are the base either side of potential rearrangement range... 
         #      ...can't find in docs anywhere
 	#     *---------
 	#                   -----------
 	if    ($strand1 eq '+') { 
 	    if ($start1 <= $end1) { $Lbase_pos = $start1 + 1; }
-	    else                  { $Lbase_pos = $end1; }
+	    else                  { $Lbase_pos = $end1 + 1; }
 	    if ($self->{debug}) { print "plus strand,  L base $Lbase_pos\n"; }
 	}
 	#     ---------*
 	#                   -----------
 	elsif ($strand1 eq '-') { 
-	    if ($start1 <= $end1) { $Lbase_pos = $end1; }
+	    if ($start1 <= $end1) { $Lbase_pos = $end1 + 1; }
 	    else                  { $Lbase_pos = $start1 + 1; }
 	    if ($self->{debug}) { print "minus strand,  L base $Lbase_pos\n"; }
 	}
@@ -234,13 +255,13 @@ sub _read_data {
 	#                   -----------*
 	if    ($strand2 eq '+') { 
 	    if ($start2 <= $end2) { $Hbase_pos = $end2; }
-	    else                  { $Hbase_pos = $start2 + 1; }
+	    else                  { $Hbase_pos = $start2; }
 	    if ($self->{debug}) { print "plus strand,  H base $Hbase_pos\n"; }
 	}
 	#     ---------
 	#                   *-----------
 	elsif ($strand2 eq '-') { 
-	    if ($start2 <= $end2) { $Hbase_pos = $start2 + 1; }
+	    if ($start2 <= $end2) { $Hbase_pos = $start2; }
 	    else                  { $Hbase_pos = $end2; }
 	    if ($self->{debug}) { print "minus strand,  H base $Hbase_pos\n"; }
 	}
