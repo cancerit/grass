@@ -30,6 +30,7 @@ Class to access genome data from a cached flat file version of Ensembl (file gen
 package Sanger::CGP::Grass::GenomeData::GenomeDataCache;
 
 use strict;
+use Tabix;
 
 use Sanger::CGP::Vagrent::Data::Transcript;
 use Sanger::CGP::Vagrent::Data::Exon;
@@ -143,16 +144,29 @@ sub get_gene_list {
 
     my $cache = $self->{genome_cache};
 
-    # eg tabix Homo_sapiens.GRCh37.74.vagrent.cache.gz 1:10000000-10100000 | cut -f5 | uniq
-    my $coord_string = $chr . ':' . $start_coord . '-' . $end_coord;
-    my $results = `tabix $cache $coord_string | cut -f5 | uniq`;
-    chomp $results;
+    # set up cache if not already prepared (start coordinate is zero based in the cache!)
+    $self->{_cache_tbx} = Tabix->new('-data' => $self->{genome_cache}) unless defined $self->{_cache_tbx};  
+ 
+    my $res = $self->{_cache_tbx}->query($chr,($start_coord - 1),$end_coord); 
+    return undef unless defined $res;
 
-    if ($results) {
-	my @results = split ',', $results;
-	$names = join ',', @results;
+    my @results = ();
+    if(defined $res){
+	while(my $ret = $self->{_cache_tbx}->read($res)){
+	    my $raw = (split("\t",$ret))[6];
+	    my $VAR1;
+	    eval $raw;
+	    next unless ($VAR1->{_genename});
+	    push @results, $VAR1->{_genename} unless (grep {$_ eq $VAR1->{_genename}} @results);
+	}
     }
 
+#    # eg tabix Homo_sapiens.GRCh37.74.vagrent.cache.gz 1:10000000-10100000 | cut -f5 | uniq
+#    my $coord_string = $chr . ':' . $start_coord . '-' . $end_coord;
+#    my $results = `tabix $cache $coord_string | cut -f5 | uniq`;
+#    chomp $results;
+
+    $names = join ',', @results;
     return($names);
 }
 #------------------------------------------------------------------------------------------------#
@@ -172,23 +186,40 @@ sub fetch_transcripts_by_region {
     my ($self, $chr, $start_coord, $end_coord) = @_;
 
     my @vagrent_transcripts = ();
-    my @transcripts = ();
 
     my $cache = $self->{genome_cache};
     if (($cache =~ /Canis/) && ($chr eq 'M')) { $chr = 'mt'; } # dogs have motochondrial chr naming problem
 
-    my $coord_string = $chr . ':' . $start_coord . '-' . $end_coord;
-    my $results = `tabix $cache $coord_string | cut -f6,7`;
-    my @results = split "\n", $results;
-    foreach my $res(@results) {
-	my @res = split "\t", $res;
-	my $length = $res[0];
-	my $trans = $res[1];
-	my $VAR1;
-	eval $trans;
-	my $vagrent_transcript = $VAR1;
-	push @vagrent_transcripts, [$length, $vagrent_transcript];
+    # set up cache if not already prepared (start coordinate is zero based in the cache!)
+    $self->{_cache_tbx} = Tabix->new('-data' => $self->{genome_cache}) unless defined $self->{_cache_tbx};  
+ 
+    my $res = $self->{_cache_tbx}->query($chr,($start_coord - 1),$end_coord); 
+
+    return undef unless defined $res;
+
+    if(defined $res){
+	while(my $ret = $self->{_cache_tbx}->read($res)){
+	    my $length = (split("\t",$ret))[5];
+	    my $raw = (split("\t",$ret))[6];
+	    my $VAR1;
+	    eval $raw;
+	    my $vagrent_transcript = $VAR1;
+	    push @vagrent_transcripts, [$length, $vagrent_transcript];
+	}
     }
+
+#    my $coord_string = $chr . ':' . $start_coord . '-' . $end_coord;
+#    my $results = `tabix $cache $coord_string | cut -f6,7`;
+#    my @results = split "\n", $results;
+#    foreach my $res(@results) {
+#	my @res = split "\t", $res;
+#	my $length = $res[0];
+#	my $trans = $res[1];
+#	my $VAR1;
+#	eval $trans;
+#	my $vagrent_transcript = $VAR1;
+#	push @vagrent_transcripts, [$length, $vagrent_transcript];
+ #   }
 
     # populate a set of Grass Transcript/Exon objects
     my $grass_transcripts = $self->_populate_grass_transcripts(\@vagrent_transcripts, $chr, $start_coord);
