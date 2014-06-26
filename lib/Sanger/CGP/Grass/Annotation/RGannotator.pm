@@ -76,6 +76,7 @@ sub new {
     if (defined($args{-gene_id_required})) { $self->gene_id_required($args{-gene_id_required}); }
     if (defined($args{-show_biotype})) { $self->show_biotype($args{-show_biotype}); }
     if (defined($args{-list_between})) { $self->list_between($args{-list_between}); }
+    if (defined($args{-multi_annos})) { $self->multi_annos($args{-multi_annos}); }
 
     return $self;
 }
@@ -229,6 +230,22 @@ sub list_between {
     return $self->{list_between};
 }
 #-----------------------------------------------------------------------#
+
+=head2 multi_annos
+
+  Arg (1)    : 1/0
+  Example    : $multi_annos = $Object->multi_annos($multi_annos);
+  Description: get more than one annotation if there are other potentially interesting ones
+  Return     : 1/0
+
+=cut
+
+sub multi_annos {
+    my $self = shift;
+    $self->{multi_annos} = shift if @_;
+    return $self->{multi_annos};
+}
+#-----------------------------------------------------------------------#
 #-----------------------------------------------------------------------#
 
 =head2 rg_annos
@@ -329,8 +346,13 @@ sub getAnnotation {
 	    $annos = $self->_thin_end($anns2);
 	}
 
-	foreach (@$annos) { push @{$self->{rg_annos}}, $_; }
-
+        # just keep the top annotation unless more are requested
+	if ($self->{multi_annos}) {
+	    foreach (@$annos) { push @{$self->{rg_annos}}, $_; }
+	}
+	else {
+	    foreach (@$annos) { push @{$self->{rg_annos}}, $_; last; }
+	}
 	$count++;
     }
     if ($self->{list_between}) { $self->get_list_between(); }
