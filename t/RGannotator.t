@@ -92,6 +92,7 @@ my $rgann1 = new Sanger::CGP::Grass::Annotation::RGannotator(-dataset         =>
 						-within          => $within,
 						-genome_data     => $genome_data_ensembl,
 						-list_between    => 0,
+						-multi_annos     => 1,
 						-show_biotype    => 0 );
 $rgann1->getAnnotation();
 
