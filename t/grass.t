@@ -34,6 +34,7 @@ sub test_coord_input {
     my $test_coord = 'X:-:84500101-84500632,X:+:84510265-84510265';
     my $test_coord_res = 'gene	gene_id	transcript_id	strand	end_phase	region	region_number	total_region_count	first/last	gene	gene_id	transcript_id	strand	phase	region	region_number	total_region_count	first/last	fusion_flag
 ZNF711	ZNF711	ENST00000373165	1	_	5UTRintron	1	9	_	ZNF711	ZNF711	ENST00000373165	1	1	exon	4	9	first_base	570
+Not bedpe format so no vcf file will be created
 ';
 
     my ($test_coord_out, @result) = capture { system("perl $script -genome_cache $genome_cache -coord $test_coord -ref $ref "); };
@@ -63,13 +64,13 @@ sub test_file_input {
 #----------------------------------------------------------------------------------------#
 sub test_file_input_bedpe {
 
-    my $infile = dirname(abs_path($0)).'/../testData/' . 'testout_Brass_I.bedpe';
-    my $outfile = dirname(abs_path($0)).'/../testData/' . 'testout_Brass_I_ann.bedpe';
-    my $outfile_vcf = dirname(abs_path($0)).'/../testData/' . 'testout_Brass_I_ann.vcf';
+    my $infile = dirname(abs_path($0)).'/../testData/' . 'testout_Brass.bedpe';
+    my $outfile = dirname(abs_path($0)).'/../testData/' . 'testout_Brass_ann.bedpe';
+    my $outfile_vcf = dirname(abs_path($0)).'/../testData/' . 'testout_Brass_ann.vcf';
 
-    my $testfile = 'testout_Brass_I.bedpe';
-    my $testfile_out = 'testout_Brass_I_ann.bedpe';
-    my $testfile_out_vcf = 'testout_Brass_I_ann.vcf';
+    my $testfile = 'testout_Brass.bedpe';
+    my $testfile_out = 'testout_Brass_ann.bedpe';
+    my $testfile_out_vcf = 'testout_Brass_ann.vcf';
 
     copy $infile, $testfile;
     my ($test_file_res, @result) = capture { system("perl $script -genome_cache $genome_cache -file $testfile -ref $ref "); };
