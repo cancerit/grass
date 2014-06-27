@@ -107,9 +107,9 @@ my $field = 0; # field of file that contains the coordinate string
 if ($coord) { do_coord($within, $species, $coord, $list_between, $show_biotype, $genome_data); }
 elsif ($file)   { $field = 0; ($outfile, $is_bedpe) = do_file($within, $species, $file,    $outfile, $field, '', $list_between, $show_biotype, $genome_data); }
 elsif ($file2)  { $field = 2; ($outfile, $is_bedpe) = do_file($within, $species, $file2,   $outfile, $field, 'refract', $list_between, $show_biotype, $genome_data); } # 2 is the field array index that contains the refract coordinate string
-
 # note that do_file flips the orientation of the second strand of brassI entries to give brassII-like constructed strands rather than seq-read strands
 
+unless ($is_bedpe) { print "Not bedpe format so no vcf file will be created\n";}
 exit if !($is_bedpe);
 
 # get the flanking bases for use in vcf conversion (appends the up and downstream bases to the end of each line)
