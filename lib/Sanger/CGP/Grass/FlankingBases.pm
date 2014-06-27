@@ -234,8 +234,8 @@ sub _read_data {
 	my ($Lbase_pos, $Hbase_pos);
 
 	# brassI coordinates - input is a bedpe file so zero based start range 
-        #                      assuming coordinates are the base either side of potential rearrangement range... 
-        #      ...can't find in docs anywhere
+        #                      assuming coordinates are the base either side of potential rearrangement range
+        #                      Should I take the ref(flanking) base to the upstream side of each range instead?
 	#     *---------
 	#                   -----------
 	if    ($strand1 eq '+') { 
@@ -256,6 +256,8 @@ sub _read_data {
 	if    ($strand2 eq '+') { 
 	    if ($start2 <= $end2) { $Hbase_pos = $end2; }
 	    else                  { $Hbase_pos = $start2; }
+#	    if ($start2 <= $end2) { $Hbase_pos = $start2; }
+#	    else                  { $Hbase_pos = $end2; }
 	    if ($self->{debug}) { print "plus strand,  H base $Hbase_pos\n"; }
 	}
 	#     ---------
@@ -263,6 +265,8 @@ sub _read_data {
 	elsif ($strand2 eq '-') { 
 	    if ($start2 <= $end2) { $Hbase_pos = $start2; }
 	    else                  { $Hbase_pos = $end2; }
+#	    if ($start2 <= $end2) { $Hbase_pos = $end2; }
+#	    else                  { $Hbase_pos = $start2; }
 	    if ($self->{debug}) { print "minus strand,  H base $Hbase_pos\n"; }
 	}
 
@@ -276,26 +280,12 @@ sub _read_data {
 	$self->{data}->{$name}->{1} = $fai->fetch("$Lstring");
 	$self->{data}->{$name}->{2} = $fai->fetch("$Hstring");
 
-	# reverse complement if on the negative strand
-	if ($strand1 eq '-') { $self->{data}->{$name}->{1} = _revcomp($self->{data}->{$name}->{1}); }
-	if ($strand2 eq '-') { $self->{data}->{$name}->{2} = _revcomp($self->{data}->{$name}->{2}); }
+	# reverse complement if on the negative strand? 
+        #NO, keep it all on the plus strand since VCF displays all variants on the plus strand (http://www.1000genomes.org/faq/what-strand-are-variants-your-vcf-file)
     }
     close($fh);
 
     return(1);
-}
-#-------------------------------------------------------------------------------------------------------------------#
-sub _revcomp {
-    my $base = shift;
-    if ($base) { $base = uc($base); }
-    else { return(''); }
-
-    if    ($base eq 'A') { $base = 'T'; }
-    elsif ($base eq 'T') { $base = 'A'; }
-    elsif ($base eq 'G') { $base = 'C'; }
-    elsif ($base eq 'C') { $base = 'G'; }
-
-    return($base);
 }
 #-----------------------------------------------------------------------#
 
