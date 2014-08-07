@@ -64,6 +64,7 @@ my $acc_source_normal = '';
 my $study_normal = '';
 
 my $help = 0;
+my $arg_count = scalar @ARGV;
 
 GetOptions( 'within:s'      => \$within,
 	    'coord:s'       => \$coord, # formats 1:-:123-456,2:+:345-678 or 1:-:123,2:+:345 or 1:-:123,2:+:345,atgatatat (shard at end)
@@ -93,7 +94,7 @@ GetOptions( 'within:s'      => \$within,
          );
 
 # check inputs
-if ($help) { usage(); }
+if ($help || $arg_count == 0) { usage(); }
 
 # set up access to genome data  from EnsemblDB (if species/ensembl_api supplied) or a cached flat file version (if genome_cache supplied)
 my $genome_data = new Sanger::CGP::Grass::GenomeData(-species      => $species,
@@ -127,7 +128,7 @@ make_vcf_file($outfile, $ref, $species, $assembly, $platform, $protocol, $tumour
 sub do_coord {
     my ($within, $species, $coord, $list_between, $show_biotype, $genome_data) = @_;
 
-    # set up the dataEntry object 
+    # set up the dataEntry object
     my $entry = new Sanger::CGP::Grass::DataEntry(-coord => $coord);
 
     # get fusion prediction
@@ -158,7 +159,7 @@ sub do_file {
     my ($within, $species, $infile, $outfile, $field, $is_refract, $list_between, $show_biotype, $genome_data) = @_;
     my $is_bedpe = 0;
 
-    unless ($outfile) { 
+    unless ($outfile) {
 	$outfile = $infile;
 	if ($outfile =~ /\./) { $outfile =~ s/\.(\D+)$/_ann.$1/; }
 	else                  { $outfile = $infile . '_ann'; }
@@ -187,7 +188,7 @@ sub do_file {
 sub do_header_line {
     my ($fh_out, $show_biotype, $line) = @_;
 
-    if ($line =~ /k?e?y?\s*EXPECTED/i) { 
+    if ($line =~ /k?e?y?\s*EXPECTED/i) {
 	if ($show_biotype) {
 	    print $fh_out "$line\tgene\tgene_id\ttranscript_id\tstrand\tend_phase\tregion\tregion_number\ttotal_region_count\tfirst/last\tbiotype\tgene\tgene_id\ttranscript_id\tstrand\tphase\tregion\tregion_number\ttotal_region_count\tfirst/last\tbiotype\tfusion_flag\tUpstream_base\tDownstream_base(rev_strand)\n";
 	}
@@ -195,7 +196,7 @@ sub do_header_line {
 	    print $fh_out "$line\tgene\tgene_id\ttranscript_id\tstrand\tend_phase\tregion\tregion_number\ttotal_region_count\tfirst/last\tgene\tgene_id\ttranscript_id\tstrand\tphase\tregion\tregion_number\ttotal_region_count\tfirst/last\tfusion_flag\tUpstream_base\tDownstream_base(rev_strand)\n";
 	}
     }
-    elsif ($line =~ /\tsample\t/i) { 
+    elsif ($line =~ /\tsample\t/i) {
 	if ($show_biotype) {
 	    print $fh_out "$line\tgene\tgene_id\ttranscript_id\tstrand\tend_phase\tregion\tregion_number\ttotal_region_count\tfirst/last\tbiotype\tgene\tgene_id\ttranscript_id\tstrand\tphase\tregion\tregion_number\ttotal_region_count\tfirst/last\tbiotype\tfusion_flag\tUpstream_base\tDownstream_base(rev_strand)\n";
 	}
@@ -214,13 +215,13 @@ sub do_data_line {
     return unless ($line);
 
     my $is_bedpe = 0;
-    
+
     # process main data line
     my @line = split "\t", $line;
     my ($entry1, $entry2, $entry3);
 
     # decide what sort of file we have and get the coordinate details into a DataEntry object
-    
+
     # brassII .tab format
     if (($line[0] =~ /^\S+$/) && ($line[1] =~ /^[+-]$/) && ($line[2] =~ /^\d+$/) && ($line[3] =~ /^\d+$/) && ($line[4] =~ /^\S+$/) && ($line[5] =~ /^[+-]$/) && ($line[6] =~ /^\d+$/) && ($line[7] =~ /^\d+$/) && ($line[8] =~ /^[\.ATGCNatgcn]+$/) && ($line[9] =~ /^[\.ATGCNatgcn]+$/)) {
 	$entry1 = new Sanger::CGP::Grass::DataEntry(-chr1       => $line[0],
@@ -278,9 +279,9 @@ sub do_data_line {
     elsif ($is_refract) {
 	my ($coord1,$coord2,$coord3) = split_refract_string($line[$field]);
 	if ($coord1) { $entry1 = new Sanger::CGP::Grass::DataEntry(-coord => $coord1); }
-	if ($coord2) { $entry2 = new Sanger::CGP::Grass::DataEntry(-coord => $coord2); } 
-	if ($coord3) { $entry3 = new Sanger::CGP::Grass::DataEntry(-coord => $coord3); } 
-	unless ($coord1) {	    
+	if ($coord2) { $entry2 = new Sanger::CGP::Grass::DataEntry(-coord => $coord2); }
+	if ($coord3) { $entry3 = new Sanger::CGP::Grass::DataEntry(-coord => $coord3); }
+	unless ($coord1) {
 	    print $fh_out "$line\n";
 	    return;
 	}
@@ -289,7 +290,7 @@ sub do_data_line {
     elsif ($field) { $entry1 = new Sanger::CGP::Grass::DataEntry(-coord => $line[$field]); }
     # standard format coordinate pair in first field
     else           { $entry1 = new Sanger::CGP::Grass::DataEntry(-coord => $line[0]); }
-    
+
     # to make sure the 2nd strand (flipped from brassI to brassII layout) is printed, not the original line...
     $line = join "\t", @line;
 
@@ -302,14 +303,14 @@ sub do_data_line {
     # get the annotation results string for each coordinate pair
     my ($out_string, $out_stringb, $out_stringc);
     $out_string = process_file_coords($line, $entry1, $within, $species, $list_between, $show_biotype, $genome_data);
-    
+
     if ($is_refract) { # only get these extra coodinates with refract output.
 	if ($entry2) { $out_stringb = process_file_coords($line, $entry2, $within, $species, 0, $show_biotype, $genome_data); }
 	if ($entry3) { $out_stringc = process_file_coords($line, $entry3, $within, $species, 0, $show_biotype, $genome_data); }
 	# merge the data from the compsite refract coordiate string. just use the first line of annotation
         $out_string = merge_refract($out_string, $out_stringb, $out_stringc);
     }
-    
+
     print $fh_out $out_string;
 
     return($is_bedpe);
@@ -332,35 +333,35 @@ sub  split_refract_string {
 	if ($chr && $strand && $p1) { $current_coord1 = $chr . $strand . ':' . $p1; }
 	if ($chr && $strand && $p2) { $current_coord2 = $chr . $strand . ':' . $p2; }
 
-	if ($current_coord1 && $current_coord2 && $last_coord && $last_shard) { 
+	if ($current_coord1 && $current_coord2 && $last_coord && $last_shard) {
 #	    print "1: $last_coord           $current_coord1           $current_coord2           $last_shard\n";
 	    push @coords, ($last_coord . ';' . $current_coord1 . ';' . $last_shard);
-	    $last_coord = $current_coord2; 
+	    $last_coord = $current_coord2;
 	}
-	elsif ($current_coord1 && $current_coord2 && $last_coord) { 
+	elsif ($current_coord1 && $current_coord2 && $last_coord) {
 #	    print "2: $last_coord           $current_coord1           $current_coord2\n";
 	    push @coords, ($last_coord . ';' . $current_coord1);
-	    $last_coord = $current_coord2; 
+	    $last_coord = $current_coord2;
 	}
-	elsif ($current_coord1 && $last_coord && $last_shard) { 
+	elsif ($current_coord1 && $last_coord && $last_shard) {
 #	    print "3: $last_coord           $current_coord1           $last_shard\n";
 	    push @coords, ($last_coord . ';' . $current_coord1 . ';' . $last_shard);
-	    $last_coord = $current_coord1; 
+	    $last_coord = $current_coord1;
 	}
-	elsif ($current_coord1 && $last_coord) { 
+	elsif ($current_coord1 && $last_coord) {
 #	    print "4: $last_coord           $current_coord1\n";
 	    push @coords, ($last_coord . ';' . $current_coord1);
-	    $last_coord = $current_coord1; 
+	    $last_coord = $current_coord1;
 	}
 	elsif ($current_coord1 && $current_coord2) { # should not happen?
 #	    print "5: $current_coord1           $current_coord2\n";
 #	    push @coords, ($current_coord1 . ';' . $current_coord2);
-	    $last_coord = $current_coord2; 
+	    $last_coord = $current_coord2;
 	}
-	elsif ($current_coord1) { 
-	    $last_coord = $current_coord1; 
+	elsif ($current_coord1) {
+	    $last_coord = $current_coord1;
 	}
-	$last_shard = $shard; 
+	$last_shard = $shard;
     }
 
     return(@coords);
@@ -429,7 +430,7 @@ sub process_file_coords {
 						   -genome_data => $genome_data);
     $rgann->getAnnotation();
     my $string = $rgann->format_for_printing();
-    my @results = split "\n", $string; 
+    my @results = split "\n", $string;
 
     # get the results string (may be more than one line) and prepend original line to it
     chomp $line;
@@ -501,15 +502,15 @@ options...
    -within        : consider a range around the given breakpoint, within n
    -species       : species (HUMAN, MOUSE, DOG etc)
    -coord         : breakpoint coordiate pair and optional shard (formats 1:-:123-456,2:+:345-678 or 1:-:123,2:+:345 or 1:-:123,2:+:345,atgatatat)
-   -r_file        : filtered refract input file - format type: tab delimited: coord string in third column. 
-                    coord format As for -coord or eg 10-:92877;13+:103483915 or eg 10-:92877;13+:1034-2000;13+:103483915  (double event)   
-   -file          : input file - format type: tab delimited, coord string in first column. As for -coord or eg 10-:92877;13+:103483915 (refract file format)      
+   -r_file        : filtered refract input file - format type: tab delimited: coord string in third column.
+                    coord format As for -coord or eg 10-:92877;13+:103483915 or eg 10-:92877;13+:1034-2000;13+:103483915  (double event)
+   -file          : input file - format type: tab delimited, coord string in first column. As for -coord or eg 10-:92877;13+:103483915 (refract file format)
    -outfile       : what file to print output to. Default is input_file.bedpe
    -ensembl_api   : path to Ensembl api (eg /software/pubseq/PerlModules/Ensembl/www_58_1)
    -genome_cache  : Ensembl genome cache file - generated by Vagrent
    -list_between  : list genes lying between a coordinate pair if they are one the same chromosome, on the same strand, and the distance between them is < 1MB
    -show_biotype  : shows the biotype (eg protein_coding) for each gene
-   -use_all_biotypes : 1 or 0. Use all biotypes, not just protein_coding (default). 
+   -use_all_biotypes : 1 or 0. Use all biotypes, not just protein_coding (default).
                        Only relevant when using an Ensembl remote server since non-protein_coding entries are filtered out by Vagrent.
    -gene_id_required : get the gene_id not just its name.
                        Only relevant when using an Ensembl remote server since Vagrent currently does not supply this information.
