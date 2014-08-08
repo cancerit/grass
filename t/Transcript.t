@@ -1,13 +1,6 @@
 #!/usr/bin/perl
 
 # for testing Sanger::CGP::Grass::GenomeData::Transcript class
-
-BEGIN {
-  use Cwd qw(abs_path);
-  use File::Basename;
-  push (@INC,dirname(abs_path($0)).'/../lib');
-};
-
 use strict;
 use warnings FATAL => 'all';
 

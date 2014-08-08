@@ -2,12 +2,6 @@
 
 # for testing Sanger::CGP::Grass::GenomeData class
 
-BEGIN {
-  use Cwd qw(abs_path);
-  use File::Basename;
-  push (@INC,dirname(abs_path($0)).'/../lib');
-};
-
 use strict;
 use warnings FATAL => 'all';
 
@@ -76,11 +70,11 @@ sub test_between_ensembl {
     my $chr = '2';
     my $pos_start = 188365837;
     my $pos_end = 188417763;
-    
+
     my $between = 'ENSG00000224063,TFPI';
-    
+
     my $between_out = $genome_data->get_gene_list($chr, $pos_start, $pos_end);
-    
+
     ok($genome_data->slice_ad(), 'slice adaptor object defined. ENSEMBL');
     is ($between_out, $between , "get between genes. ENSEMBL");
 }
@@ -91,11 +85,11 @@ sub test_between_cache {
     my $chr = '2';
     my $pos_start = 188365837;
     my $pos_end = 188417763;
-    
+
     my $between = 'TFPI';
-    
+
     my $between_out = $genome_data->get_gene_list($chr, $pos_start, $pos_end);
-    
+
     is (($between), $between_out , "get between genes. CACHE");
 }
 #------------------------------------------------------------------------------------------------#

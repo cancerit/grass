@@ -7,7 +7,7 @@
 BEGIN {
   use Cwd qw(abs_path);
   use File::Basename;
-  push (@INC,dirname(abs_path($0)).'/../lib');
+  unshift (@INC,dirname(abs_path($0)).'/../lib');
 };
 
 use strict;
@@ -148,7 +148,7 @@ Description - converts brass I and II bedpe files to vcf output
 options...
 
    -species       : species (HUMAN, MOUSE, DOG etc)
-   -file          : input file - format type: bedpe)      
+   -file          : input file - format type: bedpe)
    -outfile       : what file to print output to. Default is input_file.bedpe
    -ref           : fasta reference file (with associated fai file). For vcf out file generation.
    -assembly      : sequence assembly used (eg GRCh37). For vcf out file generation.

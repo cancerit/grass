@@ -2,12 +2,6 @@
 
 # for testing Sanger::CGP::Grass::VcfConverter class
 
-BEGIN {
-  use Cwd qw(abs_path);
-  use File::Basename;
-  push (@INC,dirname(abs_path($0)).'/../lib');
-};
-
 use strict;
 use warnings FATAL => 'all';
 
@@ -20,10 +14,12 @@ use Time::localtime;
 use File::Copy qw(copy);
 use Text::Diff;
 use Capture::Tiny qw(capture);
+use File::Basename qw(basename);
 
 use Test::More 'no_plan';
+use FindBin qw($Bin);
 
-my $ref = '/nfs/cancer_ref01/human/37/genome.fa';
+my $ref = "$Bin/../testData/genome.fa";
 
 test_brassI_bedpe_file_input($ref);
 
@@ -33,8 +29,8 @@ test_brassI_bedpe_file_input($ref);
 sub test_brassI_bedpe_file_input {
     my ($ref) = @_;
 
-    my $infile = dirname(abs_path($0)).'/../testData/' . 'test_VcfConverter_ann.bedpe';
-    my $outfile = dirname(abs_path($0)).'/../testData/' . 'test_VcfConverter_ann.vcf';
+    my $infile = $Bin.'/../testData/test_VcfConverter_ann.bedpe';
+    my $outfile = $Bin.'/../testData/test_VcfConverter_ann.vcf';
 
     my $testfile = 'test_VcfConverter_ann.bedpe';
     my $testoutfile = 'test_VcfConverter_ann.vcf';
@@ -62,14 +58,14 @@ sub test_brassI_bedpe_file_input {
     `$command2`;
     `$command3`;
 
-    my $diff = diff "$testoutfile", "$outfile";
+    my $testoutdata = slurp_file($testoutfile);
+    splice(@{$testoutdata}, 3, 1); # line 3 has a file path that will change
+    my $outdata = slurp_file($outfile);
+    splice(@{$outdata}, 3, 1); # line 3 has a file path that will change
+    is_deeply($testoutdata, $outdata, 'correct file created');
 
-    ok(!$diff, 'correct file created');
-    
-    unless ($diff) { 
-	unlink $testfile; 
-	unlink $testoutfile; 
-    }
+	unlink $testfile;
+	unlink $testoutfile;
 }
 #----------------------------------------------------------------------------------------#
 sub get_support_objects {
@@ -127,3 +123,12 @@ sub get_support_objects {
     return($wt_sample, $mt_sample, $contigs, \@process_logs, $source);
 }
 #----------------------------------------------------------------------------------------#
+
+
+sub slurp_file {
+  my $file = shift;
+  open my $fh, '<', $file || die $!;
+  my @lines = <$fh>;
+  close $fh;
+  return \@lines;
+}

@@ -2,11 +2,6 @@
 
 # for testing Sanger::CGP::Grass::Annotation::RGcombinationAnnotator class
 
-BEGIN {
-  use Cwd qw(abs_path);
-  use File::Basename;
-  push (@INC,dirname(abs_path($0)).'/../lib');
-};
 
 use strict;
 use warnings FATAL => 'all';
@@ -74,7 +69,7 @@ my $combi = new Sanger::CGP::Grass::Annotation::RGcombinationAnnotator(-anno1   
 							  -strand1 => $strand1,
 							  -strand2 => $strand2,
 							  -shard   => $shard);
-$combi->combine(); 
+$combi->combine();
 my $rganno = $combi->anno();
 
 
@@ -96,7 +91,7 @@ my $combi_cache = new Sanger::CGP::Grass::Annotation::RGcombinationAnnotator(-an
 								-strand1 => $strand1,
 								-strand2 => $strand2,
 								-shard   => $shard);
-$combi_cache->combine(); 
+$combi_cache->combine();
 my $rganno_cache = $combi_cache->anno();
 
 my $res = get_result_58();

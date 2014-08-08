@@ -2,12 +2,6 @@
 
 # for testing grass.pl script
 
-BEGIN {
-  use Cwd qw(abs_path);
-  use File::Basename;
-  push (@INC,dirname(abs_path($0)).'/../lib');
-};
-
 use Time::localtime;
 use File::Copy qw(copy);
 use Text::Diff;
@@ -17,12 +11,13 @@ use strict;
 use warnings FATAL => 'all';
 
 use Test::More 'no_plan';
+use FindBin qw($Bin);
 
 # got to do something about this...
 my $genome_cache = '/lustre/scratch104/sanger/am3/vagrent/e74/Homo_sapiens.GRCh37.74.vagrent.cache.gz';
 my $ref = '/nfs/cancer_ref01/human/37/genome.fa';
 
-my $script = dirname(abs_path($0)).'/../bin/' . 'grass.pl';
+my $script = $Bin.'/../bin/' . 'grass.pl';
 
 test_coord_input();
 test_file_input();
@@ -46,8 +41,8 @@ Not bedpe format so no vcf file will be created
 #----------------------------------------------------------------------------------------#
 sub test_file_input {
 
-    my $infile = dirname(abs_path($0)).'/../testData/' . 'testout_Brass_I_and_II';
-    my $outfile = dirname(abs_path($0)).'/../testData/' . 'testout_Brass_I_and_II_ann';
+    my $infile = $Bin.'/../testData/' . 'testout_Brass_I_and_II';
+    my $outfile = $Bin.'/../testData/' . 'testout_Brass_I_and_II_ann';
 
     my $testfile = 'testout_Brass_I_and_II';
     my $testfile_out = 'testout_Brass_I_and_II_ann';
@@ -59,15 +54,15 @@ sub test_file_input {
     my $diff = diff "$testfile_out", "$outfile";
 
     ok(!$diff, 'correct file created');
-    
+
     unless ($diff) { unlink $testfile; unlink $testfile_out; }
 }
 #----------------------------------------------------------------------------------------#
 sub test_file_input_bedpe {
 
-    my $infile = dirname(abs_path($0)).'/../testData/' . 'testout_Brass.bedpe';
-    my $outfile = dirname(abs_path($0)).'/../testData/' . 'testout_Brass_ann.bedpe';
-    my $outfile_vcf = dirname(abs_path($0)).'/../testData/' . 'testout_Brass_ann.vcf';
+    my $infile = $Bin.'/../testData/' . 'testout_Brass.bedpe';
+    my $outfile = $Bin.'/../testData/' . 'testout_Brass_ann.bedpe';
+    my $outfile_vcf = $Bin.'/../testData/' . 'testout_Brass_ann.vcf';
 
     my $testfile = 'testout_Brass.bedpe';
     my $testfile_out = 'testout_Brass_ann.bedpe';
@@ -95,7 +90,7 @@ sub test_file_input_bedpe {
 
     ok(!$diff1, 'correct bedpe file created');
     ok(!$diff2, 'correct vcf file created');
-    
+
     unless ($diff1 || $diff2) { unlink $testfile; unlink $testfile_out; unlink $testfile_out_vcf; }
 }
 #----------------------------------------------------------------------------------------#
