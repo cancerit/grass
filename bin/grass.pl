@@ -254,10 +254,10 @@ sub do_data_line {
 	$entry1 = new Sanger::CGP::Grass::DataEntry(-chr1       => $line[0],
 						    -strand1    => $line[8],
 						    -pos1_start => ($line[1] + 1),
-						    -pos1_end   => ($line[2] + 1),
+						    -pos1_end   => $line[2],
 						    -chr2       => $line[3],
 						    -strand2    => $line[9],
-						    -pos2_start => $line[4],
+						    -pos2_start => ($line[4] + 1),
 						    -pos2_end   => $line[5]);
 	$is_bedpe = 1;
     }
@@ -267,10 +267,10 @@ sub do_data_line {
 	$entry1 = new Sanger::CGP::Grass::DataEntry(-chr1       => $line[0],
 						    -strand1    => $line[8],
 						    -pos1_start => ($line[1] + 1),
-						    -pos1_end   => ($line[2] + 1),
+						    -pos1_end   => $line[2],
 						    -chr2       => $line[3],
 						    -strand2    => $line[9],
-						    -pos2_start => $line[4],
+						    -pos2_start => ($line[4] + 1),
 						    -pos2_end   => $line[5]);
 	$is_bedpe = 1;
     }
