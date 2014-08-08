@@ -245,7 +245,7 @@ sub gen_record {
 
 	# add 1 to all start ranges since converting from zero based bedpe format
 	$start1++;
-	$end1++;
+	$start2++;
     }
     elsif ($bedpe_or_tab eq 'tab') {
 # 1       +       32144920        32144921        14      -       73658034        73658033        .       T       99      5013985 PD4107a,        Chr.1  32144920(21)--T--73658034(33)  Chr.14-  (score 99) annotation stuff??? up? down?
