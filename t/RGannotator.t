@@ -70,7 +70,7 @@ push @$dataset2, $entry_2;
 
 # set values
 my $within = 0;
-my $genome_cache = '/lustre/scratch104/sanger/am3/vagrent/Homo_sapiens.GRCh37.74.vagrent.cache.gz';
+my $genome_cache = '/lustre/scratch104/sanger/am3/vagrent/e74/Homo_sapiens.GRCh37.74.vagrent.cache.gz';
 my $species = 'HUMAN';
 my $ensembl_api = '/software/pubseq/PerlModules/Ensembl/www_58_1';
 

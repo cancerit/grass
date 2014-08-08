@@ -72,7 +72,7 @@ my $entry_2 = new Sanger::CGP::Grass::DataEntry(-name       => $name_2,
 my $end_2 = 1;
 my $within_2 = 100;
 
-my $genome_cache = '/lustre/scratch104/sanger/am3/vagrent/Homo_sapiens.GRCh37.74.vagrent.cache.gz';
+my $genome_cache = '/lustre/scratch104/sanger/am3/vagrent/e74/Homo_sapiens.GRCh37.74.vagrent.cache.gz';
 my $species = 'HUMAN';
 #my $ensembl_api = '/software/pubseq/PerlModules/Ensembl/www_58_1';
 my $ensembl_api = '/software/pubseq/PerlModules/Ensembl/www_74_1';

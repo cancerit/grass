@@ -19,7 +19,7 @@ use warnings FATAL => 'all';
 use Test::More 'no_plan';
 
 # got to do something about this...
-my $genome_cache = '/lustre/scratch104/sanger/am3/vagrent/Homo_sapiens.GRCh37.74.vagrent.cache.gz';
+my $genome_cache = '/lustre/scratch104/sanger/am3/vagrent/e74/Homo_sapiens.GRCh37.74.vagrent.cache.gz';
 my $ref = '/nfs/cancer_ref01/human/37/genome.fa';
 
 my $script = dirname(abs_path($0)).'/../bin/' . 'grass.pl';
@@ -37,6 +37,7 @@ ZNF711	ZNF711	ENST00000373165	1	_	5UTRintron	1	9	_	ZNF711	ZNF711	ENST00000373165
 Not bedpe format so no vcf file will be created
 ';
 
+    #print "running perl $script -genome_cache $genome_cache -coord $test_coord -ref $ref ";
     my ($test_coord_out, @result) = capture { system("perl $script -genome_cache $genome_cache -coord $test_coord -ref $ref "); };
 
     is ($test_coord_out, $test_coord_res, "check supply coord");
@@ -73,6 +74,7 @@ sub test_file_input_bedpe {
     my $testfile_out_vcf = 'testout_Brass_ann.vcf';
 
     copy $infile, $testfile;
+    print "perl $script -genome_cache $genome_cache -file $testfile -ref $ref \n";
     my ($test_file_res, @result) = capture { system("perl $script -genome_cache $genome_cache -file $testfile -ref $ref "); };
     if ($test_file_res) { print "OUTPUT AND ERRORS: " . $test_file_res . "@result\n"; }
 

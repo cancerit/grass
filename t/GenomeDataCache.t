@@ -29,7 +29,7 @@ my $shard = 'AA';
 my $count = 6;
 
 
-my $genome_cache = '/lustre/scratch104/sanger/am3/vagrent/Homo_sapiens.GRCh37.74.vagrent.cache.gz';
+my $genome_cache = '/lustre/scratch104/sanger/am3/vagrent/e74/Homo_sapiens.GRCh37.74.vagrent.cache.gz';
 
 my $genome_data_cache = new Sanger::CGP::Grass::GenomeData::GenomeDataCache(-genome_cache => $genome_cache,
 							       -gene_id_required => 0);
