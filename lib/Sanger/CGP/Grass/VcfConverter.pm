@@ -48,7 +48,7 @@ use constant NL => "\n";
 
 =head2 new
 
-  Arg (0)    : 
+  Arg (0)    :
   Example    : $object = new Sanger::CGP::Grass::VcfConverter();
   Description: make a new VcfConverter object
   Return     : object
@@ -75,7 +75,7 @@ sub new {
 
   Arg (1)    : infile name
   Example    : $infile = $object->infile($infile);
-  Description: name of the filtered brassI marked groups bedpe infile 
+  Description: name of the filtered brassI marked groups bedpe infile
   Return     : infile
 
 =cut
@@ -106,7 +106,7 @@ sub flip_strand {
 
 =head2 convert
 
-  Arg (0)    : 
+  Arg (0)    :
   Example    : $outfile = $object->convert();
   Description: convert the filtered bedpe infile to vcf format
   Return     : outfile
@@ -130,7 +130,7 @@ sub convert {
     open my $fh_in, "<$in" or die $!;
     open my $fh_out, ">$out" or die $!;
 
-    print $fh_out $header.NL;
+    print $fh_out $header;
 
     while (my $line = <$fh_in>) {
 	next unless ($line);
@@ -147,9 +147,9 @@ sub convert {
 
 sub gen_header{
     my($self,$wt_sample, $mt_sample, $process_logs, $reference_name, $input_source) = @_;
-    
+
     my $contigs = $self->{_contigs};
-    
+
     my $info = [
 	{key => 'INFO', ID => 'SVTYPE',    Number => 1, Type => 'String',   Description => 'Type of structural variant. (All sequence is on the plus strand and in the forward direction).'},
 	{key => 'INFO', ID => 'MATEID',    Number => 1, Type => 'String',   Description => 'ID of mate breakend'},
@@ -179,13 +179,13 @@ sub gen_header{
 	{key => 'INFO', ID => 'RGNNO',     Number => 1, Type => 'Integer',  Description => 'Number of intron/exon where nucleotide variant (breakpoint) occurs in relation to a gene'},
 	{key => 'INFO', ID => 'RGNC',      Number => 1, Type => 'Integer',  Description => 'Count of total number of introns/exons in stated transcript'},
 	];
-	
+
     # details info layout for the tumour and the normal column
     my $format = [
 #	{key => 'FORMAT', ID => 'GT', Number => 1, Type => 'String', Description => 'Genotype'},
 	{key => 'FORMAT', ID => 'RC', Number => 1, Type => 'Integer', Description => 'Count of countributing reads'},
 	];
-    
+
     return Sanger::CGP::Vcf::VcfUtil::gen_tn_vcf_header( $wt_sample, $mt_sample, $contigs, $process_logs, $reference_name, $input_source, $info, $format, []);
 }
 
@@ -254,7 +254,7 @@ sub gen_record {
 	    if ($_ eq '_') { $_ = ''; }
 	    if ($_ eq '.') { $_ = ''; }
 	}
-	    
+
 	# get the up and down coordinate off the end of the line (FlankingBases added these)
 	$down = pop @entries;
 	$up = pop @entries;
@@ -282,7 +282,7 @@ sub gen_record {
 	#               |__|
     if (($strand1 eq '+') && ($strand2 eq '+')) {
 	if ($end2 >= $start2) { $alt1 = $up.$non_templated.'['.$chr2.':'.$start2.'['; }
-	else                  { $alt1 = $up.$non_templated.'['.$chr2.':'.$end2.'['; } 
+	else                  { $alt1 = $up.$non_templated.'['.$chr2.':'.$end2.'['; }
 	if ($end1 >= $start1) { $alt2 = $down.$non_templated.'['.$chr1.':'.$end1.'['; }
 	else                  { $alt2 = $down.$non_templated.'['.$chr1.':'.$start1.'['; }
     }
@@ -290,7 +290,7 @@ sub gen_record {
 	#               |______________|
     elsif (($strand1 eq '+') && ($strand2 eq '-')) {
 	if ($end2 >= $start2) { $alt1 = $up.$non_templated.']'.$chr2.':'.$end2.']'; }
-	else                  { $alt1 = $up.$non_templated.']'.$chr2.':'.$start2.']'; } 
+	else                  { $alt1 = $up.$non_templated.']'.$chr2.':'.$start2.']'; }
 	if ($end1 >= $start1) { $alt2 = '['.$chr1.':'.$end1.'['.$non_templated.$down; }
 	else                  { $alt2 = '['.$chr1.':'.$start1.'['.$non_templated.$down; }
     }
@@ -426,7 +426,7 @@ sub gen_record {
     # RECORD2
     $rec2 .= 'SVTYPE='.$svtype.';';
     $rec2 .= 'MATEID='.$name1.';';
-    unless (($start1 == $end1) && ($start2 == $end2)) { 
+    unless (($start1 == $end1) && ($start2 == $end2)) {
 	$rec2 .= 'IMPRECISE;';
 	if    ($strand2 eq '-') { $rec2 .= 'CIPOS=0,'.$imprecise2.';'; }
 	elsif ($strand2 eq '+') { $rec2 .= 'CIPOS='.$imprecise2.',0;'; }
@@ -462,11 +462,11 @@ sub gen_record {
 
     # FORMAT FIELDS
     # in format put read counts for: normal, tumour
-	
+
 	# FORMAT
 	$rec1 .= SEP.$self->{_format}.SEP.$normal_count.SEP.$tumour_count;
 	$rec2 .= SEP.$self->{_format}.SEP.$normal_count.SEP.$tumour_count;
-	
+
 	return ($rec1,$rec2);
 }
 #-----------------------------------------------------------------------#
