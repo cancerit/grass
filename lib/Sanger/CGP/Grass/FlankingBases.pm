@@ -240,13 +240,13 @@ sub _read_data {
 	#                   -----------
 	if    ($strand1 eq '+') { 
 	    if ($start1 <= $end1) { $Lbase_pos = $start1 + 1; }
-	    else                  { $Lbase_pos = $end1 + 1; }
+	    else                  { $Lbase_pos = $end1; }
 	    if ($self->{debug}) { print "plus strand,  L base $Lbase_pos\n"; }
 	}
 	#     ---------*
 	#                   -----------
 	elsif ($strand1 eq '-') { 
-	    if ($start1 <= $end1) { $Lbase_pos = $end1 + 1; }
+	    if ($start1 <= $end1) { $Lbase_pos = $end1; }
 	    else                  { $Lbase_pos = $start1 + 1; }
 	    if ($self->{debug}) { print "minus strand,  L base $Lbase_pos\n"; }
 	}
@@ -255,7 +255,7 @@ sub _read_data {
 	#                   -----------*
 	if    ($strand2 eq '+') { 
 	    if ($start2 <= $end2) { $Hbase_pos = $end2; }
-	    else                  { $Hbase_pos = $start2; }
+	    else                  { $Hbase_pos = $start2 + 1; }
 #	    if ($start2 <= $end2) { $Hbase_pos = $start2; }
 #	    else                  { $Hbase_pos = $end2; }
 	    if ($self->{debug}) { print "plus strand,  H base $Hbase_pos\n"; }
@@ -263,7 +263,7 @@ sub _read_data {
 	#     ---------
 	#                   *-----------
 	elsif ($strand2 eq '-') { 
-	    if ($start2 <= $end2) { $Hbase_pos = $start2; }
+	    if ($start2 <= $end2) { $Hbase_pos = $start2 + 1; }
 	    else                  { $Hbase_pos = $end2; }
 #	    if ($start2 <= $end2) { $Hbase_pos = $end2; }
 #	    else                  { $Hbase_pos = $start2; }
