@@ -1,8 +1,34 @@
-## Sanger::CGP::Grass::Annotation::RGannotator
+package Sanger::CGP::Grass::Annotation::RGannotator;
 
-#
-# Author las
-#
+##########LICENCE##########
+# Copyright (c) 2014 Genome Research Ltd.
+# 
+# Author: Lucy Stebbings <cgpit@sanger.ac.uk>
+# 
+# This file is part of cgpPindel.
+# 
+# cgpPindel is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or (at your option) any
+# later version.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+# details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+##########LICENCE##########
+
+
+use strict;
+use Sanger::CGP::Grass::Annotation::RGendAnnotator;
+use Sanger::CGP::Grass::Annotation::RGcombinationAnnotator;
+
+use Sanger::CGP::Grass;
+our $VERSION = Sanger::CGP::Grass->VERSION;
+
 =head1 NAME
 
 RGannotator
@@ -36,23 +62,11 @@ Returns a set of completed annotations, formated for printing.
 
 =head1 APPENDIX
 
-
-=cut
-
-package Sanger::CGP::Grass::Annotation::RGannotator;
-
-use strict;
-use Sanger::CGP::Grass::Annotation::RGendAnnotator;
-use Sanger::CGP::Grass::Annotation::RGcombinationAnnotator;
-
-use Sanger::CGP::Grass;
-our $VERSION = Sanger::CGP::Grass->VERSION;
-
 #--------------------------------------------------------------------------------------------#
 
 =head2 new
 
-  Arg (0)    : 
+  Arg (0)    :
   Example    : $object = new Sanger::CGP::Grass::Annotation::RGannotator();
   Description: make a new RGannotator object
   Return     : RGannotator object
@@ -267,11 +281,11 @@ sub rg_annos {
 
 =head2 getAnnotation
 
-  Arg (0)    : 
+  Arg (0)    :
   Example    : $Object->getAnnotation();
   Description: Takes the set of entries and looks for all possible fusion genes.
                Call rg_annos to get the results.
-  Return     : 
+  Return     :
 
 =cut
 
@@ -290,52 +304,52 @@ sub getAnnotation {
 	if ($self->{debug}) { print "entry " . ($entry->name || '') . " " . $entry->chr1 . " " . $entry->pos1_start . " " .$entry->strand1 . " " .$entry->chr2 . " " .$entry->pos2_start . " " .$entry->strand2 . " " . ($entry->shard || '') . "\n"; }
 	my ($anns1,$ccds1) = $self->_get_end_anns($entry, 1);
 	my ($anns2,$ccds2) = $self->_get_end_anns($entry, 2);
-	
+
 	# see if either end is limited to ccds entries only
 	my $ccds = 0;
 	if ($ccds1 || $ccds2) { $ccds = 1; }
-	
-	
+
+
 	# check through the combinations to see if there are any, same gene, same transcript combinations available
 	my $same_gene_trans = {};
-	foreach my $ann1 (@$anns1) { 
+	foreach my $ann1 (@$anns1) {
 	    foreach my $ann2 (@$anns2) {
 		# if the gene is the same, and the transcript is the same
 		# (should they both be in the intron?)
 		if (
-		    ($ann1->L5->gene_id eq $ann1->L3->gene_id) && 
-		    ($ann2->H5->gene_id eq $ann2->H3->gene_id) && 
-		    ($ann1->L5->gene_id eq $ann2->H5->gene_id) && 
+		    ($ann1->L5->gene_id eq $ann1->L3->gene_id) &&
+		    ($ann2->H5->gene_id eq $ann2->H3->gene_id) &&
+		    ($ann1->L5->gene_id eq $ann2->H5->gene_id) &&
 		    ($ann1->L5->transcript_id eq $ann2->H5->transcript_id)) {
 		    my $gene_id = $ann1->L5->gene_id;
 		    $same_gene_trans->{$gene_id} = 1;
 		}
 	    }
 	}
-	
-	# for each rearrangement, send each combination of end annotations to the RGcombinationAnnotator 
+
+	# for each rearrangement, send each combination of end annotations to the RGcombinationAnnotator
 	my $annos = [];
-	foreach my $ann1 (@$anns1) { 
+	foreach my $ann1 (@$anns1) {
 	    foreach my $ann2 (@$anns2) {
-		
+
 		# if the gene is the same, only try to combine same transcripts
 		my $gene_id = $ann1->L5->gene_id;
-		next if ( ($same_gene_trans->{$gene_id}) && 
-			  ($ann1->L5->gene_id eq $ann2->H5->gene_id) && 
+		next if ( ($same_gene_trans->{$gene_id}) &&
+			  ($ann1->L5->gene_id eq $ann2->H5->gene_id) &&
 			 !($ann1->L5->transcript_id eq $ann2->H5->transcript_id));
-		
+
 		my $rganno = $self->_combine($ann1,$ann2, $entry);
 		next unless ($rganno);
 		push @$annos, $rganno;
 	    }
 	}
-	
-	# if there are more than 16 combinations (4 X 4), thin them out to keep only the top 2 scores 
+
+	# if there are more than 16 combinations (4 X 4), thin them out to keep only the top 2 scores
 #	if ((scalar(@$annos) > 16) && !($ccds)) { $annos = $self->thin_out_annos($annos); }
-	
+
 	# keep only 1 of each flag value (longest total genomic length covered by transcript)
-	if ($annos && scalar(@$annos)) { 
-	    $annos = $self->_thin_out_annos2($annos); 
+	if ($annos && scalar(@$annos)) {
+	    $annos = $self->_thin_out_annos2($annos);
 	}
 	# if there are annotations for only end 1
 	elsif ($anns1 && scalar(@$anns1) && (!$anns2 || !(scalar(@$anns2))))  {
@@ -387,12 +401,12 @@ sub _combine {
 							      -strand1 => $entry->strand1,
 							      -strand2 => $entry->strand2,
 							      -shard   => $entry->shard);
-    $combi->combine(); 
+    $combi->combine();
     my $rganno = $combi->anno();
     return($rganno);
 }
 #---------------------------------------------------------------------------------------------------------------#
-# only keep the top 2 highest value flags 
+# only keep the top 2 highest value flags
 sub _thin_out_annos {
     my $self = shift;
     my $annos = shift;
@@ -415,7 +429,7 @@ sub _thin_out_annos {
     return (\@new_annos);
 }
 #---------------------------------------------------------------------------------------------------------------#
-# only keep the longest of each flag value 
+# only keep the longest of each flag value
 sub _thin_out_annos2 {
     my $self = shift;
     my $annos = shift;
@@ -471,9 +485,9 @@ sub _thin_out_annos2 {
 	    $best_anno4flag = $anno;
 	}
 
-	unless ($best_anno4flag) { 
-	    $best_anno4flag = $anno; 
-	    $longest_length = $current_length; 
+	unless ($best_anno4flag) {
+	    $best_anno4flag = $anno;
+	    $longest_length = $current_length;
 	    $longest_trans_length = $current_trans_length;
 #	    print "setting it for the first time\n";
 	}
@@ -514,7 +528,7 @@ sub _thin_end {
  	my $current_length = 0;
 	my $current_trans_length = 0;
 
-	# check the putative upstream/downstream translation product length 
+	# check the putative upstream/downstream translation product length
 	my $current_upstream_length = ($anno->Llength() || 0) + ($anno->Hlength() || 0);
 	# check the translation product length
 	if ($anno->L5) { $current_length = ($anno->L5->translation_length() || 0); }
@@ -573,7 +587,7 @@ sub _thin_end {
 
 =head2 get_list_between
 
-  Arg (0)    : 
+  Arg (0)    :
   Example    : $Object->get_list_between();
   Description: list of genes that lie between the coordinates in this dataset (only available where distance between the coordinates =< 1000000 bases)
   Return     : reference to an array of gene_names
@@ -593,16 +607,16 @@ sub get_list_between {
 	my $chr = $dataset->[0]->chr1;
 	my $start_coord = 0;
 	my $end_coord = 0;
-	if ($dataset->[0]->pos1_end < $dataset->[0]->pos2_start) { 
-	    $distance = $dataset->[0]->pos2_start - $dataset->[0]->pos1_end; 
+	if ($dataset->[0]->pos1_end < $dataset->[0]->pos2_start) {
+	    $distance = $dataset->[0]->pos2_start - $dataset->[0]->pos1_end;
 	    $start_coord = $dataset->[0]->pos1_end;
 	    $end_coord = $dataset->[0]->pos2_start;
-	}  
-	elsif ($dataset->[0]->pos2_end < $dataset->[0]->pos1_start) { 
-	    $distance = $dataset->[0]->pos1_start - $dataset->[0]->pos2_end; 
+	}
+	elsif ($dataset->[0]->pos2_end < $dataset->[0]->pos1_start) {
+	    $distance = $dataset->[0]->pos1_start - $dataset->[0]->pos2_end;
 	    $start_coord = $dataset->[0]->pos2_end;
 	    $end_coord = $dataset->[0]->pos1_start;
-	}  
+	}
 	return('') if ($distance > 1000000); # only get list of genes if less than 1MB between coordinates
 
 	$gene_names = $self->{genome_data}->get_gene_list($chr, $start_coord, $end_coord);
@@ -616,7 +630,7 @@ sub get_list_between {
 
 =head2 format_for_printing
 
-  Arg (0)    : 
+  Arg (0)    :
   Example    : $Object->format_for_printing();
   Description: Format the data processed by this class for printing
   Return     : formatted_string
@@ -653,18 +667,18 @@ sub format_for_printing {
 		. ($first_last_L || '_') . "\t";
 	    if ($show_biotype) {  $string .= '' . ($result->L5->biotype || '_')  . "\t"; }
 	}
-	else { 
-	    $string .= "_\t_\t_\t_\t_\t_\t_\t_\t_\t"; 
+	else {
+	    $string .= "_\t_\t_\t_\t_\t_\t_\t_\t_\t";
 	    if ($show_biotype) {  $string .= "_\t"; }
 	}
-	
+
 	if ($result->H5) {
 	    my $first_last_H = '';
 	    if ($result->H5->start_base) { $first_last_H = 'first_base'; }
 	    if ($result->H5->end_base)   { $first_last_H = 'last_base'; }
 	    my $phaseH = $result->H5->phase;
 	    unless (defined($phaseH)) { $phaseH = '_'; }
-	    
+
 	    $string .= $result->H5->gene . "\t"
 		. $result->H5->gene_id . "\t"
 		. $result->H5->transcript_id . "\t"
@@ -676,17 +690,17 @@ sub format_for_printing {
 		. ($first_last_H || '_') . "\t";
 	    if ($show_biotype) {  $string .= '' . ($result->H5->biotype || '_') . "\t"; }
 	}
-	else { 
-	    $string .= "_\t_\t_\t_\t_\t_\t_\t_\t_\t"; 
+	else {
+	    $string .= "_\t_\t_\t_\t_\t_\t_\t_\t_\t";
 	    if ($show_biotype) {  $string .= "_\t"; }
 	}
-	
+
 	$string .= $result->id_fusion_flag || 0;
 	if ($list_between) { $string .= "\t$between_genes";}
 	$string .= "\n";
     }
-    
-    unless ($found) { 
+
+    unless ($found) {
 	if ($show_biotype) {  $string .= "_\t_\t"; }
 	if ($list_between) { $string .= "_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t0\t$between_genes\n"; }
 	else               { $string .= "_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t_\t0\n"; }

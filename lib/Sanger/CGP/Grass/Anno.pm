@@ -1,8 +1,33 @@
-## Sanger::CGP::Grass::Anno
+package Sanger::CGP::Grass::Anno;
 
-#
-# Author las
-#
+##########LICENCE##########
+# Copyright (c) 2014 Genome Research Ltd.
+# 
+# Author: Lucy Stebbings <cgpit@sanger.ac.uk>
+# 
+# This file is part of cgpPindel.
+# 
+# cgpPindel is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or (at your option) any
+# later version.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+# details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+##########LICENCE##########
+
+
+use Sanger::CGP::Grass::AnnoPoint;
+
+use strict;
+use Sanger::CGP::Grass;
+our $VERSION = Sanger::CGP::Grass->VERSION;
+
 =head1 NAME
 
 Anno
@@ -34,21 +59,11 @@ Lists annotations for a pair of coordinates/coordinate ranges.
 
 =head1 APPENDIX
 
-
-=cut
-
-package Sanger::CGP::Grass::Anno;
-use Sanger::CGP::Grass::AnnoPoint;
-
-use strict;
-use Sanger::CGP::Grass;
-our $VERSION = Sanger::CGP::Grass->VERSION;
-
 #-----------------------------------------------------------------------#
 
 =head2 new
 
-  Arg (0)    : 
+  Arg (0)    :
   Example    : $object = new Sanger::CGP::Grass::Anno();
   Description: make a new Anno object
   Return     : Anno object
@@ -116,7 +131,7 @@ sub id_fusion_flag {
 
   Arg (1)    : $L5
   Example    : $L5 = $object->L5($L5);
-  Description: object representing the 5 prime end of the Lower end of the rearrangement (L5) 
+  Description: object representing the 5 prime end of the Lower end of the rearrangement (L5)
   Return     : $L5
 
 =cut
@@ -132,7 +147,7 @@ sub L5 {
 
   Arg (1)    : $L3
   Example    : $L3 = $object->L3($L3);
-  Description: object representing the 3 prime end of the Lower end of the rearrangement (L3) 
+  Description: object representing the 3 prime end of the Lower end of the rearrangement (L3)
   Return     : $L3
 
 =cut
@@ -164,7 +179,7 @@ sub Ltype {
 
   Arg (1)    : $H5
   Example    : $H5 = $object->H5($H5);
-  Description: object representing the 5 prime end of the Higher end of the rearrangement (H5) 
+  Description: object representing the 5 prime end of the Higher end of the rearrangement (H5)
   Return     : $H5
 
 =cut
@@ -180,7 +195,7 @@ sub H5 {
 
   Arg (1)    : $H3
   Example    : $H3 = $object->H3($H3);
-  Description: object representing the 3 prime end of the Higher end of the rearrangement (H3) 
+  Description: object representing the 3 prime end of the Higher end of the rearrangement (H3)
   Return     : $H3
 
 =cut

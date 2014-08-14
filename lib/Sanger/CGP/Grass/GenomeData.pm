@@ -1,8 +1,36 @@
-## Sanger::CGP::Grass::GenomeData
+package Sanger::CGP::Grass::GenomeData;
 
-#
-# Author las
-#
+##########LICENCE##########
+# Copyright (c) 2014 Genome Research Ltd.
+# 
+# Author: Lucy Stebbings <cgpit@sanger.ac.uk>
+# 
+# This file is part of cgpPindel.
+# 
+# cgpPindel is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or (at your option) any
+# later version.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+# details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+##########LICENCE##########
+
+
+use strict;
+
+use Sanger::CGP::Grass::GenomeData::GenomeDataEnsembl;
+use Sanger::CGP::Grass::GenomeData::GenomeDataCache;
+
+use Sanger::CGP::Grass;
+our $VERSION = Sanger::CGP::Grass->VERSION;
+
+
 =head1 NAME
 
 GenomeData
@@ -14,7 +42,7 @@ use Sanger::CGP::Grass::GenomeData;
 my $genome_data_cache = new Sanger::CGP::Grass::GenomeData(-genome_cache => $genome_cache,
 					      -gene_id_required => 0);
 
-or 
+or
 
 my $genome_data_ensembl = new Sanger::CGP::Grass::GenomeData(-species     => $species,
 						-ensembl_api => $ensembl_api_74,
@@ -25,7 +53,7 @@ depending on whether a genome_cache file (generated using vagrent from Ensembl f
 
 =head1 DESCRIPTION
 
-Class to access genome data from either ensembl DB or a cached flat file version 
+Class to access genome data from either ensembl DB or a cached flat file version
 
 =head1 CONTACT
 
@@ -33,25 +61,11 @@ Class to access genome data from either ensembl DB or a cached flat file version
 
 =head1 APPENDIX
 
-
-=cut
-
-package Sanger::CGP::Grass::GenomeData;
-
-use strict;
-
-use Sanger::CGP::Grass::GenomeData::GenomeDataEnsembl;
-use Sanger::CGP::Grass::GenomeData::GenomeDataCache;
-
-use Sanger::CGP::Grass;
-our $VERSION = Sanger::CGP::Grass->VERSION;
-
-
 #--------------------------------------------------------------------------------------------#
 
 =head2 new
 
-  Arg (0)    : 
+  Arg (0)    :
   Example    : $object = new Sanger::CGP::Grass::GenomeData();
   Description: make a new object
   Return     : object
@@ -279,22 +293,22 @@ sub thin_out_translist {
     my ($self, $translist) = @_;
 
     my @new_translist = ();
-    my $ccds_only = 0;   
+    my $ccds_only = 0;
     # check to see if any have a consensus coding sequence id (only available for human and mouse)
     # this will reduce the number of rg_gene_anno entries by about 1/3rd
     my $ccds_total = 0;
     foreach my $trans(@$translist){
 	if ($trans->ccds_id()) {
-	    $ccds_total++; 
+	    $ccds_total++;
 	    if ($self->{debug}) { print $trans->display_id . " (CCDS)\n"; }
-	    push @new_translist, $trans; 
+	    push @new_translist, $trans;
 	}
     }
-    
+
     if ($self->{debug}) { print "\n ccds count $ccds_total, trans count " . (scalar(@$translist)) . "\n"; }
-    if (scalar(@new_translist)) { 
+    if (scalar(@new_translist)) {
 	$ccds_only = 1; # mark this end as using ccds entries only
-	return(\@new_translist, $ccds_only); 
+	return(\@new_translist, $ccds_only);
     }
 
     # if it can't be restricted, use what we've got
