@@ -1,8 +1,31 @@
-### Sanger::CGP::Grass::DataEntry
+package Sanger::CGP::Grass::DataEntry;
 
-#
-# Author las
-#
+##########LICENCE##########
+# Copyright (c) 2014 Genome Research Ltd.
+# 
+# Author: Lucy Stebbings <cgpit@sanger.ac.uk>
+# 
+# This file is part of cgpPindel.
+# 
+# cgpPindel is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or (at your option) any
+# later version.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+# details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+##########LICENCE##########
+
+
+use strict;
+use Sanger::CGP::Grass;
+our $VERSION = Sanger::CGP::Grass->VERSION;
+
 =head1 NAME
 
 DataEntry
@@ -33,20 +56,11 @@ my $Entry = new Sanger::CGP::Grass::DataEntry(-name       => $name,
 
 =head1 APPENDIX
 
-
-=cut
-
-package Sanger::CGP::Grass::DataEntry;
-
-use strict;
-use Sanger::CGP::Grass;
-our $VERSION = Sanger::CGP::Grass->VERSION;
-
 #-----------------------------------------------------------------------#
 
 =head2 new
 
-  Arg (0)    : 
+  Arg (0)    :
   Example    : $object = new Sanger::CGP::Grass::DataEntry();
   Description: make a new DataEntry object
   Return     : object
@@ -88,7 +102,7 @@ sub new {
 #-----------------------------------------------------------------------#
 #-----------------------------------------------------------------------#
 
-=head2 name 
+=head2 name
 
     Arg (1)    : name
     Example    : $name = $object->name($name);
@@ -105,7 +119,7 @@ sub name {
 }
 #-----------------------------------------------------------------------#
 
-=head2 coord 
+=head2 coord
 
     Arg (1)    : coord
     Example    : $coord = $object->coord($coord);
@@ -128,7 +142,7 @@ sub coord {
 }
 #-----------------------------------------------------------------------#
 
-=head2 chr1 
+=head2 chr1
 
     Arg (1)    : chr1
     Example    : $chr1 = $object->chr1($chr1);
@@ -310,7 +324,7 @@ sub _parse_coords {
 	# parse coordinate - formats 1-:123-456;2+:345-678 or 1-:123;2+:345
 	($coord1, $coord2, $shard) = split ';', $coord_string;
 	return(0) unless ($coord1 && $coord2);
-	
+
 	my ($chr_strand1,$pos_string1) = split ':', $coord1;
 	my ($chr_strand2,$pos_string2) = split ':', $coord2;
 	($chr1, $strand1) = ($chr_strand1 =~ /(\S+?)(\S)$/);
@@ -321,7 +335,7 @@ sub _parse_coords {
 	$pos1_start = $pos_string1;
 	$pos1_end = $pos_string1;
 	if ($pos_string1 =~ /(\d+)-(\d+)/) { $pos1_start = $1; $pos1_end = $2; }
-	
+
 	$pos_string2 =~ s/[,\s]//g;
 	$pos2_start = $pos_string2;
 	$pos2_end = $pos_string2;
@@ -329,22 +343,22 @@ sub _parse_coords {
 
 	unless ($chr1 && $strand1 && $pos1_start && $pos1_end && $chr2 && $strand2 && $pos2_start && $pos2_end) {
 	    print "$coord_string not parsed correctly. skip\n";
-	    return(0); 
+	    return(0);
 	}
     }
     elsif ($coord_string =~ /,/) {
 	# parse coordinate - formats 1:-:123-456,2:+:345-678 or 1:-:123,2:+:345
 	($coord1, $coord2, $shard) = split ',', $coord_string;
-	
+
 	my ($pos_string1,$pos_string2);
 	($chr1,$strand1,$pos_string1) = split ':', $coord1;
 	($chr2,$strand2,$pos_string2) = split ':', $coord2;
-	
+
 	$pos_string1 =~ s/[,\s]//g; # take out commas and spaces in the coordinates
 	$pos1_start = $pos_string1;
 	$pos1_end = $pos_string1;
 	if ($pos_string1 =~ /(\d+)-(\d+)/) { $pos1_start = $1; $pos1_end = $2; }
-	
+
 	$pos_string2 =~ s/[,\s]//g;
 	$pos2_start = $pos_string2;
 	$pos2_end = $pos_string2;

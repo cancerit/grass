@@ -1,8 +1,35 @@
-### Sanger::CGP::Grass::VcfContigs
+package Sanger::CGP::Grass::VcfContigs;
 
-#
-# Author las
-#
+##########LICENCE##########
+# Copyright (c) 2014 Genome Research Ltd.
+# 
+# Author: Lucy Stebbings <cgpit@sanger.ac.uk>
+# 
+# This file is part of cgpPindel.
+# 
+# cgpPindel is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or (at your option) any
+# later version.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+# details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+##########LICENCE##########
+
+
+use Sanger::CGP::Vcf::Contig;
+use Sanger::CGP::Grass;
+our $VERSION = Sanger::CGP::Grass->VERSION;
+
+use strict;
+
+1;
+
 =head1 NAME
 
 VcfConverter
@@ -23,24 +50,11 @@ my $Entry = new Sanger::CGP::Grass::VcfContigs(-fai => $fai_file );
 
 =head1 APPENDIX
 
-
-=cut
-
-package Sanger::CGP::Grass::VcfContigs;
-
-use Sanger::CGP::Vcf::Contig;
-use Sanger::CGP::Grass;
-our $VERSION = Sanger::CGP::Grass->VERSION;
-
-use strict;
-
-1;
-
 #-----------------------------------------------------------------------#
 
 =head2 new
 
-  Arg (0)    : 
+  Arg (0)    :
   Example    : $object = new Sanger::CGP::Grass::VcfContigs();
   Description: make a set of Vcf::Contig objects from an fai file
   Return     : object
@@ -65,7 +79,7 @@ sub new {
 
   Arg (1)    : fai name
   Example    : $fai = $object->fai($fai);
-  Description: name of the fasta fai file to get contig info from 
+  Description: name of the fasta fai file to get contig info from
   Return     : fai
 
 =cut
@@ -113,7 +127,7 @@ sub species {
 
   Arg (1)    : contigs name
   Example    : $contigs = $object->contigs();
-  Description: returns a set of contigs 
+  Description: returns a set of contigs
   Return     : reference to a sorted array of VCF::contig objects
 
 =cut
@@ -127,7 +141,7 @@ sub contigs {
 
 =head2 generate
 
-  Arg (0)    : 
+  Arg (0)    :
   Example    : $contigs = $object->generate();
   Description: generates the set of contigs from a fai file
   Return     : reference to a sorted array of VCF::contig objects
