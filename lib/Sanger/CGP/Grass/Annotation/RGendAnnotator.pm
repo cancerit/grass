@@ -2,21 +2,21 @@ package Sanger::CGP::Grass::Annotation::RGendAnnotator;
 
 ##########LICENCE##########
 # Copyright (c) 2014 Genome Research Ltd.
-# 
+#
 # Author: Lucy Stebbings <cgpit@sanger.ac.uk>
-# 
+#
 # This file is part of cgpPindel.
-# 
+#
 # cgpPindel is free software: you can redistribute it and/or modify it under
 # the terms of the GNU Affero General Public License as published by the Free
 # Software Foundation; either version 3 of the License, or (at your option) any
 # later version.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
 # details.
-# 
+#
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 ##########LICENCE##########
@@ -25,6 +25,8 @@ package Sanger::CGP::Grass::Annotation::RGendAnnotator;
 use strict;
 use Sanger::CGP::Grass::Anno;
 use Sanger::CGP::Grass::AnnoPoint;
+use Carp qw(croak);
+use Try::Tiny qw(try catch);
 
 use Sanger::CGP::Grass;
 our $VERSION = Sanger::CGP::Grass->VERSION;
@@ -322,7 +324,13 @@ sub _getTranscripts {
 
     # get the transcripts overlapping this region
     if ($self->{debug}) { print "\nSLICE " . $self->{chr} . ':' . $self->{pos_start} . '-' . $self->{pos_end} . "\n"; }
-    my $transcripts = $self->{genome_data}->fetch_transcripts_by_region($self->{chr}, ($self->{pos_start}), ($self->{pos_end}));
+    my $transcripts = [];
+    try {
+      $transcripts = $self->{genome_data}->fetch_transcripts_by_region($self->{chr}, ($self->{pos_start}), ($self->{pos_end}));
+    }
+    catch {
+      croak $_ if($_ !~ m/^Tabix::tabix_read: iter is not of type ti_iter_t/);
+    };
     return($transcripts);
 }
 
