@@ -2,21 +2,21 @@ package Sanger::CGP::Grass::FlankingBases;
 
 ##########LICENCE##########
 # Copyright (c) 2014 Genome Research Ltd.
-# 
+#
 # Author: Lucy Stebbings <cgpit@sanger.ac.uk>
-# 
+#
 # This file is part of cgpPindel.
-# 
+#
 # cgpPindel is free software: you can redistribute it and/or modify it under
 # the terms of the GNU Affero General Public License as published by the Free
 # Software Foundation; either version 3 of the License, or (at your option) any
 # later version.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
 # details.
-# 
+#
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 ##########LICENCE##########
@@ -158,7 +158,7 @@ sub process {
     my $ok = $self->_check_file($self->{infile});
     unless ($ok) { print "FlankingBases: Check failed\n"; return; }
 
-    my $ok = $self->_check_file($self->{ref}, 'ref');
+    $ok = $self->_check_file($self->{ref}, 'ref');
     unless ($ok) { print "FlankingBases: Check ref failed\n"; return; }
 
     $ok = $self->_read_data();
