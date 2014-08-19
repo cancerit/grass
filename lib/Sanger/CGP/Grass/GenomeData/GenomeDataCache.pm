@@ -2,21 +2,21 @@ package Sanger::CGP::Grass::GenomeData::GenomeDataCache;
 
 ##########LICENCE##########
 # Copyright (c) 2014 Genome Research Ltd.
-# 
+#
 # Author: Lucy Stebbings <cgpit@sanger.ac.uk>
-# 
-# This file is part of cgpPindel.
-# 
-# cgpPindel is free software: you can redistribute it and/or modify it under
+#
+# This file is part of grass.
+#
+# grass is free software: you can redistribute it and/or modify it under
 # the terms of the GNU Affero General Public License as published by the Free
 # Software Foundation; either version 3 of the License, or (at your option) any
 # later version.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
 # details.
-# 
+#
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 ##########LICENCE##########
@@ -31,6 +31,7 @@ use Sanger::CGP::Grass::GenomeData::Exon;
 use Sanger::CGP::Grass::GenomeData::Transcript;
 use Bio::DB::Sam;
 use Data::Dumper;
+use Try::Tiny qw(try catch);
 
 use Sanger::CGP::Grass;
 our $VERSION = Sanger::CGP::Grass->VERSION;
@@ -212,14 +213,19 @@ sub fetch_transcripts_by_region {
     return undef unless defined $res;
 
     if(defined $res){
-	while(my $ret = $self->{_cache_tbx}->read($res)){
-	    my $length = (split("\t",$ret))[5];
-	    my $raw = (split("\t",$ret))[6];
-	    my $VAR1;
-	    eval $raw;
-	    my $vagrent_transcript = $VAR1;
-	    push @vagrent_transcripts, [$length, $vagrent_transcript];
-	}
+      try {
+        while(my $ret = $self->{_cache_tbx}->read($res)) {
+          my $length = (split("\t",$ret))[5];
+          my $raw = (split("\t",$ret))[6];
+          my $VAR1;
+          eval $raw;
+          my $vagrent_transcript = $VAR1;
+          push @vagrent_transcripts, [$length, $vagrent_transcript];
+        }
+      }
+      catch {
+        croak $_ if($_ !~ m/^Tabix::tabix_read: iter is not of type ti_iter_t/);
+      };
     }
 
 #    my $coord_string = $chr . ':' . $start_coord . '-' . $end_coord;

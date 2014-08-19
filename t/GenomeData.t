@@ -2,21 +2,21 @@
 
 ##########LICENCE##########
 # Copyright (c) 2014 Genome Research Ltd.
-# 
+#
 # Author: Lucy Stebbings <cgpit@sanger.ac.uk>
-# 
-# This file is part of cgpPindel.
-# 
-# cgpPindel is free software: you can redistribute it and/or modify it under
+#
+# This file is part of grass.
+#
+# grass is free software: you can redistribute it and/or modify it under
 # the terms of the GNU Affero General Public License as published by the Free
 # Software Foundation; either version 3 of the License, or (at your option) any
 # later version.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
 # details.
-# 
+#
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 ##########LICENCE##########
@@ -28,8 +28,7 @@ use strict;
 use warnings FATAL => 'all';
 
 use Data::Dumper;
-
-use Sanger::CGP::Grass::GenomeData;
+use FindBin qw($Bin);
 
 use Test::More 'no_plan';
 
@@ -44,26 +43,40 @@ my $pos2_end = 129390103;
 my $shard = 'AA';
 my $count = 6;
 
+for my $module (qw(Sanger::CGP::Grass::GenomeData)) {
+  require_ok $module or BAIL_OUT "Can't load $module";
+}
 
-my $genome_cache = '/lustre/scratch104/sanger/am3/vagrent/e74/Homo_sapiens.GRCh37.74.vagrent.cache.gz';
+my $genome_cache = "$Bin/../testData/vagrent.cache.gz";
 my $species = 'HUMAN';
-my $ensembl_api_58 = '/software/pubseq/PerlModules/Ensembl/www_58_1';
-my $ensembl_api_74 = '/software/pubseq/PerlModules/Ensembl/www_74_1';
+#my $ensembl_api = '/software/pubseq/PerlModules/Ensembl/www_74_1';
+my $ensembl_api = '';
+if(exists $ENV{GRASS_ENS_API}) {
+  $ensembl_api = $ENV{GRASS_ENS_API};
+}
 
-my $genome_data_ensembl = new Sanger::CGP::Grass::GenomeData(-species     => $species,
-						-ensembl_api => $ensembl_api_74,
-						-gene_id_required => 0,
-						-use_all_biotypes => 0);
+SKIP: {
+  unless(-d $ensembl_api) {
+    my $message = "SKIPPING: Root of Ensembl API not found at '$ensembl_api', set ENV: GRASS_ENS_API to enable these tests";
+    warn "$message\n";
+    skip $message, '1';
+  }
+  subtest 'Ensembl API approach' => sub {
+    my $genome_data_ensembl = new_ok('Sanger::CGP::Grass::GenomeData',
+               [-species     => $species,
+                -ensembl_api => $ensembl_api,
+                -gene_id_required => 0,
+                -use_all_biotypes => 0]);
+    is (($genome_data_ensembl->species()), $species , "get species");
+    is (($genome_data_ensembl->ensembl_api()), $ensembl_api , "get ensembl_api");
+    ok($genome_data_ensembl->registry(), 'registry object defined');
+    test_ensembl($genome_data_ensembl, '74');
+  };
+};
 
-my $genome_data_cache = new Sanger::CGP::Grass::GenomeData(-genome_cache => $genome_cache,
-					      -gene_id_required => 0);
-
-ok($genome_data_ensembl, 'object defined');
-is (($genome_data_ensembl->species()), $species , "get species");
-is (($genome_data_ensembl->ensembl_api()), $ensembl_api_74 , "get ensembl_api");
-ok($genome_data_ensembl->registry(), 'registry object defined');
-
-#test_ensembl($genome_data_ensembl, '74');
+my $genome_data_cache = new_ok('Sanger::CGP::Grass::GenomeData',
+              [-genome_cache => $genome_cache,
+					      -gene_id_required => 0]);
 test_cache($genome_data_cache);
 
 #------------------------------------------------------------------------------------------------#
