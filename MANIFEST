@@ -1,5 +1,5 @@
 bin/brass_bedpe2vcf.pl
-bin/get_fai_seq.pl
+bin/cpanm
 bin/grass.pl
 docs.tar.gz
 docs/pod_html/_blkbluw.css
@@ -98,7 +98,9 @@ LICENCE.TXT
 Makefile.PL
 MANIFEST			This list of files
 prerelease.sh
-README.TXT
+README.md
+setup.log
+setup.sh
 t/1_pm_compile.t
 t/2_pl_compile.t
 t/Anno.t

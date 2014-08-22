@@ -2,21 +2,21 @@ package Sanger::CGP::Grass::VcfConverter;
 
 ##########LICENCE##########
 # Copyright (c) 2014 Genome Research Ltd.
-# 
+#
 # Author: Lucy Stebbings <cgpit@sanger.ac.uk>
-# 
+#
 # This file is part of grass.
-# 
+#
 # grass is free software: you can redistribute it and/or modify it under
 # the terms of the GNU Affero General Public License as published by the Free
 # Software Foundation; either version 3 of the License, or (at your option) any
 # later version.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
 # details.
-# 
+#
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 ##########LICENCE##########
@@ -378,6 +378,7 @@ sub gen_record {
     my $svtype = 'BND';
 
     # split the copynumber entry into breakpoints
+    $copynumber_flag ||= q{};
     my ($cnch1, $cnch2) = split '_', $copynumber_flag;
 
     # put both names in for each id for bal_trans and inv
@@ -478,6 +479,8 @@ sub gen_record {
     # in format put read counts for: normal, tumour
 
 	# FORMAT
+	$normal_count = q{} unless(defined $normal_count);
+	$tumour_count = q{} unless(defined $tumour_count);
 	$rec1 .= SEP.$self->{_format}.SEP.$normal_count.SEP.$tumour_count;
 	$rec2 .= SEP.$self->{_format}.SEP.$normal_count.SEP.$tumour_count;
 

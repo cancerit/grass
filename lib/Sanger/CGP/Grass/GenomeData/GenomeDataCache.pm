@@ -23,6 +23,12 @@ package Sanger::CGP::Grass::GenomeData::GenomeDataCache;
 
 
 use strict;
+
+# prevent the init warnings from Tabix
+BEGIN {
+  $SIG{__WARN__} = sub {warn $_[0] unless( $_[0] =~ m/^Subroutine Tabix.* redefined/)};
+};
+
 use Tabix;
 
 use Sanger::CGP::Vagrent::Data::Transcript;

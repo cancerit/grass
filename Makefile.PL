@@ -6,7 +6,7 @@ WriteMakefile(
   NAME          => 'Grass',
   VERSION_FROM  => 'lib/Sanger/CGP/Grass.pm',
   EXE_FILES     => [qw( bin/grass.pl
-                        bin/brass_bedpe2vcf)],
+                        bin/brass_bedpe2vcf.pl)],
   PREREQ_PM     => {
                      'Const::Fast' => 0.014,
                      'Try::Tiny' => 0.19,

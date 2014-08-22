@@ -432,6 +432,15 @@ sub _buildRGanno {
     my $length = int($tran->length);
     my $translation_length = int($tran->translation_length);
 
+
+    # fix up $phase, needs to be forced text
+    if(defined $phase) {
+      $phase .= q{};
+    }
+    else {
+      $phase = q{};
+    }
+
     # make half an RGanno object and populate it with the RGannoPoint objects (L5/L3 or H5/H3) for this end
     my $annopoint1 = undef;
     my $annopoint2 = undef;
@@ -445,7 +454,7 @@ sub _buildRGanno {
 				       -translation_length => $translation_length,
 				       -entrez_id     => $entrez_id,
 				       -strand        => $strand,
-				       -phase         => ($phase . ''),
+				       -phase         => $phase,
 				       -up2           => $upstream_seq,
 				       -down2         => $downstream_seq,
 				       -region        => $start_region,
@@ -463,7 +472,7 @@ sub _buildRGanno {
 				       -translation_length => $translation_length,
 				       -entrez_id     => $entrez_id,
 				       -strand        => $strand,
-				       -phase         => ($phase . ''),
+				       -phase         => $phase,
 				       -up2           => $upstream_seq,
 				       -down2         => $downstream_seq,
 				       -region        => $end_region,

@@ -51,7 +51,7 @@ echo '########################################'
 export HARNESS_PERL_SWITCHES=-MDevel::Cover=-db,reports,-ignore,'t/.*\.t,/Bio',
 rm -rf docs
 mkdir -p docs/reports_text
-prove --nocolor -I ./lib |& grep -vF 'Subroutine Tabix' | sed 's/^/  /' # indent output of prove
+prove -w --nocolor -I ./lib | sed 's/^/  /' # indent output of prove
 
 echo '### Generating test/pod coverage reports ###'
 # removed 'condition' from coverage as '||' 'or' doesn't work properly
