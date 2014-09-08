@@ -128,355 +128,355 @@ sub flip_strand {
 =cut
 
 sub convert {
-    my ($self,$wt_sample, $mt_sample, $process_logs, $reference_name, $input_source) = @_;
+  my ($self,$wt_sample, $mt_sample, $process_logs, $reference_name, $input_source) = @_;
 
-    unless ($self->{infile}) { print "No bedpe infile supplied. Exiting\n"; exit(1); }
+  unless ($self->{infile}) { print "No bedpe infile supplied. Exiting\n"; exit(1); }
 
-    my $filetype = '';
-    if ($self->{infile} =~ /^(\S+?)\.bedpe$/) { $self->{outfile} = $1 . '.vcf'; $filetype = 'bedpe'; }
-    elsif ($self->{infile} =~ /^(\S+?)\.tab$/){ $self->{outfile} = $1 . '.vcf'; $filetype = 'tab'; }
-    else                                   { $self->{outfile} = $self->{infile} . '.vcf'; }
+  my $filetype = '';
+  if ($self->{infile} =~ /^(\S+?)\.bedpe$/) { $self->{outfile} = $1 . '.vcf'; $filetype = 'bedpe'; }
+  elsif ($self->{infile} =~ /^(\S+?)\.tab$/){ $self->{outfile} = $1 . '.vcf'; $filetype = 'tab'; }
+  else                                   { $self->{outfile} = $self->{infile} . '.vcf'; }
 
-    my $header = $self->gen_header($wt_sample, $mt_sample, $process_logs, $reference_name, $input_source);
+  my $header = $self->gen_header($wt_sample, $mt_sample, $process_logs, $reference_name, $input_source);
 
-    my $in = $self->{infile};
-    my $out = $self->{outfile};
-    open my $fh_in, "<$in" or die $!;
-    open my $fh_out, ">$out" or die $!;
+  my $in = $self->{infile};
+  my $out = $self->{outfile};
+  open my $fh_in, "<$in" or die $!;
+  open my $fh_out, ">$out" or die $!;
 
-    print $fh_out $header;
+  print $fh_out $header;
 
-    while (my $line = <$fh_in>) {
-	next unless ($line);
-	next if ($line =~ /^#/);
-	my ($rec1, $rec2) = $self->gen_record($line, $filetype);
-	print $fh_out $rec1.NL;
-	print $fh_out $rec2.NL;
-    }
+  while (my $line = <$fh_in>) {
+    next unless ($line);
+    next if ($line =~ /^#/);
+    my ($rec1, $rec2) = $self->gen_record($line, $filetype);
+    print $fh_out $rec1.NL;
+    print $fh_out $rec2.NL;
+  }
 
-    close $fh_in;
-    close $fh_out;
+  close $fh_in;
+  close $fh_out;
 }
 #-----------------------------------------------------------------------#
 
 sub gen_header{
-    my($self,$wt_sample, $mt_sample, $process_logs, $reference_name, $input_source) = @_;
+  my($self,$wt_sample, $mt_sample, $process_logs, $reference_name, $input_source) = @_;
 
-    my $contigs = $self->{_contigs};
+  my $contigs = $self->{_contigs};
 
-    my $info = [
-	{key => 'INFO', ID => 'SVTYPE',    Number => 1, Type => 'String',   Description => 'Type of structural variant. (All sequence is on the plus strand and in the forward direction).'},
-	{key => 'INFO', ID => 'MATEID',    Number => 1, Type => 'String',   Description => 'ID of mate breakend'},
-	{key => 'INFO', ID => 'HOMSEQ',    Number => 1, Type => 'String',   Description => 'Sequence of base pair identical micro-homology at event breakpoints. Plus strand sequence displayed.'},
-	{key => 'INFO', ID => 'IMPRECISE', Number => 0, Type => 'Flag',     Description => 'Imprecise structural variation'},
-	{key => 'INFO', ID => 'CIPOS',     Number => 2, Type => 'Integer',  Description => 'Confidence interval around POS for imprecise variants'},
-	{key => 'INFO', ID => 'CIEND',     Number => 2, Type => 'Integer',  Description => 'Confidence interval around END for imprecise variants'},
-	{key => 'INFO', ID => 'HOMLEN',    Number => 1, Type => 'Integer',  Description => 'Length of base pair identical micro-homology at event breakpoints'},
-	{key => 'INFO', ID => 'REPS',      Number => '.', Type => 'String', Description => 'Repeat features that may contribute to rearrangement'},
-	{key => 'INFO', ID => 'NPSNO',     Number => 1, Type => 'Integer',  Description => 'Number of normal panel samples with sequencing reads for this rearrangement'},
-	{key => 'INFO', ID => 'NPRNO',     Number => 1, Type => 'Integer',  Description => 'Number of sequencing reads from normal panel samples for this rearrangement'},
-	{key => 'INFO', ID => 'RBLAT',     Number => 1, Type => 'Integer',  Description => 'Blat score for first bkpt range versus second bkpt range'},
-	{key => 'INFO', ID => 'BKDIST',    Number => 1, Type => 'Integer',  Description => 'Distance between breakpoints (-1 if difference chromosomes)'},
-	{key => 'INFO', ID => 'BALS',      Number => '.', Type => 'String', Description => 'IDs of complementary rearrangements involved in balanced translocations'},
-	{key => 'INFO', ID => 'INVS',      Number => '.', Type => 'String', Description => 'IDs of complementary rearrangements involved in inversion events'},
-	{key => 'INFO', ID => 'FFV',       Number => 1, Type => 'Integer',  Description => 'Fusion Flag value. Best one reported.'},
-	{key => 'INFO', ID => 'CNCH',      Number => 1, Type => 'String',   Description => 'Copynumber changepoints lie within CN_WITHIN of breakpoint (A=ASCAT,B=BATTENBERG,N=NGS_PICNIC). Only reported if both rearrangement breakpoints have adjacent changepoints'},
-	{key => 'INFO', ID => 'OCC',       Number => 1, Type => 'Integer',  Description => 'How many time the breakpoint appears in this dataset'},
-	{key => 'INFO', ID => 'SID',       Number => 1, Type => 'String',   Description => 'Unique identifier from gene annotation source or unknown'},
-	{key => 'INFO', ID => 'GENE',      Number => 1, Type => 'String',   Description => 'HUGO gene symbol or Unknown'},
-	{key => 'INFO', ID => 'TID',       Number => 1, Type => 'String',   Description => 'Transcript id for transcript associated with breakpoint'},
-	{key => 'INFO', ID => 'AS',        Number => 1, Type => 'String',   Description => 'Breakpoint annotation on this strand (+ or -)'},
-	{key => 'INFO', ID => 'EPH',       Number => 1, Type => 'Integer',  Description => 'End phase - phase of the first coding base following the breakpoint'},
-	{key => 'INFO', ID => 'PH',        Number => 1, Type => 'Integer',  Description => 'Phase at the breakpoint'},
-	{key => 'INFO', ID => 'FL',        Number => 1, Type => 'String',   Description => 'If the breakpoint is at the first or last base of an exon (common in RNAseq data)'},
-	{key => 'INFO', ID => 'RGN',       Number => 1, Type => 'String',   Description => 'Region where nucleotide variant (breakpoint) occurs in relation to a gene'},
-	{key => 'INFO', ID => 'RGNNO',     Number => 1, Type => 'Integer',  Description => 'Number of intron/exon where nucleotide variant (breakpoint) occurs in relation to a gene'},
-	{key => 'INFO', ID => 'RGNC',      Number => 1, Type => 'Integer',  Description => 'Count of total number of introns/exons in stated transcript'},
-	];
+  my $info = [
+    {key => 'INFO', ID => 'SVTYPE',    Number => 1, Type => 'String',   Description => 'Type of structural variant. (All sequence is on the plus strand and in the forward direction).'},
+    {key => 'INFO', ID => 'MATEID',    Number => 1, Type => 'String',   Description => 'ID of mate breakend'},
+    {key => 'INFO', ID => 'HOMSEQ',    Number => 1, Type => 'String',   Description => 'Sequence of base pair identical micro-homology at event breakpoints. Plus strand sequence displayed.'},
+    {key => 'INFO', ID => 'IMPRECISE', Number => 0, Type => 'Flag',     Description => 'Imprecise structural variation'},
+    {key => 'INFO', ID => 'CIPOS',     Number => 2, Type => 'Integer',  Description => 'Confidence interval around POS for imprecise variants'},
+    {key => 'INFO', ID => 'CIEND',     Number => 2, Type => 'Integer',  Description => 'Confidence interval around END for imprecise variants'},
+    {key => 'INFO', ID => 'HOMLEN',    Number => 1, Type => 'Integer',  Description => 'Length of base pair identical micro-homology at event breakpoints'},
+    {key => 'INFO', ID => 'REPS',      Number => '.', Type => 'String', Description => 'Repeat features that may contribute to rearrangement'},
+    {key => 'INFO', ID => 'NPSNO',     Number => 1, Type => 'Integer',  Description => 'Number of normal panel samples with sequencing reads for this rearrangement'},
+    {key => 'INFO', ID => 'NPRNO',     Number => 1, Type => 'Integer',  Description => 'Number of sequencing reads from normal panel samples for this rearrangement'},
+    {key => 'INFO', ID => 'RBLAT',     Number => 1, Type => 'Integer',  Description => 'Blat score for first bkpt range versus second bkpt range'},
+    {key => 'INFO', ID => 'BKDIST',    Number => 1, Type => 'Integer',  Description => 'Distance between breakpoints (-1 if difference chromosomes)'},
+    {key => 'INFO', ID => 'BALS',      Number => '.', Type => 'String', Description => 'IDs of complementary rearrangements involved in balanced translocations'},
+    {key => 'INFO', ID => 'INVS',      Number => '.', Type => 'String', Description => 'IDs of complementary rearrangements involved in inversion events'},
+    {key => 'INFO', ID => 'FFV',       Number => 1, Type => 'Integer',  Description => 'Fusion Flag value. Best one reported.'},
+    {key => 'INFO', ID => 'CNCH',      Number => 1, Type => 'String',   Description => 'Copynumber changepoints lie within CN_WITHIN of breakpoint (A=ASCAT,B=BATTENBERG,N=NGS_PICNIC). Only reported if both rearrangement breakpoints have adjacent changepoints'},
+    {key => 'INFO', ID => 'OCC',       Number => 1, Type => 'Integer',  Description => 'How many time the breakpoint appears in this dataset'},
+    {key => 'INFO', ID => 'SID',       Number => 1, Type => 'String',   Description => 'Unique identifier from gene annotation source or unknown'},
+    {key => 'INFO', ID => 'GENE',      Number => 1, Type => 'String',   Description => 'HUGO gene symbol or Unknown'},
+    {key => 'INFO', ID => 'TID',       Number => 1, Type => 'String',   Description => 'Transcript id for transcript associated with breakpoint'},
+    {key => 'INFO', ID => 'AS',        Number => 1, Type => 'String',   Description => 'Breakpoint annotation on this strand (+ or -)'},
+    {key => 'INFO', ID => 'EPH',       Number => 1, Type => 'Integer',  Description => 'End phase - phase of the first coding base following the breakpoint'},
+    {key => 'INFO', ID => 'PH',        Number => 1, Type => 'Integer',  Description => 'Phase at the breakpoint'},
+    {key => 'INFO', ID => 'FL',        Number => 1, Type => 'String',   Description => 'If the breakpoint is at the first or last base of an exon (common in RNAseq data)'},
+    {key => 'INFO', ID => 'RGN',       Number => 1, Type => 'String',   Description => 'Region where nucleotide variant (breakpoint) occurs in relation to a gene'},
+    {key => 'INFO', ID => 'RGNNO',     Number => 1, Type => 'Integer',  Description => 'Number of intron/exon where nucleotide variant (breakpoint) occurs in relation to a gene'},
+    {key => 'INFO', ID => 'RGNC',      Number => 1, Type => 'Integer',  Description => 'Count of total number of introns/exons in stated transcript'},
+      ];
 
-    # details info layout for the tumour and the normal column
-    my $format = [
+  # details info layout for the tumour and the normal column
+  my $format = [
 #	{key => 'FORMAT', ID => 'GT', Number => 1, Type => 'String', Description => 'Genotype'},
-	{key => 'FORMAT', ID => 'RC', Number => 1, Type => 'Integer', Description => 'Count of countributing reads'},
-	];
+    {key => 'FORMAT', ID => 'RC', Number => 1, Type => 'Integer', Description => 'Count of countributing reads'},
+      ];
 
-    return Sanger::CGP::Vcf::VcfUtil::gen_tn_vcf_header( $wt_sample, $mt_sample, $contigs, $process_logs, $reference_name, $input_source, $info, $format, []);
+  return Sanger::CGP::Vcf::VcfUtil::gen_tn_vcf_header( $wt_sample, $mt_sample, $contigs, $process_logs, $reference_name, $input_source, $info, $format, []);
 }
 
 #-----------------------------------------------------------------------#
 
 sub gen_record {
-    my($self, $line, $bedpe_or_tab) = @_;
+  my($self, $line, $bedpe_or_tab) = @_;
 
-    chomp $line;
+  chomp $line;
 
-    my $non_templated = '';
-    my ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $repeats, $np_sample_count, $tumour_count, $normal_count, $np_count, $distance, $sample, $sample_type, $names, $count, $bal_trans, $inv, $occL, $occH, $copynumber_flag, $range_blat, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag, $up, $down, $microhom, $string, $samp);
+  my $non_templated = '';
+  my ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $repeats, $np_sample_count, $tumour_count, $normal_count, $np_count, $distance, $sample, $sample_type, $names, $count, $bal_trans, $inv, $occL, $occH, $copynumber_flag, $range_blat, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag, $up, $down, $microhom, $string, $samp);
 
-    # each line splits into 2 records
-    my $rec1 = '';
-    my $rec2 = '';
+  # each line splits into 2 records
+  my $rec1 = '';
+  my $rec2 = '';
 
-    # check if its a brassI or brassII linev (for brassII start and end pos may need swapping over)
-    if ($bedpe_or_tab eq 'bedpe') {
+  # check if its a brassI or brassII linev (for brassII start and end pos may need swapping over)
+  if ($bedpe_or_tab eq 'bedpe') {
 # brass I:
 # chr1  start1  end1    chr2    start2  end2    id/name brass_score     strand1 strand2 repeats np_sample_count tumour_count     normal_count    np_count        bkpt_distance   sample  sample_type     names   count   bal_trans inv     occL    occH    copynumber_flag range_blat      gene    gene_id transcript_id   strand  end_phase       region  region_number   total_region_count      first/last      gene    gene_id transcript_id   strand  phase region  region_number   total_region_count      first/last      fusion_flag     Upstream_base   Downstream_base(rev_strand)
-	my @entries = split "\t", $line;
-	foreach (@entries) {
+    my @entries = split "\t", $line;
+    foreach (@entries) {
 	    if ($_ eq '_') { $_ = ''; }
 	    if ($_ eq '.') { $_ = ''; }
-	}
+    }
 
-	# get the up and down coordinate off the end of the line (FlankingBases added these)
-	$down = pop @entries;
-	$up = pop @entries;
+    # get the up and down coordinate off the end of the line (FlankingBases added these)
+    $down = pop @entries;
+    $up = pop @entries;
 
-	# brassI annotated (look for the tumour/normal count fields) - second strand may have already been flipped to brassII-like constructed style
-	if (($entries[11] =~ /^\d+$/) && ($entries[12] =~ /^\d+$/) && (scalar(@entries) > 30)) {
+    # brassI annotated (look for the tumour/normal count fields) - second strand may have already been flipped to brassII-like constructed style
+    if (($entries[11] =~ /^\d+$/) && ($entries[12] =~ /^\d+$/) && (scalar(@entries) > 30)) {
 	    ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $repeats, $np_sample_count, $tumour_count, $normal_count, $np_count, $distance, $sample, $sample_type, $names, $count, $bal_trans, $inv, $occL, $occH, $copynumber_flag, $range_blat, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag) = @entries;
 	    if ($self->{flip_strand}) {
-		if ($strand2 eq '+') { $strand2 = '-'; }
-		elsif ($strand2 eq '-') { $strand2 = '+'; }
+        if ($strand2 eq '+') { $strand2 = '-'; }
+        elsif ($strand2 eq '-') { $strand2 = '+'; }
 	    }
-	}
-	# brassI unannotated (look for the tumour/normal count fields) - second strand may have already been flipped to brassII-like constructed style
-	elsif (($entries[11] =~ /^\d+$/) && ($entries[12] =~ /^\d+$/)) {
+    }
+    # brassI unannotated (look for the tumour/normal count fields) - second strand may have already been flipped to brassII-like constructed style
+    elsif (($entries[11] =~ /^\d+$/) && ($entries[12] =~ /^\d+$/)) {
 	    ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $repeats, $np_sample_count, $tumour_count, $normal_count, $np_count, $distance, $sample, $sample_type, $names, $count, $bal_trans, $inv, $occL, $occH, $copynumber_flag, $range_blat) = @entries;
 	    if ($self->{flip_strand}) {
-		if ($strand2 eq '+') { $strand2 = '-'; }
-		elsif ($strand2 eq '-') { $strand2 = '+'; }
+        if ($strand2 eq '+') { $strand2 = '-'; }
+        elsif ($strand2 eq '-') { $strand2 = '+'; }
 	    }
-	}
-
-	# brassII annotated(look for the non-templated/microhm  fields)
-	elsif ((!$entries[12] || ($entries[12] =~ /^[ATGCN]+$/i)) && (!$entries[13] || ($entries[13] =~ /^[ATGCN]+$/i)) && (scalar(@entries) > 16))  {
-	    ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $samp, $string, $non_templated, $microhom, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag) = @entries;
-	}
-	# brassII unannotated (look for the non-templated/microhm  fields)
-	elsif ((!$entries[12] || ($entries[12] =~ /^[ATGCN]+$/i)) && (!$entries[13] || ($entries[13] =~ /^[ATGCN]+$/i)))  {
-	    ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $samp, $string, $non_templated, $microhom) = @entries;
-	}
-
-	# add 1 to all start ranges since converting from zero based bedpe format
-	$start1++;
-	$start2++;
     }
-    elsif ($bedpe_or_tab eq 'tab') {
+
+    # brassII annotated(look for the non-templated/microhm  fields)
+    elsif ((!$entries[12] || ($entries[12] =~ /^[ATGCN]+$/i)) && (!$entries[13] || ($entries[13] =~ /^[ATGCN]+$/i)) && (scalar(@entries) > 16))  {
+	    ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $samp, $string, $non_templated, $microhom, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag) = @entries;
+    }
+    # brassII unannotated (look for the non-templated/microhm  fields)
+    elsif ((!$entries[12] || ($entries[12] =~ /^[ATGCN]+$/i)) && (!$entries[13] || ($entries[13] =~ /^[ATGCN]+$/i)))  {
+	    ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $samp, $string, $non_templated, $microhom) = @entries;
+    }
+
+    # add 1 to all start ranges since converting from zero based bedpe format
+    $start1++;
+    $start2++;
+  }
+  elsif ($bedpe_or_tab eq 'tab') {
 # 1       +       32144920        32144921        14      -       73658034        73658033        .       T       99      5013985 PD4107a,        Chr.1  32144920(21)--T--73658034(33)  Chr.14-  (score 99) annotation stuff??? up? down?
-	my @entries = split "\t", $line;
-	foreach (@entries) {
+    my @entries = split "\t", $line;
+    foreach (@entries) {
 	    if ($_ eq '_') { $_ = ''; }
 	    if ($_ eq '.') { $_ = ''; }
-	}
-
-	# get the up and down coordinate off the end of the line (FlankingBases added these)
-	$down = pop @entries;
-	$up = pop @entries;
-
-	# all tab files are brassII
-	($chr1, $strand1, $start1, $end1, $chr2, $strand2, $start2, $end2, $non_templated, $microhom, $score, $name, $sample, $string, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag) = @entries;
     }
 
-    # set the name for each breakpoint end
-    my $name1 = $name . '_1';
-    my $name2 = $name . '_2';
+    # get the up and down coordinate off the end of the line (FlankingBases added these)
+    $down = pop @entries;
+    $up = pop @entries;
 
-    # construst the forward and reverse alt fields - add 1 to all start fields since converting from zero based bedpe format
-    # the flanking bases are currently fetched (in FlankingBases) on the plus and displayed on the plus strand so dont need revcomp'ing
-    #
-    # BRASSII issues:
-    #   For each range, the lowest coordinate will be in the second field not the first if the strand is negative
-    #   Microhom and non-templated sequences are only available for BrassII entries, not BrassI
-    #   In the bedpe file, microhom and non-templated sequences are shown on the same strand as the firest coordinate range (ie as it is in the assembled reads)
-    #     1000 genomes states that all variants are shown on the plus strand (http://www.1000genomes.org/faq/what-strand-are-variants-your-vcf-file)
-    #     so convert the homseq/non-templated to the plus strand
-    my $alt1 = '';
-    my $alt2 = '';
+    # all tab files are brassII
+    ($chr1, $strand1, $start1, $end1, $chr2, $strand2, $start2, $end2, $non_templated, $microhom, $score, $name, $sample, $string, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag) = @entries;
+  }
+
+  # set the name for each breakpoint end
+  my $name1 = $name . '_1';
+  my $name2 = $name . '_2';
+
+  # construst the forward and reverse alt fields - add 1 to all start fields since converting from zero based bedpe format
+  # the flanking bases are currently fetched (in FlankingBases) on the plus and displayed on the plus strand so dont need revcomp'ing
+  #
+  # BRASSII issues:
+  #   For each range, the lowest coordinate will be in the second field not the first if the strand is negative
+  #   Microhom and non-templated sequences are only available for BrassII entries, not BrassI
+  #   In the bedpe file, microhom and non-templated sequences are shown on the same strand as the firest coordinate range (ie as it is in the assembled reads)
+  #     1000 genomes states that all variants are shown on the plus strand (http://www.1000genomes.org/faq/what-strand-are-variants-your-vcf-file)
+  #     so convert the homseq/non-templated to the plus strand
+  my $alt1 = '';
+  my $alt2 = '';
 	#     *---------    -----------*
 	#               |__|
-    if (($strand1 eq '+') && ($strand2 eq '+')) {
-	if ($end2 >= $start2) { $alt1 = $up.$non_templated.'['.$chr2.':'.$start2.'['; }
-	else                  { $alt1 = $up.$non_templated.'['.$chr2.':'.$end2.'['; }
-	if ($end1 >= $start1) { $alt2 = $down.$non_templated.'['.$chr1.':'.$end1.'['; }
-	else                  { $alt2 = $down.$non_templated.'['.$chr1.':'.$start1.'['; }
-    }
+  if (($strand1 eq '+') && ($strand2 eq '+')) {
+    if ($end2 >= $start2) { $alt1 = $up.$non_templated.'['.$chr2.':'.$start2.'['; }
+    else                  { $alt1 = $up.$non_templated.'['.$chr2.':'.$end2.'['; }
+    if ($end1 >= $start1) { $alt2 = $down.$non_templated.'['.$chr1.':'.$end1.'['; }
+    else                  { $alt2 = $down.$non_templated.'['.$chr1.':'.$start1.'['; }
+  }
 	#     *---------    *-----------
 	#               |______________|
-    elsif (($strand1 eq '+') && ($strand2 eq '-')) {
-	if ($end2 >= $start2) { $alt1 = $up.$non_templated.']'.$chr2.':'.$end2.']'; }
-	else                  { $alt1 = $up.$non_templated.']'.$chr2.':'.$start2.']'; }
-	if ($end1 >= $start1) { $alt2 = '['.$chr1.':'.$end1.'['.$non_templated.$down; }
-	else                  { $alt2 = '['.$chr1.':'.$start1.'['.$non_templated.$down; }
-    }
+  elsif (($strand1 eq '+') && ($strand2 eq '-')) {
+    if ($end2 >= $start2) { $alt1 = $up.$non_templated.']'.$chr2.':'.$end2.']'; }
+    else                  { $alt1 = $up.$non_templated.']'.$chr2.':'.$start2.']'; }
+    if ($end1 >= $start1) { $alt2 = '['.$chr1.':'.$end1.'['.$non_templated.$down; }
+    else                  { $alt2 = '['.$chr1.':'.$start1.'['.$non_templated.$down; }
+  }
 	#     ---------*    *-----------
 	#    |__________________________|
-    elsif (($strand1 eq '-') && ($strand2 eq '-')) {
-	if ($end2 >= $start2) { $alt1 = ']'.$chr2.':'.$end2.']'._revcomp($non_templated).$up; }
-	else                  { $alt1 = ']'.$chr2.':'.$start2.']'._revcomp($non_templated).$up; }
-	if ($end1 >= $start1) { $alt2 = ']'.$chr1.':'.$start1.']'._revcomp($non_templated).$down; }
-        else                  { $alt2 = ']'.$chr1.':'.$end1.']'._revcomp($non_templated).$down; }
-    }
+  elsif (($strand1 eq '-') && ($strand2 eq '-')) {
+    if ($end2 >= $start2) { $alt1 = ']'.$chr2.':'.$end2.']'._revcomp($non_templated).$up; }
+    else                  { $alt1 = ']'.$chr2.':'.$start2.']'._revcomp($non_templated).$up; }
+    if ($end1 >= $start1) { $alt2 = ']'.$chr1.':'.$start1.']'._revcomp($non_templated).$down; }
+    else                  { $alt2 = ']'.$chr1.':'.$end1.']'._revcomp($non_templated).$down; }
+  }
 	#     ---------*    -----------*
 	#    |_____________|
-    elsif (($strand1 eq '-') && ($strand2 eq '+')) {
-        if ($end2 >= $start2) { $alt1 = '['.$chr2.':'.$start2.'['._revcomp($non_templated).$up; }
-        else                  { $alt1 = '['.$chr2.':'.$end2.'['._revcomp($non_templated).$up; }
-        if ($end1 >= $start1) { $alt2 = $down._revcomp($non_templated).']'.$chr1.':'.$start1.']'; }
-        else                  { $alt2 = $down._revcomp($non_templated).']'.$chr1.':'.$end1.']'; }
-    }
+  elsif (($strand1 eq '-') && ($strand2 eq '+')) {
+    if ($end2 >= $start2) { $alt1 = '['.$chr2.':'.$start2.'['._revcomp($non_templated).$up; }
+    else                  { $alt1 = '['.$chr2.':'.$end2.'['._revcomp($non_templated).$up; }
+    if ($end1 >= $start1) { $alt2 = $down._revcomp($non_templated).']'.$chr1.':'.$start1.']'; }
+    else                  { $alt2 = $down._revcomp($non_templated).']'.$chr1.':'.$end1.']'; }
+  }
 
-    # BrassII only - microhom sequences in the bedpe file are shown on the same strand as the first coordinate range so convert to plus strand (stick with forward direction)
-    #    the second instance of the microhomology sequence in the rearrangement may need reverse complementing, depending on strands
-    my $microhom1 = '';
-    my $microhom2 = '';
+  # BrassII only - microhom sequences in the bedpe file are shown on the same strand as the first coordinate range so convert to plus strand (stick with forward direction)
+  #    the second instance of the microhomology sequence in the rearrangement may need reverse complementing, depending on strands
+  my $microhom1 = '';
+  my $microhom2 = '';
 	#     *---------    -----------*
 	#               |__|
-    if (($strand1 eq '+') && ($strand2 eq '+')) {
-	$microhom1 = $microhom;
-	$microhom2 = $microhom;
-    }
+  if (($strand1 eq '+') && ($strand2 eq '+')) {
+    $microhom1 = $microhom;
+    $microhom2 = $microhom;
+  }
 	#     *---------    *-----------
 	#               |______________|
-    elsif (($strand1 eq '+') && ($strand2 eq '-')) {
-	$microhom1 = $microhom;
-	$microhom2 = _revcomp($microhom);
+  elsif (($strand1 eq '+') && ($strand2 eq '-')) {
+    $microhom1 = $microhom;
+    $microhom2 = _revcomp($microhom);
 #	$microhom2 = _rev($microhom2);
-    }
+  }
 	#     ---------*    *-----------
 	#    |__________________________|
-    elsif (($strand1 eq '-') && ($strand2 eq '-')) {
-	$microhom1 = _revcomp($microhom);
-	$microhom2 = _revcomp($microhom);
-    }
+  elsif (($strand1 eq '-') && ($strand2 eq '-')) {
+    $microhom1 = _revcomp($microhom);
+    $microhom2 = _revcomp($microhom);
+  }
 	#     ---------*    -----------*
 	#    |_____________|
-    elsif (($strand1 eq '-') && ($strand2 eq '+')) {
-	$microhom1 = _revcomp($microhom);
-	$microhom2 = $microhom;
-    }
+  elsif (($strand1 eq '-') && ($strand2 eq '+')) {
+    $microhom1 = _revcomp($microhom);
+    $microhom2 = $microhom;
+  }
 
-    # work out the imprecise range for each end
-    my $imprecise1 = abs($end1 - $start1);
-    my $imprecise2 = abs($end2 - $start2);
-    my $imprecise_length = abs($imprecise1 + $imprecise2);
+  # work out the imprecise range for each end
+  my $imprecise1 = abs($end1 - $start1);
+  my $imprecise2 = abs($end2 - $start2);
+  my $imprecise_length = abs($imprecise1 + $imprecise2);
 
-    # CORE FIELDS
-    # (CHR  POS     ID      REF     ALT     QUAL    FILTER)
-    if    (($strand1 eq '+') && ($end1 >= $start1)) { $rec1 .= $chr1.SEP.$start1.SEP.$name1.SEP.$up.SEP.$alt1.SEP.$score.SEP.'.'.SEP; }
-    elsif (($strand1 eq '+') && ($start1 > $end1))  { $rec1 .= $chr1.SEP.$end1.SEP.$name1.SEP.$up.SEP.$alt1.SEP.$score.SEP.'.'.SEP; }
-    elsif (($strand1 eq '-') && ($end1 >= $start1)) { $rec1 .= $chr1.SEP.$end1.SEP.$name1.SEP.$up.SEP.$alt1.SEP.$score.SEP.'.'.SEP; }
-    elsif (($strand1 eq '-') && ($start1 > $end1))  { $rec1 .= $chr1.SEP.$start1.SEP.$name1.SEP.$up.SEP.$alt1.SEP.$score.SEP.'.'.SEP; }
+  # CORE FIELDS
+  # (CHR  POS     ID      REF     ALT     QUAL    FILTER)
+  if    (($strand1 eq '+') && ($end1 >= $start1)) { $rec1 .= $chr1.SEP.$start1.SEP.$name1.SEP.$up.SEP.$alt1.SEP.$score.SEP.'.'.SEP; }
+  elsif (($strand1 eq '+') && ($start1 > $end1))  { $rec1 .= $chr1.SEP.$end1.SEP.$name1.SEP.$up.SEP.$alt1.SEP.$score.SEP.'.'.SEP; }
+  elsif (($strand1 eq '-') && ($end1 >= $start1)) { $rec1 .= $chr1.SEP.$end1.SEP.$name1.SEP.$up.SEP.$alt1.SEP.$score.SEP.'.'.SEP; }
+  elsif (($strand1 eq '-') && ($start1 > $end1))  { $rec1 .= $chr1.SEP.$start1.SEP.$name1.SEP.$up.SEP.$alt1.SEP.$score.SEP.'.'.SEP; }
 
-    if    (($strand2 eq '+') && ($end2 >= $start2)) { $rec2 .= $chr2.SEP.$end2.SEP.$name2.SEP.$down.SEP.$alt2.SEP.$score.SEP.'.'.SEP; }
-    elsif (($strand2 eq '+') && ($start2 > $end2))  { $rec2 .= $chr2.SEP.$start2.SEP.$name2.SEP.$down.SEP.$alt2.SEP.$score.SEP.'.'.SEP; }
-    elsif (($strand2 eq '-') && ($end2 >= $start2)) { $rec2 .= $chr2.SEP.$start2.SEP.$name2.SEP.$down.SEP.$alt2.SEP.$score.SEP.'.'.SEP; }
-    elsif (($strand2 eq '-') && ($start2 > $end2))  { $rec2 .= $chr2.SEP.$end2.SEP.$name2.SEP.$down.SEP.$alt2.SEP.$score.SEP.'.'.SEP; }
+  if    (($strand2 eq '+') && ($end2 >= $start2)) { $rec2 .= $chr2.SEP.$end2.SEP.$name2.SEP.$down.SEP.$alt2.SEP.$score.SEP.'.'.SEP; }
+  elsif (($strand2 eq '+') && ($start2 > $end2))  { $rec2 .= $chr2.SEP.$start2.SEP.$name2.SEP.$down.SEP.$alt2.SEP.$score.SEP.'.'.SEP; }
+  elsif (($strand2 eq '-') && ($end2 >= $start2)) { $rec2 .= $chr2.SEP.$start2.SEP.$name2.SEP.$down.SEP.$alt2.SEP.$score.SEP.'.'.SEP; }
+  elsif (($strand2 eq '-') && ($start2 > $end2))  { $rec2 .= $chr2.SEP.$end2.SEP.$name2.SEP.$down.SEP.$alt2.SEP.$score.SEP.'.'.SEP; }
 
-    # INFO FIELDS
+  # INFO FIELDS
 
-    # treat all as complex events
-    my $svtype = 'BND';
+  # treat all as complex events
+  my $svtype = 'BND';
 
-    # split the copynumber entry into breakpoints
-    $copynumber_flag ||= q{};
-    my ($cnch1, $cnch2) = split '_', $copynumber_flag;
+  # split the copynumber entry into breakpoints
+  $copynumber_flag ||= q{};
+  my ($cnch1, $cnch2) = split '_', $copynumber_flag;
 
-    # put both names in for each id for bal_trans and inv
-    my @bal_trans_formatted = ();
-    my $bal_trans_formatted = '';
-    if ($bal_trans) {
-	my @entries = split ',', $bal_trans;
-	foreach my $root_name(@entries) { $bal_trans_formatted .= $root_name.'_1|'.$root_name.'_2'; }
-    }
-    $bal_trans_formatted = join ',', @bal_trans_formatted if (@bal_trans_formatted);
+  # put both names in for each id for bal_trans and inv
+  my @bal_trans_formatted = ();
+  my $bal_trans_formatted = '';
+  if ($bal_trans) {
+    my @entries = split ',', $bal_trans;
+    foreach my $root_name(@entries) { $bal_trans_formatted .= $root_name.'_1|'.$root_name.'_2'; }
+  }
+  $bal_trans_formatted = join ',', @bal_trans_formatted if (@bal_trans_formatted);
 
-    my @inv_formatted = ();
-    my $inv_formatted = '';
-    if ($inv) {
-	my @entries = split ',', $inv;
-	foreach my $root_name(@entries) { $inv_formatted .= $root_name.'_1|'.$root_name.'_2'; }
-    }
-    $inv_formatted = join ',', @inv_formatted if (@inv_formatted);
+  my @inv_formatted = ();
+  my $inv_formatted = '';
+  if ($inv) {
+    my @entries = split ',', $inv;
+    foreach my $root_name(@entries) { $inv_formatted .= $root_name.'_1|'.$root_name.'_2'; }
+  }
+  $inv_formatted = join ',', @inv_formatted if (@inv_formatted);
 
-    # assemble records
+  # assemble records
 
-    # RECORD1
-    $rec1 .= 'SVTYPE='.$svtype.';';
-    $rec1 .= 'MATEID='.$name2.';';
-    unless (($start1 == $end1) && ($start2 == $end2)) {
-	$rec1 .= 'IMPRECISE;';
-	if    ($strand1 eq '+') { $rec1 .= 'CIPOS=0,'.$imprecise1.';'; }
-	elsif ($strand1 eq '-') { $rec1 .= 'CIPOS='.$imprecise1.',0;'; }
-	if    ($strand2 eq '-') { $rec1 .= 'CIEND='.$imprecise2.',0;'; }
-	elsif ($strand2 eq '+') { $rec1 .= 'CIEND=0,'.$imprecise2.';'; }
-    }
-    $rec1 .= 'REPS='.$repeats.';' if ($repeats);
-    $rec1 .= 'NPSNO='.$np_sample_count.';' if ($np_sample_count);
-    $rec1 .= 'NPRNO='.$np_count.';' if ($np_count);
-    $rec1 .= 'RBLAT='.$range_blat.';' if ($range_blat);
-    $rec1 .= 'BKDIST='.$distance.';' if ($distance);
-    $rec1 .= 'BALS='.$bal_trans_formatted.';' if ($bal_trans_formatted);
-    $rec1 .= 'INVS='.$inv_formatted.';' if ($inv_formatted);
-    $rec1 .= 'FFV='.$fusion_flag.';' if (defined($fusion_flag) && $gene1 && $gene2);
-    $rec1 .= 'CNCH='.$cnch1.';' if ($cnch1);
-    $rec1 .= 'OCC='.$occL.';' if ($occL);
-    if ($microhom1) {
-	$rec1 .= 'HOMSEQ='.$microhom1.';';
-	$rec1 .= 'HOMLEN='.length($microhom1).';';
-    }
-    # gene annotation
-    if ($gene1) {
-	$rec1 .= 'GENE='.$gene1.';';
-	$rec1 .= 'SID='.$gene_id1.';';
-	$rec1 .= 'TID='.$transcript_id1.';';
-	$rec1 .= 'AS='.$astrand1.';';
-	$rec1 .= 'EPH='.$end_phase1.';' if ($end_phase1);
-	$rec1 .= 'RGN='.$region1.';' if ($region1);
-	$rec1 .= 'RGNNO='.$region_number1.';' if ($region_number1);
-	$rec1 .= 'RGNC='.$total_region_count1.';' if ($total_region_count1);
-	$rec1 .= 'FL='.$firstlast1.';' if ($firstlast1);
-    }
+  # RECORD1
+  $rec1 .= 'SVTYPE='.$svtype.';';
+  $rec1 .= 'MATEID='.$name2.';';
+  unless (($start1 == $end1) && ($start2 == $end2)) {
+    $rec1 .= 'IMPRECISE;';
+    if    ($strand1 eq '+') { $rec1 .= 'CIPOS=0,'.$imprecise1.';'; }
+    elsif ($strand1 eq '-') { $rec1 .= 'CIPOS='.$imprecise1.',0;'; }
+    if    ($strand2 eq '-') { $rec1 .= 'CIEND='.$imprecise2.',0;'; }
+    elsif ($strand2 eq '+') { $rec1 .= 'CIEND=0,'.$imprecise2.';'; }
+  }
+  $rec1 .= 'REPS='.$repeats.';' if ($repeats);
+  $rec1 .= 'NPSNO='.$np_sample_count.';' if ($np_sample_count);
+  $rec1 .= 'NPRNO='.$np_count.';' if ($np_count);
+  $rec1 .= 'RBLAT='.$range_blat.';' if ($range_blat);
+  $rec1 .= 'BKDIST='.$distance.';' if ($distance);
+  $rec1 .= 'BALS='.$bal_trans_formatted.';' if ($bal_trans_formatted);
+  $rec1 .= 'INVS='.$inv_formatted.';' if ($inv_formatted);
+  $rec1 .= 'FFV='.$fusion_flag.';' if (defined($fusion_flag) && $gene1 && $gene2);
+  $rec1 .= 'CNCH='.$cnch1.';' if ($cnch1);
+  $rec1 .= 'OCC='.$occL.';' if ($occL);
+  if ($microhom1) {
+    $rec1 .= 'HOMSEQ='.$microhom1.';';
+    $rec1 .= 'HOMLEN='.length($microhom1).';';
+  }
+  # gene annotation
+  if ($gene1) {
+    $rec1 .= 'GENE='.$gene1.';';
+    $rec1 .= 'SID='.$gene_id1.';';
+    $rec1 .= 'TID='.$transcript_id1.';';
+    $rec1 .= 'AS='.$astrand1.';';
+    $rec1 .= 'EPH='.$end_phase1.';' if ($end_phase1);
+    $rec1 .= 'RGN='.$region1.';' if ($region1);
+    $rec1 .= 'RGNNO='.$region_number1.';' if ($region_number1);
+    $rec1 .= 'RGNC='.$total_region_count1.';' if ($total_region_count1);
+    $rec1 .= 'FL='.$firstlast1.';' if ($firstlast1);
+  }
 
 
-    # RECORD2
-    $rec2 .= 'SVTYPE='.$svtype.';';
-    $rec2 .= 'MATEID='.$name1.';';
-    unless (($start1 == $end1) && ($start2 == $end2)) {
-	$rec2 .= 'IMPRECISE;';
-	if    ($strand2 eq '-') { $rec2 .= 'CIPOS=0,'.$imprecise2.';'; }
-	elsif ($strand2 eq '+') { $rec2 .= 'CIPOS='.$imprecise2.',0;'; }
-	if    ($strand1 eq '+') { $rec2 .= 'CIEND='.$imprecise1.',0;'; }
-	elsif ($strand1 eq '-') { $rec2 .= 'CIEND=0,'.$imprecise1.';'; }
-    }
-    $rec2 .= 'REPS='.$repeats.';' if ($repeats);
-    $rec2 .= 'NPSNO='.$np_sample_count.';' if ($np_sample_count);
-    $rec2 .= 'NPRNO='.$np_count.';' if ($np_count);
-    $rec2 .= 'RBLAT='.$range_blat.';' if ($range_blat);
-    $rec2 .= 'BKDIST='.$distance.';' if ($distance);
-    $rec2 .= 'BALS='.$bal_trans_formatted.';' if ($bal_trans_formatted);
-    $rec2 .= 'INVS='.$inv_formatted.';' if ($inv_formatted);
-    $rec2 .= 'FFV='.$fusion_flag.';' if (defined($fusion_flag) && $gene1 && $gene2);
-    $rec2 .= 'CNCH='.$cnch2.';' if ($cnch2);
-    $rec2 .= 'OCC='.$occH.';' if ($occH);
-    if ($microhom2) {
-	$rec2 .= 'HOMSEQ='.$microhom2.';';
-	$rec2 .= 'HOMLEN='.length($microhom2).';';
-    }
-    # gene annotation
-    if ($gene2) {
-	$rec2 .= 'GENE='.$gene2.';';
-	$rec2 .= 'SID='.$gene_id2.';';
-	$rec2 .= 'TID='.$transcript_id2.';';
-	$rec2 .= 'AS='.$astrand2.';';
-	$rec2 .= 'PH='.$phase2.';' if ($phase2);
-	$rec2 .= 'RGN='.$region2.';' if ($region2);
-	$rec2 .= 'RGNNO='.$region_number2.';' if ($region_number2);
-	$rec2 .= 'RGNC='.$total_region_count2.';' if ($total_region_count2);
-	$rec2 .= 'FL='.$firstlast2.';' if ($firstlast2);
-    }
+  # RECORD2
+  $rec2 .= 'SVTYPE='.$svtype.';';
+  $rec2 .= 'MATEID='.$name1.';';
+  unless (($start1 == $end1) && ($start2 == $end2)) {
+    $rec2 .= 'IMPRECISE;';
+    if    ($strand2 eq '-') { $rec2 .= 'CIPOS=0,'.$imprecise2.';'; }
+    elsif ($strand2 eq '+') { $rec2 .= 'CIPOS='.$imprecise2.',0;'; }
+    if    ($strand1 eq '+') { $rec2 .= 'CIEND='.$imprecise1.',0;'; }
+    elsif ($strand1 eq '-') { $rec2 .= 'CIEND=0,'.$imprecise1.';'; }
+  }
+  $rec2 .= 'REPS='.$repeats.';' if ($repeats);
+  $rec2 .= 'NPSNO='.$np_sample_count.';' if ($np_sample_count);
+  $rec2 .= 'NPRNO='.$np_count.';' if ($np_count);
+  $rec2 .= 'RBLAT='.$range_blat.';' if ($range_blat);
+  $rec2 .= 'BKDIST='.$distance.';' if ($distance);
+  $rec2 .= 'BALS='.$bal_trans_formatted.';' if ($bal_trans_formatted);
+  $rec2 .= 'INVS='.$inv_formatted.';' if ($inv_formatted);
+  $rec2 .= 'FFV='.$fusion_flag.';' if (defined($fusion_flag) && $gene1 && $gene2);
+  $rec2 .= 'CNCH='.$cnch2.';' if ($cnch2);
+  $rec2 .= 'OCC='.$occH.';' if ($occH);
+  if ($microhom2) {
+    $rec2 .= 'HOMSEQ='.$microhom2.';';
+    $rec2 .= 'HOMLEN='.length($microhom2).';';
+  }
+  # gene annotation
+  if ($gene2) {
+    $rec2 .= 'GENE='.$gene2.';';
+    $rec2 .= 'SID='.$gene_id2.';';
+    $rec2 .= 'TID='.$transcript_id2.';';
+    $rec2 .= 'AS='.$astrand2.';';
+    $rec2 .= 'PH='.$phase2.';' if ($phase2);
+    $rec2 .= 'RGN='.$region2.';' if ($region2);
+    $rec2 .= 'RGNNO='.$region_number2.';' if ($region_number2);
+    $rec2 .= 'RGNC='.$total_region_count2.';' if ($total_region_count2);
+    $rec2 .= 'FL='.$firstlast2.';' if ($firstlast2);
+  }
 
-    # FORMAT FIELDS
-    # in format put read counts for: normal, tumour
+  # FORMAT FIELDS
+  # in format put read counts for: normal, tumour
 
 	# FORMAT
 	$normal_count = q{} unless(defined $normal_count);
@@ -488,29 +488,29 @@ sub gen_record {
 }
 #-----------------------------------------------------------------------#
 sub _revcomp {
-    my $seq = shift;
-    if ($seq) { $seq = uc($seq); }
-    else { return(''); }
+  my $seq = shift;
+  if ($seq) { $seq = uc($seq); }
+  else { return(''); }
 
-    my @seq = split '',$seq;
-    foreach (@seq) {
-	if    ($_ eq 'A') { $_ = 'T'; }
-	elsif ($_ eq 'T') { $_ = 'A'; }
-	elsif ($_ eq 'G') { $_ = 'C'; }
-	elsif ($_ eq 'C') { $_ = 'G'; }
-    }
-    my $done_seq = join '', reverse(@seq);
-    return($done_seq);
+  my @seq = split '',$seq;
+  foreach (@seq) {
+    if    ($_ eq 'A') { $_ = 'T'; }
+    elsif ($_ eq 'T') { $_ = 'A'; }
+    elsif ($_ eq 'G') { $_ = 'C'; }
+    elsif ($_ eq 'C') { $_ = 'G'; }
+  }
+  my $done_seq = join '', reverse(@seq);
+  return($done_seq);
 }
 #-----------------------------------------------------------------------#
 sub _rev {
-    my $seq = shift;
-    if ($seq) { $seq = uc($seq); }
-    else { return(''); }
+  my $seq = shift;
+  if ($seq) { $seq = uc($seq); }
+  else { return(''); }
 
-    my @seq = split '',$seq;
-    my $done_seq = join '', reverse(@seq);
-    return($done_seq);
+  my @seq = split '',$seq;
+  my $done_seq = join '', reverse(@seq);
+  return($done_seq);
 }
 #-----------------------------------------------------------------------#
 1;
