@@ -1,0 +1,119 @@
+##fileformat=VCFv4.1
+##fileDate=20140512
+##source_20140512.1=VcfConverter.t_v1.0.0
+##reference=/nfs/users/nfs_l/las/CGP_github/grass/t/../testData/genome.fa
+##contig=<ID=1,assembly=GRC37,length=249250621,species=HUMAN>
+##contig=<ID=2,assembly=GRC37,length=243199373,species=HUMAN>
+##contig=<ID=3,assembly=GRC37,length=198022430,species=HUMAN>
+##contig=<ID=4,assembly=GRC37,length=191154276,species=HUMAN>
+##contig=<ID=5,assembly=GRC37,length=180915260,species=HUMAN>
+##contig=<ID=6,assembly=GRC37,length=171115067,species=HUMAN>
+##contig=<ID=7,assembly=GRC37,length=159138663,species=HUMAN>
+##contig=<ID=8,assembly=GRC37,length=146364022,species=HUMAN>
+##contig=<ID=9,assembly=GRC37,length=141213431,species=HUMAN>
+##contig=<ID=10,assembly=GRC37,length=135534747,species=HUMAN>
+##contig=<ID=11,assembly=GRC37,length=135006516,species=HUMAN>
+##contig=<ID=12,assembly=GRC37,length=133851895,species=HUMAN>
+##contig=<ID=13,assembly=GRC37,length=115169878,species=HUMAN>
+##contig=<ID=14,assembly=GRC37,length=107349540,species=HUMAN>
+##contig=<ID=15,assembly=GRC37,length=102531392,species=HUMAN>
+##contig=<ID=16,assembly=GRC37,length=90354753,species=HUMAN>
+##contig=<ID=17,assembly=GRC37,length=81195210,species=HUMAN>
+##contig=<ID=18,assembly=GRC37,length=78077248,species=HUMAN>
+##contig=<ID=19,assembly=GRC37,length=59128983,species=HUMAN>
+##contig=<ID=20,assembly=GRC37,length=63025520,species=HUMAN>
+##contig=<ID=21,assembly=GRC37,length=48129895,species=HUMAN>
+##contig=<ID=22,assembly=GRC37,length=51304566,species=HUMAN>
+##contig=<ID=MT,assembly=GRC37,length=16569,species=HUMAN>
+##contig=<ID=X,assembly=GRC37,length=155270560,species=HUMAN>
+##contig=<ID=Y,assembly=GRC37,length=59373566,species=HUMAN>
+##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant. (All sequence is on the plus strand and in the forward direction).">
+##INFO=<ID=MATEID,Number=1,Type=String,Description="ID of mate breakend">
+##INFO=<ID=HOMSEQ,Number=1,Type=String,Description="Sequence of base pair identical micro-homology at event breakpoints. Plus strand sequence displayed.">
+##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise structural variation">
+##INFO=<ID=CIPOS,Number=2,Type=Integer,Description="Confidence interval around POS for imprecise variants">
+##INFO=<ID=CIEND,Number=2,Type=Integer,Description="Confidence interval around END for imprecise variants">
+##INFO=<ID=HOMLEN,Number=1,Type=Integer,Description="Length of base pair identical micro-homology at event breakpoints">
+##INFO=<ID=REPS,Number=.,Type=String,Description="Repeat features that may contribute to rearrangement">
+##INFO=<ID=NPSNO,Number=1,Type=Integer,Description="Number of normal panel samples with sequencing reads for this rearrangement">
+##INFO=<ID=NPRNO,Number=1,Type=Integer,Description="Number of sequencing reads from normal panel samples for this rearrangement">
+##INFO=<ID=RBLAT,Number=1,Type=Integer,Description="Blat score for first bkpt range versus second bkpt range">
+##INFO=<ID=BKDIST,Number=1,Type=Integer,Description="Distance between breakpoints (-1 if difference chromosomes)">
+##INFO=<ID=BALS,Number=.,Type=String,Description="IDs of complementary rearrangements involved in balanced translocations">
+##INFO=<ID=INVS,Number=.,Type=String,Description="IDs of complementary rearrangements involved in inversion events">
+##INFO=<ID=FFV,Number=1,Type=Integer,Description="Fusion Flag value. Best one reported.">
+##INFO=<ID=CNCH,Number=1,Type=String,Description="Copynumber changepoints lie within CN_WITHIN of breakpoint (A=ASCAT,B=BATTENBERG,N=NGS_PICNIC). Only reported if both rearrangement breakpoints have adjacent changepoints">
+##INFO=<ID=OCC,Number=1,Type=Integer,Description="How many time the breakpoint appears in this dataset">
+##INFO=<ID=SID,Number=1,Type=String,Description="Unique identifier from gene annotation source or unknown">
+##INFO=<ID=GENE,Number=1,Type=String,Description="HUGO gene symbol or Unknown">
+##INFO=<ID=TID,Number=1,Type=String,Description="Transcript id for transcript associated with breakpoint">
+##INFO=<ID=AS,Number=1,Type=String,Description="Breakpoint annotation on this strand (+ or -)">
+##INFO=<ID=EPH,Number=1,Type=Integer,Description="End phase - phase of the first coding base following the breakpoint">
+##INFO=<ID=PH,Number=1,Type=Integer,Description="Phase at the breakpoint">
+##INFO=<ID=FL,Number=1,Type=String,Description="If the breakpoint is at the first or last base of an exon (common in RNAseq data)">
+##INFO=<ID=RGN,Number=1,Type=String,Description="Region where nucleotide variant (breakpoint) occurs in relation to a gene">
+##INFO=<ID=RGNNO,Number=1,Type=Integer,Description="Number of intron/exon where nucleotide variant (breakpoint) occurs in relation to a gene">
+##INFO=<ID=RGNC,Number=1,Type=Integer,Description="Count of total number of introns/exons in stated transcript">
+##FORMAT=<ID=RC,Number=1,Type=Integer,Description="Count of countributing reads">
+##vcfProcessLog_20140512.1=<InputVCFSource=<VcfConverter.t>,InputVCFVer=<1.0.0>>
+##SAMPLE=<ID=NORMAL,Description="Normal",Accession=45,Platform=HiSeq,Protocol=genomic,SampleName=PD1234b,Source=ID_SAMPLE_COSMIC,Study=12346>
+##SAMPLE=<ID=TUMOUR,Description="Mutant",Accession=123,Platform=HiSeq,Protocol=genomic,SampleName=PD1234a,Source=ID_SAMPLE_COSMIC,Study=12345>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NORMAL	TUMOUR
+1	247423088	34_1	C	C[1:247426965[	100	.	SVTYPE=BND;MATEID=34_2;IMPRECISE;CIPOS=0,1;CIEND=0,1;HOMSEQ=T;HOMLEN=1;	RC		
+1	247426965	34_2	T	]1:247423088]T	100	.	SVTYPE=BND;MATEID=34_1;IMPRECISE;CIPOS=0,1;CIEND=0,1;HOMSEQ=T;HOMLEN=1;	RC		
+2	8481314	38_1	G	]2:8862605]G	99	.	SVTYPE=BND;MATEID=38_2;IMPRECISE;CIPOS=0,4;CIEND=0,4;HOMSEQ=GACT;HOMLEN=4;	RC		
+2	8862605	38_2	G	G[2:8481314[	99	.	SVTYPE=BND;MATEID=38_1;IMPRECISE;CIPOS=0,4;CIEND=0,4;HOMSEQ=GACT;HOMLEN=4;	RC		
+2	77858084	59_1	T	T[2:78030132[	100	.	SVTYPE=BND;MATEID=59_2;	RC		
+2	78030132	59_2	A	]2:77858084]A	100	.	SVTYPE=BND;MATEID=59_1;	RC		
+2	115789325	68_1	T	[7:47865378[GTTTCTTTTTACGTAGGAGTTATTTCTTTCTCT	100	.	SVTYPE=BND;MATEID=68_2;	RC		
+7	47865378	68_2	T	[2:115789325[GTTTCTTTTTACGTAGGAGTTATTTCTTTCTCT	100	.	SVTYPE=BND;MATEID=68_1;	RC		
+3	30964692	95_1	A	ATTTTTG[3:123595213[	100	.	SVTYPE=BND;MATEID=95_2;	RC		
+3	123595213	95_2	T	]3:30964692]TTTTTGT	100	.	SVTYPE=BND;MATEID=95_1;	RC		
+5	18660036	155_1	G	[5:18662304[TG	100	.	SVTYPE=BND;MATEID=155_2;	RC		
+5	18662304	155_2	T	[5:18660036[TT	100	.	SVTYPE=BND;MATEID=155_1;	RC		
+7	933993	265_1	G	[12:105670750[G	100	.	SVTYPE=BND;MATEID=265_2;	RC		
+12	105670750	265_2	T	[7:933993[T	100	.	SVTYPE=BND;MATEID=265_1;	RC		
+7	11540717	270_1	T	TC[12:75543515[	100	.	SVTYPE=BND;MATEID=270_2;	RC		
+12	75543515	270_2	A	]7:11540717]CA	100	.	SVTYPE=BND;MATEID=270_1;	RC		
+7	29821334	279_1	A	[8:103009744[A	100	.	SVTYPE=BND;MATEID=279_2;IMPRECISE;CIPOS=0,1;CIEND=1,0;HOMSEQ=A;HOMLEN=1;	RC		
+8	103009743	279_2	T	[7:29821335[T	100	.	SVTYPE=BND;MATEID=279_1;IMPRECISE;CIPOS=0,1;CIEND=1,0;HOMSEQ=T;HOMLEN=1;	RC		
+7	41625819	285_1	C	[12:123344747[C	100	.	SVTYPE=BND;MATEID=285_2;	RC		
+12	123344747	285_2	A	[7:41625819[A	100	.	SVTYPE=BND;MATEID=285_1;	RC		
+7	47865264	291_1	C	[15:26085961[C	99	.	SVTYPE=BND;MATEID=291_2;IMPRECISE;CIPOS=0,1;CIEND=1,0;HOMSEQ=C;HOMLEN=1;	RC		
+15	26085960	291_2	G	[7:47865265[G	99	.	SVTYPE=BND;MATEID=291_1;IMPRECISE;CIPOS=0,1;CIEND=1,0;HOMSEQ=G;HOMLEN=1;	RC		
+7	47865362	292_1	C	]13:43473963]C	100	.	SVTYPE=BND;MATEID=292_2;	RC		
+13	43473963	292_2	A	A[7:47865362[	100	.	SVTYPE=BND;MATEID=292_1;	RC		
+7	53826208	298_1	A	A]7:54758753]	99	.	SVTYPE=BND;MATEID=298_2;IMPRECISE;CIPOS=0,2;CIEND=2,0;HOMSEQ=GT;HOMLEN=2;	RC		
+7	54758751	298_2	C	C]7:53826210]	99	.	SVTYPE=BND;MATEID=298_1;IMPRECISE;CIPOS=0,2;CIEND=2,0;HOMSEQ=AC;HOMLEN=2;	RC		
+7	54169602	299_1	C	]8:77783087]C	100	.	SVTYPE=BND;MATEID=299_2;IMPRECISE;CIPOS=0,1;CIEND=0,1;HOMSEQ=C;HOMLEN=1;	RC		
+8	77783087	299_2	C	C[7:54169602[	100	.	SVTYPE=BND;MATEID=299_1;IMPRECISE;CIPOS=0,1;CIEND=0,1;HOMSEQ=C;HOMLEN=1;	RC		
+7	55907492	301_1	G	]8:77792853]G	100	.	SVTYPE=BND;MATEID=301_2;IMPRECISE;CIPOS=0,2;CIEND=0,2;HOMSEQ=GT;HOMLEN=2;	RC		
+8	77792853	301_2	T	T[7:55907492[	100	.	SVTYPE=BND;MATEID=301_1;IMPRECISE;CIPOS=0,2;CIEND=0,2;HOMSEQ=GT;HOMLEN=2;	RC		
+8	102805081	350_1	T	T]12:75239347]	70	.	SVTYPE=BND;MATEID=350_2;IMPRECISE;CIPOS=0,1;CIEND=1,0;HOMSEQ=G;HOMLEN=1;	RC		
+12	75239346	350_2	C	C]8:102805082]	70	.	SVTYPE=BND;MATEID=350_1;IMPRECISE;CIPOS=0,1;CIEND=1,0;HOMSEQ=C;HOMLEN=1;	RC		
+8	109956299	352_1	C	C[8:119151065[	99	.	SVTYPE=BND;MATEID=352_2;IMPRECISE;CIPOS=0,2;CIEND=0,2;HOMSEQ=AG;HOMLEN=2;	RC		
+8	119151065	352_2	A	]8:109956299]A	99	.	SVTYPE=BND;MATEID=352_1;IMPRECISE;CIPOS=0,2;CIEND=0,2;HOMSEQ=AG;HOMLEN=2;	RC		
+8	118445558	355_1	C	C]8:132969936]	100	.	SVTYPE=BND;MATEID=355_2;	RC		
+8	132969936	355_2	A	A]8:118445558]	100	.	SVTYPE=BND;MATEID=355_1;	RC		
+13	30729268	454_1	G	G[13:31266756[	84	.	SVTYPE=BND;MATEID=454_2;IMPRECISE;CIPOS=0,2;CIEND=0,2;HOMSEQ=CT;HOMLEN=2;	RC		
+13	31266756	454_2	C	]13:30729268]C	84	.	SVTYPE=BND;MATEID=454_1;IMPRECISE;CIPOS=0,2;CIEND=0,2;HOMSEQ=CT;HOMLEN=2;	RC		
+13	32135625	457_1	T	TG[13:32228129[	100	.	SVTYPE=BND;MATEID=457_2;	RC		
+13	32228129	457_2	C	]13:32135625]GC	100	.	SVTYPE=BND;MATEID=457_1;	RC		
+13	78094824	533_1	A	A[13:78117973[	100	.	SVTYPE=BND;MATEID=533_2;	RC		
+13	78117973	533_2	T	]13:78094824]T	100	.	SVTYPE=BND;MATEID=533_1;	RC		
+13	105862740	584_1	G	G[13:106195536[	100	.	SVTYPE=BND;MATEID=584_2;IMPRECISE;CIPOS=0,1;CIEND=0,1;HOMSEQ=C;HOMLEN=1;	RC		
+13	106195536	584_2	C	]13:105862740]C	100	.	SVTYPE=BND;MATEID=584_1;IMPRECISE;CIPOS=0,1;CIEND=0,1;HOMSEQ=C;HOMLEN=1;	RC		
+13	106114076	585_1	T	]13:106236424]T	95	.	SVTYPE=BND;MATEID=585_2;IMPRECISE;CIPOS=0,1;CIEND=0,1;HOMSEQ=T;HOMLEN=1;	RC		
+13	106236424	585_2	C	C[13:106114076[	95	.	SVTYPE=BND;MATEID=585_1;IMPRECISE;CIPOS=0,1;CIEND=0,1;HOMSEQ=T;HOMLEN=1;	RC		
+13	106186440	586_1	C	C[13:106264821[	100	.	SVTYPE=BND;MATEID=586_2;IMPRECISE;CIPOS=0,1;CIEND=0,1;HOMSEQ=A;HOMLEN=1;	RC		
+13	106264821	586_2	A	]13:106186440]A	100	.	SVTYPE=BND;MATEID=586_1;IMPRECISE;CIPOS=0,1;CIEND=0,1;HOMSEQ=A;HOMLEN=1;	RC		
+16	6513702	612_1	G	G[16:7201252[	100	.	SVTYPE=BND;MATEID=612_2;IMPRECISE;CIPOS=0,3;CIEND=0,3;HOMSEQ=TTT;HOMLEN=3;	RC		
+16	7201252	612_2	T	]16:6513702]T	100	.	SVTYPE=BND;MATEID=612_1;IMPRECISE;CIPOS=0,3;CIEND=0,3;HOMSEQ=TTT;HOMLEN=3;	RC		
+16	7078396	617_1	G	GAAGATGGAGGGTAATATGGAAGGGAC[16:7148145[	94	.	SVTYPE=BND;MATEID=617_2;	RC		
+16	7148145	617_2	A	]16:7078396]AAGATGGAGGGTAATATGGAAGGGACA	94	.	SVTYPE=BND;MATEID=617_1;	RC		
+18	51627487	649_1	C	C[18:66338693[	94	.	SVTYPE=BND;MATEID=649_2;	RC		
+18	66338693	649_2	A	]18:51627487]A	94	.	SVTYPE=BND;MATEID=649_1;	RC		
+19	21057860	660_1	C	CCGCTAATTCTTCACAGTGAAAACCAATTCCATATCACACACTCACTCACCGCAGTGGGAGTCTCTTCAGTGTCACCCATTCACTTATCAAAGTGGGAACCTCTTCACTCTTACCCACTCATTTACCACGGTGAGAACCTGTTCATTGTCAC[19:21058012[	89	.	SVTYPE=BND;MATEID=660_2;	RC		
+19	21058012	660_2	C	]19:21057860]CGCTAATTCTTCACAGTGAAAACCAATTCCATATCACACACTCACTCACCGCAGTGGGAGTCTCTTCAGTGTCACCCATTCACTTATCAAAGTGGGAACCTCTTCACTCTTACCCACTCATTTACCACGGTGAGAACCTGTTCATTGTCACC	89	.	SVTYPE=BND;MATEID=660_1;	RC		
+21	34611853	726_1	G	G[21:34612122[	95	.	SVTYPE=BND;MATEID=726_2;IMPRECISE;CIPOS=0,48;CIEND=0,48;HOMSEQ=GGCCCAGAGTGGTCACAGCCCTCAATGTTGTGAGCTACAGGTTCTATA;HOMLEN=48;	RC		
+21	34612122	726_2	G	]21:34611853]G	95	.	SVTYPE=BND;MATEID=726_1;IMPRECISE;CIPOS=0,48;CIEND=0,48;HOMSEQ=GGCCCAGAGTGGTCACAGCCCTCAATGTTGTGAGCTACAGGTTCTATA;HOMLEN=48;	RC		
