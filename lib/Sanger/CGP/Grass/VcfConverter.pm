@@ -257,9 +257,9 @@ sub gen_record {
 	    ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $samp, $string, $non_templated, $microhom) = @entries;
     }
 
-    # add 1 to all start ranges since converting from zero based bedpe format
+    # add 1 to the start range since converting from zero based bedpe format
     $start1++;
-    $start2++;
+    $end1++;
   }
   elsif ($bedpe_or_tab eq 'tab') {
 # 1       +       32144920        32144921        14      -       73658034        73658033        .       T       99      5013985 PD4107a,        Chr.1  32144920(21)--T--73658034(33)  Chr.14-  (score 99) annotation stuff??? up? down?
@@ -281,6 +281,10 @@ sub gen_record {
   my $name1 = $name . '_1';
   my $name2 = $name . '_2';
 
+  # work out the imprecise range for each end
+  my $imprecise1 = abs($end1 - $start1);
+  my $imprecise2 = abs($end2 - $start2);
+
   # construst the forward and reverse alt fields - add 1 to all start fields since converting from zero based bedpe format
   # the flanking bases are currently fetched (in FlankingBases) on the plus and displayed on the plus strand so dont need revcomp'ing
   #
@@ -290,87 +294,80 @@ sub gen_record {
   #   In the bedpe file, microhom and non-templated sequences are shown on the same strand as the firest coordinate range (ie as it is in the assembled reads)
   #     1000 genomes states that all variants are shown on the plus strand (http://www.1000genomes.org/faq/what-strand-are-variants-your-vcf-file)
   #     so convert the homseq/non-templated to the plus strand
+  # the second entry for a rearrangement reads in the opposite direction so strands are flipped
+  # BrassII only - microhom sequences in the bedpe file are shown on the same strand as the first coordinate range so convert to plus strand (stick with forward direction)
+  #    the second instance of the microhomology sequence in the rearrangement may need reverse complementing, depending on strands
+
+  # work out the alt field and what ref base (start or end) for record 1 and record2
+  # If there is a microhomology, the second entry for the rearrangement may be the leftmost base of the microhom, not the flanking base
+  my $microhom1 = '';
+  my $microhom2 = '';
+  my $pos1 = '';
+  my $pos2 = '';
   my $alt1 = '';
   my $alt2 = '';
 	#     *---------    -----------*
 	#               |__|
   if (($strand1 eq '+') && ($strand2 eq '+')) {
-    if ($end2 >= $start2) { $alt1 = $up.$non_templated.'['.$chr2.':'.$start2.'['; }
-    else                  { $alt1 = $up.$non_templated.'['.$chr2.':'.$end2.'['; }
-    if ($end1 >= $start1) { $alt2 = $down.$non_templated.'['.$chr1.':'.$end1.'['; }
-    else                  { $alt2 = $down.$non_templated.'['.$chr1.':'.$start1.'['; }
-  }
-	#     *---------    *-----------
-	#               |______________|
-  elsif (($strand1 eq '+') && ($strand2 eq '-')) {
-    if ($end2 >= $start2) { $alt1 = $up.$non_templated.']'.$chr2.':'.$end2.']'; }
-    else                  { $alt1 = $up.$non_templated.']'.$chr2.':'.$start2.']'; }
-    if ($end1 >= $start1) { $alt2 = '['.$chr1.':'.$end1.'['.$non_templated.$down; }
-    else                  { $alt2 = '['.$chr1.':'.$start1.'['.$non_templated.$down; }
-  }
-	#     ---------*    *-----------
-	#    |__________________________|
-  elsif (($strand1 eq '-') && ($strand2 eq '-')) {
-    if ($end2 >= $start2) { $alt1 = ']'.$chr2.':'.$end2.']'._revcomp($non_templated).$up; }
-    else                  { $alt1 = ']'.$chr2.':'.$start2.']'._revcomp($non_templated).$up; }
-    if ($end1 >= $start1) { $alt2 = ']'.$chr1.':'.$start1.']'._revcomp($non_templated).$down; }
-    else                  { $alt2 = ']'.$chr1.':'.$end1.']'._revcomp($non_templated).$down; }
-  }
-	#     ---------*    -----------*
-	#    |_____________|
-  elsif (($strand1 eq '-') && ($strand2 eq '+')) {
-    if ($end2 >= $start2) { $alt1 = '['.$chr2.':'.$start2.'['._revcomp($non_templated).$up; }
-    else                  { $alt1 = '['.$chr2.':'.$end2.'['._revcomp($non_templated).$up; }
-    if ($end1 >= $start1) { $alt2 = $down._revcomp($non_templated).']'.$chr1.':'.$start1.']'; }
-    else                  { $alt2 = $down._revcomp($non_templated).']'.$chr1.':'.$end1.']'; }
-  }
-
-  # BrassII only - microhom sequences in the bedpe file are shown on the same strand as the first coordinate range so convert to plus strand (stick with forward direction)
-  #    the second instance of the microhomology sequence in the rearrangement may need reverse complementing, depending on strands
-  my $microhom1 = '';
-  my $microhom2 = '';
-	#     *---------    -----------*
-	#               |__|
-  if (($strand1 eq '+') && ($strand2 eq '+')) {
     $microhom1 = $microhom;
     $microhom2 = $microhom;
+    if ($microhom2) { $down = (substr $microhom2, 0, 1); }
+    if ($end2 >= $start2) { $alt1 = $up.$non_templated.'['.$chr2.':'.$start2.'[';   $pos2 = $start2; }
+    else                  { $alt1 = $up.$non_templated.'['.$chr2.':'.$end2.'[';     $pos2 = $end2; }
+    if ($end1 >= $start1) { $alt2 = ']'.$chr1.':'.$start1.']'.$non_templated.$down; $pos1 = $start1; }
+    else                  { $alt2 = ']'.$chr1.':'.$end1.']'.$non_templated.$down;   $pos1 = $end1; }
   }
 	#     *---------    *-----------
 	#               |______________|
   elsif (($strand1 eq '+') && ($strand2 eq '-')) {
     $microhom1 = $microhom;
     $microhom2 = _revcomp($microhom);
-#	$microhom2 = _rev($microhom2);
+    if ($end2 >= $start2) { $alt1 = $up.$non_templated.']'.$chr2.':'.$end2.']'; $pos2 = $start2; }
+    else                  { $alt1 = $up.$non_templated.']'.$chr2.':'.$start2.']'; $pos2 = $end2; }
+    if ($end1 >= $start1) { $alt2 = $down.$non_templated.']'.$chr1.':'.$end1.']'; $pos1 = $start1; }
+    else                  { $alt2 = $down.$non_templated.']'.$chr1.':'.$start1.']'; $pos1 = $end1; }
   }
 	#     ---------*    *-----------
 	#    |__________________________|
   elsif (($strand1 eq '-') && ($strand2 eq '-')) {
     $microhom1 = _revcomp($microhom);
     $microhom2 = _revcomp($microhom);
+    if ($microhom1) { $up = (substr $microhom1, 0, 1); }
+    if ($end2 >= $start2) { $alt1 = ']'.$chr2.':'.$start2.']'._revcomp($non_templated).$up; $pos2 = $start2; }
+    else                  { $alt1 = ']'.$chr2.':'.$end2.']'._revcomp($non_templated).$up; $pos2 = $end2; }
+    if ($end1 >= $start1) { $alt2 = $down._revcomp($non_templated).'['.$chr1.':'.$start1.'['; $pos1 = $start1; }
+    else                  { $alt2 = $down._revcomp($non_templated).'['.$chr1.':'.$end1.'['; $pos1 = $end1; }
   }
 	#     ---------*    -----------*
 	#    |_____________|
   elsif (($strand1 eq '-') && ($strand2 eq '+')) {
     $microhom1 = _revcomp($microhom);
     $microhom2 = $microhom;
+    if ($microhom1) { $up = (substr $microhom1, 0, 1); }
+    if ($microhom2) { $down = (substr $microhom2, 0, 1); }
+    if ($end2 >= $start2) { $alt1 = '['.$chr2.':'.$end2.'['._revcomp($non_templated).$up; $pos2 = $start2; }
+    else                  { $alt1 = '['.$chr2.':'.$start2.'['._revcomp($non_templated).$up; $pos2 = $end2; }
+    if ($end1 >= $start1) { $alt2 = '['.$chr1.':'.$end1.'['._revcomp($non_templated).$down; $pos1 = $start1; }
+    else                  { $alt2 = '['.$chr1.':'.$start1.'['._revcomp($non_templated).$down; $pos1 = $end1; }
   }
 
-  # work out the imprecise range for each end
-  my $imprecise1 = abs($end1 - $start1);
-  my $imprecise2 = abs($end2 - $start2);
-  my $imprecise_length = abs($imprecise1 + $imprecise2);
+#  print "$name $strand1 $strand2 $microhom $microhom1 $microhom2 $imprecise1 $imprecise2 ($end1 - $start1) ($end2 - $start2)\n";
+#  exit;
 
   # CORE FIELDS
   # (CHR  POS     ID      REF     ALT     QUAL    FILTER)
-  if    (($strand1 eq '+') && ($end1 >= $start1)) { $rec1 .= $chr1.SEP.$start1.SEP.$name1.SEP.$up.SEP.$alt1.SEP.$score.SEP.'.'.SEP; }
-  elsif (($strand1 eq '+') && ($start1 > $end1))  { $rec1 .= $chr1.SEP.$end1.SEP.$name1.SEP.$up.SEP.$alt1.SEP.$score.SEP.'.'.SEP; }
-  elsif (($strand1 eq '-') && ($end1 >= $start1)) { $rec1 .= $chr1.SEP.$end1.SEP.$name1.SEP.$up.SEP.$alt1.SEP.$score.SEP.'.'.SEP; }
-  elsif (($strand1 eq '-') && ($start1 > $end1))  { $rec1 .= $chr1.SEP.$start1.SEP.$name1.SEP.$up.SEP.$alt1.SEP.$score.SEP.'.'.SEP; }
+  $rec1 .= $chr1.SEP.$pos1.SEP.$name1.SEP.$up.SEP.$alt1.SEP.$score.SEP.'.'.SEP;
+  $rec2 .= $chr2.SEP.$pos2.SEP.$name2.SEP.$down.SEP.$alt2.SEP.$score.SEP.'.'.SEP;
 
-  if    (($strand2 eq '+') && ($end2 >= $start2)) { $rec2 .= $chr2.SEP.$end2.SEP.$name2.SEP.$down.SEP.$alt2.SEP.$score.SEP.'.'.SEP; }
-  elsif (($strand2 eq '+') && ($start2 > $end2))  { $rec2 .= $chr2.SEP.$start2.SEP.$name2.SEP.$down.SEP.$alt2.SEP.$score.SEP.'.'.SEP; }
-  elsif (($strand2 eq '-') && ($end2 >= $start2)) { $rec2 .= $chr2.SEP.$start2.SEP.$name2.SEP.$down.SEP.$alt2.SEP.$score.SEP.'.'.SEP; }
-  elsif (($strand2 eq '-') && ($start2 > $end2))  { $rec2 .= $chr2.SEP.$end2.SEP.$name2.SEP.$down.SEP.$alt2.SEP.$score.SEP.'.'.SEP; }
+#  if    (($strand1 eq '+') && ($end1 >= $start1)) { $rec1 .= $chr1.SEP.$start1.SEP.$name1.SEP.$up.SEP.$alt1.SEP.$score.SEP.'.'.SEP; }
+#  elsif (($strand1 eq '+') && ($start1 > $end1))  { $rec1 .= $chr1.SEP.$end1.SEP.$name1.SEP.$up.SEP.$alt1.SEP.$score.SEP.'.'.SEP; }
+#  elsif (($strand1 eq '-') && ($end1 >= $start1)) { $rec1 .= $chr1.SEP.$end1.SEP.$name1.SEP.$up.SEP.$alt1.SEP.$score.SEP.'.'.SEP; }
+#  elsif (($strand1 eq '-') && ($start1 > $end1))  { $rec1 .= $chr1.SEP.$start1.SEP.$name1.SEP.$up.SEP.$alt1.SEP.$score.SEP.'.'.SEP; }
+
+#  if    (($strand2 eq '+') && ($end2 >= $start2)) { $rec2 .= $chr2.SEP.$start2.SEP.$name2.SEP.$down.SEP.$alt2.SEP.$score.SEP.'.'.SEP; }
+#  elsif (($strand2 eq '+') && ($start2 > $end2))  { $rec2 .= $chr2.SEP.$end2.SEP.$name2.SEP.$down.SEP.$alt2.SEP.$score.SEP.'.'.SEP; }
+#  elsif (($strand2 eq '-') && ($end2 >= $start2)) { $rec2 .= $chr2.SEP.$start2.SEP.$name2.SEP.$down.SEP.$alt2.SEP.$score.SEP.'.'.SEP; }
+#  elsif (($strand2 eq '-') && ($start2 > $end2))  { $rec2 .= $chr2.SEP.$end2.SEP.$name2.SEP.$down.SEP.$alt2.SEP.$score.SEP.'.'.SEP; }
 
   # INFO FIELDS
 
@@ -405,10 +402,12 @@ sub gen_record {
   $rec1 .= 'MATEID='.$name2.';';
   unless (($start1 == $end1) && ($start2 == $end2)) {
     $rec1 .= 'IMPRECISE;';
-    if    ($strand1 eq '+') { $rec1 .= 'CIPOS=0,'.$imprecise1.';'; }
-    elsif ($strand1 eq '-') { $rec1 .= 'CIPOS='.$imprecise1.',0;'; }
-    if    ($strand2 eq '-') { $rec1 .= 'CIEND='.$imprecise2.',0;'; }
-    elsif ($strand2 eq '+') { $rec1 .= 'CIEND=0,'.$imprecise2.';'; }
+    if ($strand1 eq $strand2) { $rec1 .= 'CIPOS=0,'.$imprecise1.';'.'CIEND=0,'.$imprecise2.';'; }
+    else                      { $rec1 .= 'CIPOS=0,'.$imprecise1.';'.'CIEND='.$imprecise2.',0;'; }
+#    if    ($strand1 eq '+') { $rec1 .= 'CIPOS=0,'.$imprecise1.';'; }
+#    elsif ($strand1 eq '-') { $rec1 .= 'CIPOS=0,'.$imprecise1.';'; }
+#    if    ($strand2 eq '-') { $rec1 .= 'CIEND=0,'.$imprecise2.';'; }
+#    elsif ($strand2 eq '+') { $rec1 .= 'CIEND=0,'.$imprecise2.';'; }
   }
   $rec1 .= 'REPS='.$repeats.';' if ($repeats);
   $rec1 .= 'NPSNO='.$np_sample_count.';' if ($np_sample_count);
@@ -439,14 +438,24 @@ sub gen_record {
 
 
   # RECORD2
+  # read back the other way so in effect, strands change (sequence is still on the plus strand)
+    if    ($strand2 eq '-') { $strand2 eq '+'; }
+    elsif ($strand2 eq '+') { $strand2 eq '-'; }
+    if    ($strand1 eq '+') { $strand1 eq '-'; }
+    elsif ($strand1 eq '-') { $strand1 eq '+'; }
+
+
+
   $rec2 .= 'SVTYPE='.$svtype.';';
   $rec2 .= 'MATEID='.$name1.';';
   unless (($start1 == $end1) && ($start2 == $end2)) {
     $rec2 .= 'IMPRECISE;';
-    if    ($strand2 eq '-') { $rec2 .= 'CIPOS=0,'.$imprecise2.';'; }
-    elsif ($strand2 eq '+') { $rec2 .= 'CIPOS='.$imprecise2.',0;'; }
-    if    ($strand1 eq '+') { $rec2 .= 'CIEND='.$imprecise1.',0;'; }
-    elsif ($strand1 eq '-') { $rec2 .= 'CIEND=0,'.$imprecise1.';'; }
+    if ($strand1 eq $strand2) { $rec2 .= 'CIPOS=0,'.$imprecise2.';'.'CIEND=0,'.$imprecise1.';'; }
+    else                      { $rec2 .= 'CIPOS=0,'.$imprecise2.';'.'CIEND='.$imprecise1.',0;'; }
+#    if    ($strand2 eq '+') { $rec2 .= 'CIPOS=0,'.$imprecise2.';'; }
+#    elsif ($strand2 eq '-') { $rec2 .= 'CIPOS=0,'.$imprecise2.';'; }
+#    if    ($strand1 eq '-') { $rec2 .= 'CIEND=0,'.$imprecise1.';'; }
+#    elsif ($strand1 eq '+') { $rec2 .= 'CIEND=0,'.$imprecise1.';'; }
   }
   $rec2 .= 'REPS='.$repeats.';' if ($repeats);
   $rec2 .= 'NPSNO='.$np_sample_count.';' if ($np_sample_count);
