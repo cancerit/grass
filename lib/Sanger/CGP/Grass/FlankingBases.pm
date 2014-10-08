@@ -313,8 +313,6 @@ sub _print_file {
     my $infile = $self->{infile};
     my $temp_file = $self->{infile} . '.temp';
 
-    my $field = $self->{field} - 1; # arrays are zero base referenced
-
     open my $fh, "<$infile" or die $!;
     open my $fh_temp, ">$temp_file" or die $!;
 
