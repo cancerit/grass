@@ -465,10 +465,10 @@ sub gen_record {
 
   # RECORD2
   # read back the other way so in effect, strands change (sequence is still on the plus strand)
-    if    ($strand2 eq '-') { $strand2 eq '+'; }
-    elsif ($strand2 eq '+') { $strand2 eq '-'; }
-    if    ($strand1 eq '+') { $strand1 eq '-'; }
-    elsif ($strand1 eq '-') { $strand1 eq '+'; }
+    if    ($strand2 eq '-') { $strand2 = '+'; }
+    elsif ($strand2 eq '+') { $strand2 = '-'; }
+    if    ($strand1 eq '+') { $strand1 = '-'; }
+    elsif ($strand1 eq '-') { $strand1 = '+'; }
 
 
 
