@@ -149,7 +149,7 @@ sub convert {
   while (my $line = <$fh_in>) {
     next unless ($line);
     next if ($line =~ /^#/);
-    my ($rec1, $rec2) = $self->gen_record($line, $filetype);
+    my ($rec1, $rec2) = $self->gen_record($line, $filetype,$wt_sample, $mt_sample);
     print $fh_out $rec1.NL;
     print $fh_out $rec2.NL;
   }
@@ -192,6 +192,8 @@ sub gen_header{
     {key => 'INFO', ID => 'RGN',       Number => 1, Type => 'String',   Description => 'Region where nucleotide variant (breakpoint) occurs in relation to a gene'},
     {key => 'INFO', ID => 'RGNNO',     Number => 1, Type => 'Integer',  Description => 'Number of intron/exon where nucleotide variant (breakpoint) occurs in relation to a gene'},
     {key => 'INFO', ID => 'RGNC',      Number => 1, Type => 'Integer',  Description => 'Count of total number of introns/exons in stated transcript'},
+    {key => 'INFO', ID => 'TRDS',      Number => '.', Type => 'String',  Description => 'Reads from the tumour sample ('.$mt_sample->name.') that contribute to this rearrangement'},
+    {key => 'INFO', ID => 'NRDS',      Number => '.', Type => 'String',  Description => 'Reads from the normal sample ('.$wt_sample->name.') that contribute to this rearrangement'},
       ];
 
   # details info layout for the tumour and the normal column
@@ -206,11 +208,11 @@ sub gen_header{
 #-----------------------------------------------------------------------#
 
 sub gen_record {
-  my($self, $line, $bedpe_or_tab) = @_;
+  my($self, $line, $bedpe_or_tab,$wt_sample, $mt_sample) = @_;
   chomp $line;
 
   my $non_templated = '';
-  my ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $repeats, $np_sample_count, $tumour_count, $normal_count, $np_count, $distance, $sample, $sample_type, $names, $count, $bal_trans, $inv, $occL, $occH, $copynumber_flag, $range_blat, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag, $up, $down, $microhom, $string, $samp, $readnames);
+  my ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $repeats, $np_sample_count, $tumour_count, $normal_count, $np_count, $distance, $sample, $sample_type, $names, $count, $bal_trans, $inv, $occL, $occH, $copynumber_flag, $range_blat, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag, $up, $down, $microhom, $string, $samp, $readnames, $nreads, $treads);
 
   # each line splits into 2 records
   my $rec1 = '';
@@ -275,6 +277,9 @@ sub gen_record {
            !($entries[14]))  {
 	    ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $samp, $string, $non_templated, $microhom) = @entries;
     }
+
+    # get the contributing samples and readnames if present
+    if ($samp && $readnames) { ($nreads, $treads, $normal_count, $tumour_count) = get_readname_strings($samp, $readnames, $wt_sample, $mt_sample); }
 
     # add 1 to the start of each range since converting from zero based bedpe format
     $start1++;
@@ -442,6 +447,8 @@ sub gen_record {
     $rec1 .= 'HOMSEQ='.$microhom1.';';
     $rec1 .= 'HOMLEN='.length($microhom1).';';
   }
+  $rec1 .= 'NRDS='.$nreads.';' if ($nreads);
+  $rec1 .= 'TRDS='.$treads.';' if ($treads);
   # gene annotation
   if ($gene1) {
     $rec1 .= 'GENE='.$gene1.';';
@@ -490,6 +497,9 @@ sub gen_record {
     $rec2 .= 'HOMSEQ='.$microhom2.';';
     $rec2 .= 'HOMLEN='.length($microhom2).';';
   }
+  $rec2 .= 'NRDS='.$nreads.';' if ($nreads);
+  $rec2 .= 'TRDS='.$treads.';' if ($treads);
+
   # gene annotation
   if ($gene2) {
     $rec2 .= 'GENE='.$gene2.';';
@@ -513,6 +523,29 @@ sub gen_record {
 	$rec2 .= SEP.$self->{_format}.SEP.$normal_count.SEP.$tumour_count;
 
 	return ($rec1,$rec2);
+}
+#-----------------------------------------------------------------------#
+sub get_readname_strings {
+  my ($samp, $readnames, $wt_sample, $mt_sample) = @_;
+
+  my ($nreads, $treads);
+  my $normal_count = 0;
+  my $tumour_count = 0;
+  return ($nreads, $treads) unless ($samp && $readnames);
+
+  my @samples = split ',', $samp;
+  my @tnreadnames = split /\|/, $readnames;
+
+  foreach my $samp_name(@samples) {
+    my $readname_group = shift @tnreadnames;
+    my @readname_group = split ',', $readname_group;
+    my $rcount = scalar(@readname_group);
+    if ($samp_name eq $wt_sample->name) { $nreads = $readname_group; $normal_count = $rcount; }
+    elsif ($samp_name eq $mt_sample->name) { $treads = $readname_group; $tumour_count = $rcount; }
+#    print "NAME $samp_name READS $readname_group\n";
+  }
+
+  return($nreads, $treads, $normal_count, $tumour_count);
 }
 #-----------------------------------------------------------------------#
 sub _revcomp {
