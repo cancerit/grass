@@ -245,15 +245,19 @@ sub _read_data {
 	my ($chr1,$start1,$end1,$chr2,$start2,$end2,$name,$score,$strand1,$strand2,$is_brass1) = $self->_check_line($line);
 	return(0) unless ($chr1);
 	#print "HERE: $chr1,$start1,$end1,$chr2,$start2,$end2,$name,$score,$strand1,$strand2\n";
+
+  # input is bedpe format so add 1 to each start range
+  $start1++;
+  $start2++;
+
 	my ($Lbase_pos, $Hbase_pos);
 
-	# brassI coordinates - input is a bedpe file so zero based start range
-        #                      assuming coordinates are the base either side of potential rearrangement range
-        #                      Should I take the ref(flanking) base to the upstream side of each range instead?
+	# brassI coordinates - assuming coordinates are the base either side of potential rearrangement range
+        #                Should I take the ref(flanking) base to the upstream side of each range instead?
 	#     *---------
 	#                   -----------
 	if    ($strand1 eq '+') {
-	    if ($start1 <= $end1) { $Lbase_pos = $start1 + 1; }
+	    if ($start1 <= $end1) { $Lbase_pos = $start1; }
 	    else                  { $Lbase_pos = $end1; }
 	    if ($self->{debug}) { print "plus strand,  L base $Lbase_pos\n"; }
 	}
@@ -261,7 +265,7 @@ sub _read_data {
 	#                   -----------
 	elsif ($strand1 eq '-') {
 	    if ($start1 <= $end1) { $Lbase_pos = $end1; }
-	    else                  { $Lbase_pos = $start1 + 1; }
+	    else                  { $Lbase_pos = $start1; }
 	    if ($self->{debug}) { print "minus strand,  L base $Lbase_pos\n"; }
 	}
 
@@ -269,7 +273,7 @@ sub _read_data {
 	#                   -----------*
 	if    ($strand2 eq '+') {
 	    if ($start2 <= $end2) { $Hbase_pos = $end2; }
-	    else                  { $Hbase_pos = $start2 + 1; }
+	    else                  { $Hbase_pos = $start2; }
 #	    if ($start2 <= $end2) { $Hbase_pos = $start2; }
 #	    else                  { $Hbase_pos = $end2; }
 	    if ($self->{debug}) { print "plus strand,  H base $Hbase_pos\n"; }
@@ -277,7 +281,7 @@ sub _read_data {
 	#     ---------
 	#                   *-----------
 	elsif ($strand2 eq '-') {
-	    if ($start2 <= $end2) { $Hbase_pos = $start2 + 1; }
+	    if ($start2 <= $end2) { $Hbase_pos = $start2; }
 	    else                  { $Hbase_pos = $end2; }
 #	    if ($start2 <= $end2) { $Hbase_pos = $end2; }
 #	    else                  { $Hbase_pos = $start2; }
