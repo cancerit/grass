@@ -44,7 +44,9 @@ if(exists $ENV{GRASS_GRCH37_FA}) {
   $ref = $ENV{GRASS_GRCH37_FA};
 }
 
+# to look at the created file, set CLEANUP to 0 and uncomment the note line to see its location in the output tmp space
 my $tmpdir = tempdir( CLEANUP => 1 );
+#note $tmpdir;
 
 SKIP: {
   unless(-e $ref) {
