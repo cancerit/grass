@@ -428,10 +428,6 @@ sub gen_record {
     $rec1 .= 'IMPRECISE;';
     if ($strand1 eq $strand2) { $rec1 .= 'CIPOS=0,'.$imprecise1.';'.'CIEND=0,'.$imprecise2.';'; }
     else                      { $rec1 .= 'CIPOS=0,'.$imprecise1.';'.'CIEND='.$imprecise2.',0;'; }
-#    if    ($strand1 eq '+') { $rec1 .= 'CIPOS=0,'.$imprecise1.';'; }
-#    elsif ($strand1 eq '-') { $rec1 .= 'CIPOS=0,'.$imprecise1.';'; }
-#    if    ($strand2 eq '-') { $rec1 .= 'CIEND=0,'.$imprecise2.';'; }
-#    elsif ($strand2 eq '+') { $rec1 .= 'CIEND=0,'.$imprecise2.';'; }
   }
   $rec1 .= 'REPS='.$repeats.';' if ($repeats);
   $rec1 .= 'NPSNO='.$np_sample_count.';' if ($np_sample_count);
@@ -462,15 +458,8 @@ sub gen_record {
     $rec1 .= 'FL='.$firstlast1.';' if ($firstlast1);
   }
 
-
   # RECORD2
   # read back the other way so in effect, strands change (sequence is still on the plus strand)
-    if    ($strand2 eq '-') { $strand2 = '+'; }
-    elsif ($strand2 eq '+') { $strand2 = '-'; }
-    if    ($strand1 eq '+') { $strand1 = '-'; }
-    elsif ($strand1 eq '-') { $strand1 = '+'; }
-
-
 
   $rec2 .= 'SVTYPE='.$svtype.';';
   $rec2 .= 'MATEID='.$name1.';';
@@ -478,10 +467,6 @@ sub gen_record {
     $rec2 .= 'IMPRECISE;';
     if ($strand1 eq $strand2) { $rec2 .= 'CIPOS=0,'.$imprecise2.';'.'CIEND=0,'.$imprecise1.';'; }
     else                      { $rec2 .= 'CIPOS=0,'.$imprecise2.';'.'CIEND='.$imprecise1.',0;'; }
-#    if    ($strand2 eq '+') { $rec2 .= 'CIPOS=0,'.$imprecise2.';'; }
-#    elsif ($strand2 eq '-') { $rec2 .= 'CIPOS=0,'.$imprecise2.';'; }
-#    if    ($strand1 eq '-') { $rec2 .= 'CIEND=0,'.$imprecise1.';'; }
-#    elsif ($strand1 eq '+') { $rec2 .= 'CIEND=0,'.$imprecise1.';'; }
   }
   $rec2 .= 'REPS='.$repeats.';' if ($repeats);
   $rec2 .= 'NPSNO='.$np_sample_count.';' if ($np_sample_count);
@@ -537,7 +522,7 @@ sub get_readname_strings {
   my @tnreadnames = split /\|/, $readnames;
 
   foreach my $samp_name(@samples) {
-    my $readname_group = shift @tnreadnames;
+    my $readname_group = (shift @tnreadnames) || '';
     my @readname_group = split ',', $readname_group;
     my $rcount = scalar(@readname_group);
     if ($samp_name eq $wt_sample->name) { $nreads = $readname_group; $normal_count = $rcount; }
