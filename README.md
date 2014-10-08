@@ -2,9 +2,9 @@ LICENCE
 =======
 Copyright (c) 2014 Genome Research Ltd.
 
-Author: Lucy Stebbings <cgpit@sanger.ac.uk>
+Author: Cancer Genome Project <cgpit@sanger.ac.uk>
 
-This file is part of grass.
+This file is part of GRASS.
 
 grass is free software: you can redistribute it and/or modify it under
 the terms of the GNU Affero General Public License as published by the Free
@@ -31,6 +31,8 @@ identical to a statement that reads ‘Copyright (c) 2005, 2006, 2007, 2008,
 
 GRASS
 =====
+
+Gene Rearrangement AnalySiS
 
 Takes pairs of coordinates describing potential rearrangement events and predicts the 'most interesting' fusion consequences that could occur.
 
