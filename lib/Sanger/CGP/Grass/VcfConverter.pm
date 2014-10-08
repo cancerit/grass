@@ -207,11 +207,10 @@ sub gen_header{
 
 sub gen_record {
   my($self, $line, $bedpe_or_tab) = @_;
-
   chomp $line;
 
   my $non_templated = '';
-  my ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $repeats, $np_sample_count, $tumour_count, $normal_count, $np_count, $distance, $sample, $sample_type, $names, $count, $bal_trans, $inv, $occL, $occH, $copynumber_flag, $range_blat, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag, $up, $down, $microhom, $string, $samp);
+  my ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $repeats, $np_sample_count, $tumour_count, $normal_count, $np_count, $distance, $sample, $sample_type, $names, $count, $bal_trans, $inv, $occL, $occH, $copynumber_flag, $range_blat, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag, $up, $down, $microhom, $string, $samp, $readnames);
 
   # each line splits into 2 records
   my $rec1 = '';
@@ -232,7 +231,9 @@ sub gen_record {
     $up = pop @entries;
 
     # brassI annotated (look for the tumour/normal count fields) - second strand may have already been flipped to brassII-like constructed style
-    if (($entries[11] =~ /^\d+$/) && ($entries[12] =~ /^\d+$/) && (scalar(@entries) > 30)) {
+    if (($entries[11] =~ /^\d+$/) &&
+        ($entries[12] =~ /^\d+$/) &&
+        (scalar(@entries) > 30)) {
 	    ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $repeats, $np_sample_count, $tumour_count, $normal_count, $np_count, $distance, $sample, $sample_type, $names, $count, $bal_trans, $inv, $occL, $occH, $copynumber_flag, $range_blat, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag) = @entries;
 	    if ($self->{flip_strand}) {
         if ($strand2 eq '+') { $strand2 = '-'; }
@@ -240,7 +241,8 @@ sub gen_record {
 	    }
     }
     # brassI unannotated (look for the tumour/normal count fields) - second strand may have already been flipped to brassII-like constructed style
-    elsif (($entries[11] =~ /^\d+$/) && ($entries[12] =~ /^\d+$/)) {
+    elsif (($entries[11] =~ /^\d+$/) &&
+           ($entries[12] =~ /^\d+$/)) {
 	    ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $repeats, $np_sample_count, $tumour_count, $normal_count, $np_count, $distance, $sample, $sample_type, $names, $count, $bal_trans, $inv, $occL, $occH, $copynumber_flag, $range_blat) = @entries;
 	    if ($self->{flip_strand}) {
         if ($strand2 eq '+') { $strand2 = '-'; }
@@ -248,18 +250,35 @@ sub gen_record {
 	    }
     }
 
+    # brassII annotated(look for the non-templated/microhm  fields) with readnames
+    elsif ((!$entries[12] || ($entries[12] =~ /^[ATGCN]+$/i)) &&
+           (!$entries[13] || ($entries[13] =~ /^[ATGCN]+$/i)) &&
+           ($entries[14]) && ($entries[14] =~ /\d+:\d+:\d+/) &&
+           (scalar(@entries) > 15))  {
+	    ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $samp, $string, $non_templated, $microhom, $readnames, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag) = @entries;
+    }
+    # brassII unannotated (look for the non-templated/microhm  fields) with readnames
+    elsif ((!$entries[12] || ($entries[12] =~ /^[ATGCN]+$/i)) &&
+           (!$entries[13] || ($entries[13] =~ /^[ATGCN]+$/i)) &&
+           ($entries[14]) && ($entries[14] =~ /\d+:\d+:\d+/))  {
+	    ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $samp, $string, $non_templated, $microhom, $readnames) = @entries;
+    }
     # brassII annotated(look for the non-templated/microhm  fields)
-    elsif ((!$entries[12] || ($entries[12] =~ /^[ATGCN]+$/i)) && (!$entries[13] || ($entries[13] =~ /^[ATGCN]+$/i)) && (scalar(@entries) > 16))  {
+    elsif ((!$entries[12] || ($entries[12] =~ /^[ATGCN]+$/i)) &&
+           (!$entries[13] || ($entries[13] =~ /^[ATGCN]+$/i)) &&
+           (scalar(@entries) > 14))  {
 	    ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $samp, $string, $non_templated, $microhom, $gene1, $gene_id1, $transcript_id1, $astrand1, $end_phase1, $region1, $region_number1, $total_region_count1, $firstlast1, $gene2, $gene_id2, $transcript_id2, $astrand2, $phase2, $region2, $region_number2, $total_region_count2, $firstlast2, $fusion_flag) = @entries;
     }
     # brassII unannotated (look for the non-templated/microhm  fields)
-    elsif ((!$entries[12] || ($entries[12] =~ /^[ATGCN]+$/i)) && (!$entries[13] || ($entries[13] =~ /^[ATGCN]+$/i)))  {
+    elsif ((!$entries[12] || ($entries[12] =~ /^[ATGCN]+$/i)) &&
+           (!$entries[13] || ($entries[13] =~ /^[ATGCN]+$/i)) &&
+           !($entries[14]))  {
 	    ($chr1, $start1, $end1, $chr2, $start2, $end2, $name, $score, $strand1, $strand2, $samp, $string, $non_templated, $microhom) = @entries;
     }
 
-    # add 1 to the start range since converting from zero based bedpe format
+    # add 1 to the start of each range since converting from zero based bedpe format
     $start1++;
-    $end1++;
+    $start2++;
   }
   elsif ($bedpe_or_tab eq 'tab') {
 # 1       +       32144920        32144921        14      -       73658034        73658033        .       T       99      5013985 PD4107a,        Chr.1  32144920(21)--T--73658034(33)  Chr.14-  (score 99) annotation stuff??? up? down?
