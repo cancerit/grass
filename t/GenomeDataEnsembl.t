@@ -1,13 +1,33 @@
 #!/usr/bin/perl
 
+##########LICENCE##########
+# Copyright (c) 2014 Genome Research Ltd.
+#
+# Author: Lucy Stebbings <cgpit@sanger.ac.uk>
+#
+# This file is part of grass.
+#
+# grass is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+##########LICENCE##########
+
+
 # for testing Sanger::CGP::Grass::GenomeData class
 
 use strict;
 use warnings FATAL => 'all';
 
 use Data::Dumper;
-
-use Sanger::CGP::Grass::GenomeData::GenomeDataEnsembl;
 
 use Test::More 'no_plan';
 
@@ -23,27 +43,41 @@ my $shard = 'AA';
 my $count = 6;
 
 
+for my $module (qw(Sanger::CGP::Grass::GenomeData::GenomeDataEnsembl)) {
+  require_ok $module or BAIL_OUT "Can't load $module";
+}
+
 my $species = 'HUMAN';
-my $ensembl_api_58 = '/software/pubseq/PerlModules/Ensembl/www_58_1';
-my $ensembl_api_74 = '/software/pubseq/PerlModules/Ensembl/www_74_1';
+my $version = 74;
+#my $ensembl_api = '/software/pubseq/PerlModules/Ensembl/www_74_1';
+my $ensembl_api= '';
 
-my $version = '74';
-my $ensembl_api = $ensembl_api_74;
+if(exists $ENV{GRASS_ENS_API}) {
+  $ensembl_api = $ENV{GRASS_ENS_API};
+}
 
-my $genome_data_ensembl = new Sanger::CGP::Grass::GenomeData::GenomeDataEnsembl(-species     => $species,
-								   -ensembl_api => $ensembl_api,
-								   -gene_id_required => 1,
-								   -use_all_biotypes => 1);
 
-ok($genome_data_ensembl, 'object defined');
-is (($genome_data_ensembl->gene_id_required()), 1 , "get gene_id_required");
-is (($genome_data_ensembl->use_all_biotypes()), 1 , "get use_all_biotypes");
-is (($genome_data_ensembl->species()), $species , "get species");
-is (($genome_data_ensembl->ensembl_api()), $ensembl_api , "get ensembl_api");
-ok($genome_data_ensembl->registry(), 'registry object defined');
+SKIP: {
+  unless(-d $ensembl_api) {
+    my $message = "SKIPPING: Root of Ensembl API not found at '$ensembl_api', set ENV: GRASS_ENS_API to enable these tests";
+    warn "$message\n";
+    skip $message, '11';
+  }
+  my $genome_data_ensembl = new_ok('Sanger::CGP::Grass::GenomeData::GenomeDataEnsembl',
+                    [-species     => $species,
+                     -ensembl_api => $ensembl_api,
+                     -gene_id_required => 1,
+                     -use_all_biotypes => 1]);
 
-test_between_ensembl($genome_data_ensembl, $version);
-test_fetch_transcript_by_region_ensembl($genome_data_ensembl, $version);
+  is ($genome_data_ensembl->gene_id_required(), 1 , "get gene_id_required");
+  is ($genome_data_ensembl->use_all_biotypes(), 1 , "get use_all_biotypes");
+  is ($genome_data_ensembl->species(), $species , "get species");
+  is ($genome_data_ensembl->ensembl_api(), $ensembl_api , "get ensembl_api");
+  ok($genome_data_ensembl->registry(), 'registry object defined');
+
+  test_between_ensembl($genome_data_ensembl, $version);
+  test_fetch_transcript_by_region_ensembl($genome_data_ensembl, $version);
+}
 
 #------------------------------------------------------------------------------------------------#
 sub test_between_ensembl {
@@ -79,10 +113,4 @@ sub test_fetch_transcript_by_region_ensembl {
     ok($genome_data->trans_ad(), 'transcript adaptor object defined. ENSEMBL');
     is (ref($fetch_region_out->[0]), $fetch_region , "get fetch_region transcript object. ENSEMBL");
     is ($translist_count , $all_count , "get fetch_region transcript count. ENSEMBL");
-}
-#------------------------------------------------------------------------------------------------#
-sub get_result {
-    my $res = <<'END';
-END
-    return($res);
 }

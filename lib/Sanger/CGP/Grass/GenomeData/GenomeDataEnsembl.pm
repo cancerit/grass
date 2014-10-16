@@ -1,8 +1,35 @@
-## Sanger::CGP::Grass::GenomeData::GenomeDataEnsembl
+package Sanger::CGP::Grass::GenomeData::GenomeDataEnsembl;
 
-#
-# Author las
-#
+##########LICENCE##########
+# Copyright (c) 2014 Genome Research Ltd.
+# 
+# Author: Lucy Stebbings <cgpit@sanger.ac.uk>
+# 
+# This file is part of grass.
+# 
+# grass is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or (at your option) any
+# later version.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+# details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+##########LICENCE##########
+
+
+use strict;
+
+use Sanger::CGP::Grass::GenomeData::Transcript;
+use Sanger::CGP::Grass::GenomeData::Exon;
+
+use Sanger::CGP::Grass;
+our $VERSION = Sanger::CGP::Grass->VERSION;
+
 =head1 NAME
 
 GenomeDataEnsembl
@@ -26,24 +53,11 @@ Class to access genome data from a remote ensembl DB server
 
 =head1 APPENDIX
 
-
-=cut
-
-package Sanger::CGP::Grass::GenomeData::GenomeDataEnsembl;
-
-use strict;
-
-use Sanger::CGP::Grass::GenomeData::Transcript;
-use Sanger::CGP::Grass::GenomeData::Exon;
-
-use Sanger::CGP::Grass;
-our $VERSION = Sanger::CGP::Grass->VERSION;
-
 #--------------------------------------------------------------------------------------------#
 
 =head2 new
 
-  Arg (0)    : 
+  Arg (0)    :
   Example    : $object = new Sanger::CGP::Grass::GenomeData::GenomeDataEnsembl();
   Description: make a new object
   Return     : object
@@ -200,7 +214,7 @@ sub _set_ensembl {
 				      -user => 'anonymous');
 
     unless ($registry->get_adaptor(($self->{species}),'core','slice')) {
-	print "could not get connection to remote ensembl registry\n"; 
+	print "could not get connection to remote ensembl registry\n";
 	exit;
     }
 
@@ -226,21 +240,21 @@ sub get_gene_list {
     my @names = ();
 
     # get the slice adaptor if we dont already have one for the species
-    unless ($self->{slice_ad}) { 
-	$self->{slice_ad} = $self->{registry}->get_adaptor(($self->{species}),'core','slice'); 
+    unless ($self->{slice_ad}) {
+	$self->{slice_ad} = $self->{registry}->get_adaptor(($self->{species}),'core','slice');
 	unless ($self->{slice_ad}) { print "could not get slice for $self->{species} core\n"; return(""); }
     }
 
     my $slice = $self->{slice_ad}->fetch_by_region('chromosome', $chr, $start_coord, $end_coord);
     unless ($slice) { $slice = $self->{slice_ad}->fetch_by_region(undef, chr, $start_coord, $end_coord); } # look at every type of structure, not just chromosomes
-    
+
     my $genes = $slice->get_all_Genes();
     foreach my $gene(@$genes) {
 	my $name = '';
 	my @links = @{$gene->get_all_DBEntries};
 	foreach my $link(@links){
-	    if ($link->dbname =~ /^HGNC/) { $name = $link->display_id; 
-					    last; 
+	    if ($link->dbname =~ /^HGNC/) { $name = $link->display_id;
+					    last;
 	    } # picks up 'HGNC' and 'HGNC_curated_gene' names
 	}
 	unless ($name) { $name = $gene->stable_id; }
@@ -285,7 +299,7 @@ sub fetch_transcripts_by_region {
     unless ($self->{trans_ad}) {
 	$self->{trans_ad} = $self->{registry}->get_adaptor(($self->{species}),'core','transcript');
     }
-	
+
     # get all the transcripts that are in the slice
     my $transcripts = $self->{trans_ad}->fetch_all_by_Slice($slice);
 
@@ -328,21 +342,21 @@ sub _populate_grass_transcripts {
 	}
 
 	# get gene info
-	my ($gene_name, $gene_id, $gene_biotype, $gene_status) = $self->_getGeneInfoForTranscript($ensembl_transcript); 
+	my ($gene_name, $gene_id, $gene_biotype, $gene_status) = $self->_getGeneInfoForTranscript($ensembl_transcript);
 
 	# force translation of the transcript to get the translation length
 	my $aa_length = '';
 	my $accession = '';
 	eval { $ensembl_transcript->translate;  };
 	if ($@) { print "translating ensembl transcript failed... $@\n"; }
-	elsif ($ensembl_transcript->translate) { 
-	    $aa_length = $ensembl_transcript->translate->length; 
+	elsif ($ensembl_transcript->translate) {
+	    $aa_length = $ensembl_transcript->translate->length;
 	    $accession = $ensembl_transcript->translation->stable_id;
 	}
-	if ($self->{debug}) { 
+	if ($self->{debug}) {
             print "name: " . $ensembl_transcript->display_id . "\n";
             print "id: " . $ensembl_transcript->stable_id . "\n";
-	    print "Translation_length ensembl: $aa_length\n"; 
+	    print "Translation_length ensembl: $aa_length\n";
 	    print "  start ensembl: "  . $ensembl_transcript->start . "\n";
 	    print "  end ensembl  : "  . $ensembl_transcript->end . "\n";
 	    print "  cds start ensembl: "  . $ensembl_transcript->coding_region_start . "\n";

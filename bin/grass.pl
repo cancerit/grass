@@ -1,5 +1,27 @@
 #!/usr/bin/perl
 
+##########LICENCE##########
+# Copyright (c) 2014 Genome Research Ltd.
+#
+# Author: Lucy Stebbings <cgpit@sanger.ac.uk>
+#
+# This file is part of grass.
+#
+# grass is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+##########LICENCE##########
+
+
 # adds gene and mutational consequence annotation to bedpe formatted rearrangement data
 
 BEGIN {
@@ -110,7 +132,7 @@ elsif ($file)   { $field = 0; ($outfile, $is_bedpe) = do_file($within, $species,
 elsif ($file2)  { $field = 2; ($outfile, $is_bedpe) = do_file($within, $species, $file2,   $outfile, $field, 'refract', $list_between, $show_biotype, $genome_data); } # 2 is the field array index that contains the refract coordinate string
 # note that do_file flips the orientation of the second strand of brassI entries to give brassII-like constructed strands rather than seq-read strands
 
-unless ($is_bedpe) { print "Not bedpe format so no vcf file will be created\n";}
+unless ($is_bedpe) { warn "Not bedpe format so no vcf file will be created\n";}
 exit if !($is_bedpe);
 
 # get the flanking bases for use in vcf conversion (appends the up and downstream bases to the end of each line)
@@ -180,8 +202,14 @@ sub do_file {
 	}
 
 	my $entry_is_bedpe = do_data_line($fh_out, $line, $field, $is_refract, $list_between, $show_biotype, $genome_data);
-	if ($entry_is_bedpe) { $is_bedpe = 1; };
+	if ($entry_is_bedpe) { $is_bedpe = 1; }
+	elsif(-s $infile == 0 && $infile =~ m/\.bedpe$/i) {
+	  $is_bedpe = 1;
+	}
     }
+  if($is_bedpe != 1 && -s $infile == 0 && $infile =~ m/\.bedpe$/i) {
+	  $is_bedpe = 1;
+	}
     return($outfile, $is_bedpe);
 }
 #------------------------------------------------------------------------------------------------#
@@ -210,110 +238,107 @@ sub do_header_line {
 }
 #------------------------------------------------------------------------------------------------#
 sub do_data_line {
-    my ($fh_out, $line, $field, $is_refract, $list_between, $show_biotype, $genome_data) = @_;
+  my ($fh_out, $line, $field, $is_refract, $list_between, $show_biotype, $genome_data) = @_;
+  return unless ($line);
+  my $is_bedpe = 0;
 
-    return unless ($line);
+  # process main data line
+  my @line = split "\t", $line;
+  my ($entry1, $entry2, $entry3);
 
-    my $is_bedpe = 0;
+  # decide what sort of file we have and get the coordinate details into a DataEntry object
 
-    # process main data line
-    my @line = split "\t", $line;
-    my ($entry1, $entry2, $entry3);
-
-    # decide what sort of file we have and get the coordinate details into a DataEntry object
-
-    # brassII .tab format
-    if (($line[0] =~ /^\S+$/) && ($line[1] =~ /^[+-]$/) && ($line[2] =~ /^\d+$/) && ($line[3] =~ /^\d+$/) && ($line[4] =~ /^\S+$/) && ($line[5] =~ /^[+-]$/) && ($line[6] =~ /^\d+$/) && ($line[7] =~ /^\d+$/) && ($line[8] =~ /^[\.ATGCNatgcn]+$/) && ($line[9] =~ /^[\.ATGCNatgcn]+$/)) {
-	$entry1 = new Sanger::CGP::Grass::DataEntry(-chr1       => $line[0],
-						    -strand1    => $line[1],
-						    -pos1_start => $line[2],
-						    -pos1_end   => $line[3],
-						    -chr2       => $line[4],
-						    -strand2    => $line[5],
-						    -pos2_start => $line[6],
-						    -pos2_end   => $line[7],
-						    -shard      => $line[9]);
+  # brassII .tab format
+  if (($line[0] =~ /^\S+$/) && ($line[1] =~ /^[+-]$/) && ($line[2] =~ /^\d+$/) && ($line[3] =~ /^\d+$/) && ($line[4] =~ /^\S+$/) && ($line[5] =~ /^[+-]$/) && ($line[6] =~ /^\d+$/) && ($line[7] =~ /^\d+$/) && ($line[8] =~ /^[\.ATGCNatgcn]+$/) && ($line[9] =~ /^[\.ATGCNatgcn]+$/)) {
+    $entry1 = new Sanger::CGP::Grass::DataEntry(-chr1       => $line[0],
+            -strand1    => $line[1],
+            -pos1_start => $line[2],
+            -pos1_end   => $line[3],
+            -chr2       => $line[4],
+            -strand2    => $line[5],
+            -pos2_start => $line[6],
+            -pos2_end   => $line[7],
+            -shard      => $line[9]);
+  }
+  # brassI marked.rg format - need to flip the second strand orientation to give brassII type strands
+  elsif (($line[0] =~ /^\S+$/) && ($line[1] =~ /^[+-]$/) && ($line[2] =~ /^\d+$/)&& ($line[3] =~ /^\d+$/)) {
+    if ($line[5] eq '+') { $line[5] = '-'; }
+    elsif ($line[5] eq '-') { $line[5] = '+'; }
+    $entry1 = new Sanger::CGP::Grass::DataEntry(-chr1       => $line[0],
+            -strand1    => $line[1],
+            -pos1_start => $line[2],
+            -pos1_end   => $line[3],
+            -chr2       => $line[4],
+            -strand2    => $line[5],
+            -pos2_start => $line[6],
+            -pos2_end   => $line[7]);
+  }
+  # brassI filter bedpe format - need to flip the second strand orientation
+  # also add 1 to the start of each range because bedpe is zero based and reference is 1 based.
+  elsif (($line[0] =~ /^\S+$/) && ($line[1] =~ /^\d+$/)&& ($line[2] =~ /^\d+$/) && ($line[3] =~ /^\S+$/) && ($line[4] =~ /^\d+$/)&& ($line[5] =~ /^\d+$/) && ($line[6] =~ /^\S+$/) && ($line[7] =~ /^\S+$/) && ($line[8] =~ /^[+-]$/) && ($line[9] =~ /^[+-]$/)  && ($line[11] =~ /^\d+$/)  && ($line[12] =~ /^\d+$/) ) {
+    if ($line[9] eq '+') { $line[9] = '-'; }
+    elsif ($line[9] eq '-') { $line[9] = '+'; }
+    $entry1 = new Sanger::CGP::Grass::DataEntry(-chr1       => $line[0],
+            -strand1    => $line[8],
+            -pos1_start => ($line[1] + 1),
+            -pos1_end   => $line[2],
+            -chr2       => $line[3],
+            -strand2    => $line[9],
+            -pos2_start => ($line[4] + 1),
+            -pos2_end   => $line[5]);
+    $is_bedpe = 1;
+  }
+  # brassII filter bedpe format
+  # add 1 to the start of each range because bedpe is zero based and reference is 1 based.
+  elsif (($line[0] =~ /^\S+$/) && ($line[1] =~ /^\d+$/)&& ($line[2] =~ /^\d+$/) && ($line[3] =~ /^\S+$/) && ($line[4] =~ /^\d+$/)&& ($line[5] =~ /^\d+$/) && ($line[6] =~ /^\S+$/) && ($line[7] =~ /^\S+$/) && ($line[8] =~ /^[+-]$/) && ($line[9] =~ /^[+-]$/) ) {
+    $entry1 = new Sanger::CGP::Grass::DataEntry(-chr1       => $line[0],
+            -strand1    => $line[8],
+            -pos1_start => ($line[1] + 1),
+            -pos1_end   => $line[2],
+            -chr2       => $line[3],
+            -strand2    => $line[9],
+            -pos2_start => ($line[4] + 1),
+            -pos2_end   => $line[5]);
+    $is_bedpe = 1;
+  }
+  # refract format - coordinate usually in second field, possibly more than one pair of coordinates, ?? in place of shards or unknown coordinate
+  elsif ($is_refract) {
+    my ($coord1,$coord2,$coord3) = split_refract_string($line[$field]);
+    if ($coord1) { $entry1 = new Sanger::CGP::Grass::DataEntry(-coord => $coord1); }
+    if ($coord2) { $entry2 = new Sanger::CGP::Grass::DataEntry(-coord => $coord2); }
+    if ($coord3) { $entry3 = new Sanger::CGP::Grass::DataEntry(-coord => $coord3); }
+    unless ($coord1) {
+      print $fh_out "$line\n";
+      return;
     }
-    # brassI marked.rg format - need to flip the second strand orientation to give brassII type strands
-    elsif (($line[0] =~ /^\S+$/) && ($line[1] =~ /^[+-]$/) && ($line[2] =~ /^\d+$/)&& ($line[3] =~ /^\d+$/)) {
-	if ($line[5] eq '+') { $line[5] = '-'; }
-	elsif ($line[5] eq '-') { $line[5] = '+'; }
-	$entry1 = new Sanger::CGP::Grass::DataEntry(-chr1       => $line[0],
-						    -strand1    => $line[1],
-						    -pos1_start => $line[2],
-						    -pos1_end   => $line[3],
-						    -chr2       => $line[4],
-						    -strand2    => $line[5],
-						    -pos2_start => $line[6],
-						    -pos2_end   => $line[7]);
-    }
-    # brassI filter bedpe format - need to flip the second strand orientation
-    # also add 1 to the start of each range because bedpe is zero based and reference is 1 based.
-    elsif (($line[0] =~ /^\S+$/) && ($line[1] =~ /^\d+$/)&& ($line[2] =~ /^\d+$/) && ($line[3] =~ /^\S+$/) && ($line[4] =~ /^\d+$/)&& ($line[5] =~ /^\d+$/) && ($line[6] =~ /^\S+$/) && ($line[7] =~ /^\S+$/) && ($line[8] =~ /^[+-]$/) && ($line[9] =~ /^[+-]$/)  && ($line[11] =~ /^\d+$/)  && ($line[12] =~ /^\d+$/) ) {
-	if ($line[9] eq '+') { $line[9] = '-'; }
-	elsif ($line[9] eq '-') { $line[9] = '+'; }
-	$entry1 = new Sanger::CGP::Grass::DataEntry(-chr1       => $line[0],
-						    -strand1    => $line[8],
-						    -pos1_start => ($line[1] + 1),
-						    -pos1_end   => $line[2],
-						    -chr2       => $line[3],
-						    -strand2    => $line[9],
-						    -pos2_start => ($line[4] + 1),
-						    -pos2_end   => $line[5]);
-	$is_bedpe = 1;
-    }
-    # brassII filter bedpe format
-    # add 1 to the start of each range because bedpe is zero based and reference is 1 based.
-    elsif (($line[0] =~ /^\S+$/) && ($line[1] =~ /^\d+$/)&& ($line[2] =~ /^\d+$/) && ($line[3] =~ /^\S+$/) && ($line[4] =~ /^\d+$/)&& ($line[5] =~ /^\d+$/) && ($line[6] =~ /^\S+$/) && ($line[7] =~ /^\S+$/) && ($line[8] =~ /^[+-]$/) && ($line[9] =~ /^[+-]$/) ) {
-	$entry1 = new Sanger::CGP::Grass::DataEntry(-chr1       => $line[0],
-						    -strand1    => $line[8],
-						    -pos1_start => ($line[1] + 1),
-						    -pos1_end   => $line[2],
-						    -chr2       => $line[3],
-						    -strand2    => $line[9],
-						    -pos2_start => ($line[4] + 1),
-						    -pos2_end   => $line[5]);
-	$is_bedpe = 1;
-    }
-    # refract format - coordinate usually in second field, possibly more than one pair of coordinates, ?? in place of shards or unknown coordinate
-    elsif ($is_refract) {
-	my ($coord1,$coord2,$coord3) = split_refract_string($line[$field]);
-	if ($coord1) { $entry1 = new Sanger::CGP::Grass::DataEntry(-coord => $coord1); }
-	if ($coord2) { $entry2 = new Sanger::CGP::Grass::DataEntry(-coord => $coord2); }
-	if ($coord3) { $entry3 = new Sanger::CGP::Grass::DataEntry(-coord => $coord3); }
-	unless ($coord1) {
-	    print $fh_out "$line\n";
-	    return;
-	}
-    }
-    # standard format coordinate pair in specified field
-    elsif ($field) { $entry1 = new Sanger::CGP::Grass::DataEntry(-coord => $line[$field]); }
-    # standard format coordinate pair in first field
-    else           { $entry1 = new Sanger::CGP::Grass::DataEntry(-coord => $line[0]); }
+  }
+  # standard format coordinate pair in specified field
+  elsif ($field) { $entry1 = new Sanger::CGP::Grass::DataEntry(-coord => $line[$field]); }
+  # standard format coordinate pair in first field
+  else           { $entry1 = new Sanger::CGP::Grass::DataEntry(-coord => $line[0]); }
 
-    # to make sure the 2nd strand (flipped from brassI to brassII layout) is printed, not the original line...
-    $line = join "\t", @line;
+  # to make sure the 2nd strand (flipped from brassI to brassII layout) is printed, not the original line...
+  $line = join "\t", @line;
 
-    # skip it if we couldn't get an interpretable coord string
-    unless ($entry1->chr1 && $entry1->strand1 && $entry1->pos1_start && $entry1->pos1_end && $entry1->chr2 && $entry1->strand2 && $entry1->pos2_start && $entry1->pos2_end) {
-	print $fh_out "$line\n";
-	return;
-    }
+  # skip it if we couldn't get an interpretable coord string
+  unless ($entry1->chr1 && $entry1->strand1 && $entry1->pos1_start && $entry1->pos1_end && $entry1->chr2 && $entry1->strand2 && $entry1->pos2_start && $entry1->pos2_end) {
+    print $fh_out "$line\n";
+    return;
+  }
 
-    # get the annotation results string for each coordinate pair
-    my ($out_string, $out_stringb, $out_stringc);
-    $out_string = process_file_coords($line, $entry1, $within, $species, $list_between, $show_biotype, $genome_data);
+  # get the annotation results string for each coordinate pair
+  my ($out_string, $out_stringb, $out_stringc);
+  $out_string = process_file_coords($line, $entry1, $within, $species, $list_between, $show_biotype, $genome_data);
+  if ($is_refract) { # only get these extra coodinates with refract output.
+    if ($entry2) { $out_stringb = process_file_coords($line, $entry2, $within, $species, 0, $show_biotype, $genome_data); }
+    if ($entry3) { $out_stringc = process_file_coords($line, $entry3, $within, $species, 0, $show_biotype, $genome_data); }
+    # merge the data from the compsite refract coordiate string. just use the first line of annotation
+    $out_string = merge_refract($out_string, $out_stringb, $out_stringc);
+  }
 
-    if ($is_refract) { # only get these extra coodinates with refract output.
-	if ($entry2) { $out_stringb = process_file_coords($line, $entry2, $within, $species, 0, $show_biotype, $genome_data); }
-	if ($entry3) { $out_stringc = process_file_coords($line, $entry3, $within, $species, 0, $show_biotype, $genome_data); }
-	# merge the data from the compsite refract coordiate string. just use the first line of annotation
-        $out_string = merge_refract($out_string, $out_stringb, $out_stringc);
-    }
+  print $fh_out $out_string;
 
-    print $fh_out $out_string;
-
-    return($is_bedpe);
+  return($is_bedpe);
 }
 #------------------------------------------------------------------------------------------------#
 sub  split_refract_string {

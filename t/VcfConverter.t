@@ -1,5 +1,27 @@
 #!/usr/bin/perl
 
+##########LICENCE##########
+# Copyright (c) 2014 Genome Research Ltd.
+#
+# Author: Lucy Stebbings <cgpit@sanger.ac.uk>
+#
+# This file is part of grass.
+#
+# grass is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+##########LICENCE##########
+
+
 # for testing Sanger::CGP::Grass::VcfConverter class
 
 use strict;
@@ -22,6 +44,7 @@ use FindBin qw($Bin);
 my $ref = "$Bin/../testData/genome.fa";
 
 test_brassI_bedpe_file_input($ref);
+test_brassII_bedpe_file_input($ref);
 
 #------------------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------#
@@ -34,6 +57,49 @@ sub test_brassI_bedpe_file_input {
 
     my $testfile = 'test_VcfConverter_ann.bedpe';
     my $testoutfile = 'test_VcfConverter_ann.vcf';
+
+    copy $infile, $testfile;
+
+    my ($wt_sample, $mt_sample, $contigs, $process_logs, $source) = get_support_objects($ref);
+
+    # make a new object
+    my $VcfConverter = new Sanger::CGP::Grass::VcfConverter(-infile  => $testfile,
+                                                            -contigs => $contigs );
+    ok($VcfConverter, 'object defined');
+
+    $VcfConverter->convert($wt_sample, $mt_sample, $process_logs, $ref, $source);
+
+    # the current file date is put in the output vcf file so it will always differ to the 'correct' file in testData unless updated
+    my $date_in_correct_testfile = '20140512';
+    my $tm = localtime;
+    my $today = ($tm->year() + 1900) . sprintf("%02d",($tm->mon() + 1)) . sprintf("%02d",($tm->mday()));
+    # do an inline substitution
+    my $command1 = "perl -pi -e \'s/##fileDate=$today/##fileDate=$date_in_correct_testfile/g\' $testoutfile";
+    my $command2 = "perl -pi -e \'s/##source_$today/##source_$date_in_correct_testfile/g\' $testoutfile";
+    my $command3 = "perl -pi -e \'s/##vcfProcessLog_$today/##vcfProcessLog_$date_in_correct_testfile/g\' $testoutfile";
+    `$command1`;
+    `$command2`;
+    `$command3`;
+
+    my $testoutdata = slurp_file($testoutfile);
+    splice(@{$testoutdata}, 3, 1); # line 3 has a file path that will change
+    my $outdata = slurp_file($outfile);
+    splice(@{$outdata}, 3, 1); # line 3 has a file path that will change
+    is_deeply($testoutdata, $outdata, 'correct file created');
+
+	unlink $testfile;
+	unlink $testoutfile;
+}
+#----------------------------------------------------------------------------------------#
+
+sub test_brassII_bedpe_file_input {
+    my ($ref) = @_;
+
+    my $infile = $Bin.'/../testData/test_VcfConverterII_ann.bedpe';
+    my $outfile = $Bin.'/../testData/test_VcfConverterII_ann.vcf';
+
+    my $testfile = 'test_VcfConverterII_ann.bedpe';
+    my $testoutfile = 'test_VcfConverterII_ann.vcf';
 
     copy $infile, $testfile;
 
