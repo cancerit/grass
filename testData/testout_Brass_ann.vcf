@@ -1,6 +1,6 @@
 ##fileformat=VCFv4.1
 ##fileDate=20140512
-##source_20140512.1=grass.pl_v1.0.0
+##source_20140512.1=grass.pl_v1.0.1
 ##reference=/nfs/cancer_ref01/human/37/genome.fa
 ##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant. (All sequence is on the plus strand and in the forward direction).">
 ##INFO=<ID=MATEID,Number=1,Type=String,Description="ID of mate breakend">
@@ -30,7 +30,7 @@
 ##INFO=<ID=RGNNO,Number=1,Type=Integer,Description="Number of intron/exon where nucleotide variant (breakpoint) occurs in relation to a gene">
 ##INFO=<ID=RGNC,Number=1,Type=Integer,Description="Count of total number of introns/exons in stated transcript">
 ##FORMAT=<ID=RC,Number=1,Type=Integer,Description="Count of countributing reads">
-##vcfProcessLog_20140512.1=<InputVCFSource=<grass.pl>,InputVCFVer=<1.0.0>>
+##vcfProcessLog_20140512.1=<InputVCFSource=<grass.pl>,InputVCFVer=<1.0.1>>
 ##SAMPLE=<ID=NORMAL,Description="Normal",SampleName=>
 ##SAMPLE=<ID=TUMOUR,Description="Mutant",SampleName=>
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NORMAL	TUMOUR

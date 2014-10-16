@@ -1,6 +1,6 @@
 ##fileformat=VCFv4.1
 ##fileDate=20140512
-##source_20140512.1=VcfConverter.t_v1.0.0
+##source_20140512.1=VcfConverter.t_v1.0.1
 ##reference=/nfs/users/nfs_l/las/CGP_github/grass/t/../testData/genome.fa
 ##contig=<ID=1,assembly=GRC37,length=249250621,species=HUMAN>
 ##contig=<ID=2,assembly=GRC37,length=243199373,species=HUMAN>
@@ -57,7 +57,7 @@
 ##INFO=<ID=TRDS,Number=.,Type=String,Description="Reads from the tumour sample (PD1234a) that contribute to this rearrangement">
 ##INFO=<ID=NRDS,Number=.,Type=String,Description="Reads from the normal sample (PD1234b) that contribute to this rearrangement">
 ##FORMAT=<ID=RC,Number=1,Type=Integer,Description="Count of countributing reads">
-##vcfProcessLog_20140512.1=<InputVCFSource=<VcfConverter.t>,InputVCFVer=<1.0.0>>
+##vcfProcessLog_20140512.1=<InputVCFSource=<VcfConverter.t>,InputVCFVer=<1.0.1>>
 ##SAMPLE=<ID=NORMAL,Description="Normal",Accession=45,Platform=HiSeq,Protocol=genomic,SampleName=PD1234b,Source=ID_SAMPLE_COSMIC,Study=12346>
 ##SAMPLE=<ID=TUMOUR,Description="Mutant",Accession=123,Platform=HiSeq,Protocol=genomic,SampleName=PD1234a,Source=ID_SAMPLE_COSMIC,Study=12345>
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NORMAL	TUMOUR
