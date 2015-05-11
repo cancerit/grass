@@ -82,9 +82,16 @@ sub test_brassI_bedpe_file_input {
     `$command3`;
 
     my $testoutdata = slurp_file($testoutfile);
-    splice(@{$testoutdata}, 3, 1); # line 3 has a file path that will change
     my $outdata = slurp_file($outfile);
-    splice(@{$outdata}, 3, 1); # line 3 has a file path that will change
+
+    # versions and path of reference file will differ so remove from comparison
+    splice(@{$testoutdata}, 2,2);
+    splice(@{$outdata}, 2,2);
+
+    # this will move if more headers added
+    splice(@{$testoutdata}, 59,1);
+    splice(@{$outdata}, 59,1);
+
     is_deeply($testoutdata, $outdata, 'correct file created');
 
 	unlink $testfile;
@@ -125,9 +132,16 @@ sub test_brassII_bedpe_file_input {
     `$command3`;
 
     my $testoutdata = slurp_file($testoutfile);
-    splice(@{$testoutdata}, 3, 1); # line 3 has a file path that will change
     my $outdata = slurp_file($outfile);
-    splice(@{$outdata}, 3, 1); # line 3 has a file path that will change
+
+    # versions and path of reference file will differ so remove from comparison
+    splice(@{$testoutdata}, 2,2);
+    splice(@{$outdata}, 2,2);
+
+    # this will move if more headers added
+    splice(@{$testoutdata}, 59,1);
+    splice(@{$outdata}, 59,1);
+
     is_deeply($testoutdata, $outdata, 'correct file created');
 
 	unlink $testfile;

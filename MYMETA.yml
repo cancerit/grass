@@ -3,28 +3,28 @@ abstract: unknown
 author:
   - unknown
 build_requires:
-  ExtUtils::MakeMaker: 0
+  ExtUtils::MakeMaker: '0'
 configure_requires:
-  ExtUtils::MakeMaker: 0
+  ExtUtils::MakeMaker: '0'
 dynamic_config: 0
-generated_by: 'ExtUtils::MakeMaker version 6.68, CPAN::Meta::Converter version 2.131560'
+generated_by: 'ExtUtils::MakeMaker version 6.68, CPAN::Meta::Converter version 2.142690'
 license: open_source
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
-  version: 1.4
+  version: '1.4'
 name: Grass
 no_index:
   directory:
     - t
     - inc
 requires:
-  Attribute::Abstract: 1.02
-  Bio::DB::Sam: 1.39
-  Bio::Root::Version: 1.006923
-  Const::Fast: 0.014
-  Devel::Cover: 1.09
-  List::Util: 1.38
-  Pod::Coverage: 0.23
-  Sub::Exporter::Progressive: 0.001011
-  Try::Tiny: 0.19
-version: v1.0.1
+  Attribute::Abstract: '1.02'
+  Bio::DB::Sam: '1.39'
+  Bio::Root::Version: '1.006923'
+  Const::Fast: '0.014'
+  Devel::Cover: '1.09'
+  List::Util: '1.38'
+  Pod::Coverage: '0.23'
+  Sub::Exporter::Progressive: '0.001011'
+  Try::Tiny: '0.19'
+version: v1.0.2
