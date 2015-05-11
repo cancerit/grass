@@ -54,8 +54,6 @@
 ##INFO=<ID=RGN,Number=1,Type=String,Description="Region where nucleotide variant (breakpoint) occurs in relation to a gene">
 ##INFO=<ID=RGNNO,Number=1,Type=Integer,Description="Number of intron/exon where nucleotide variant (breakpoint) occurs in relation to a gene">
 ##INFO=<ID=RGNC,Number=1,Type=Integer,Description="Count of total number of introns/exons in stated transcript">
-##INFO=<ID=TSRDS,Number=.,Type=String,Description="Reads from the tumour sample (PD1234a) that span to this rearrangement">
-##INFO=<ID=NSRDS,Number=.,Type=String,Description="Reads from the normal sample (PD1234b) that span to this rearrangement">
 ##INFO=<ID=TRDS,Number=.,Type=String,Description="Reads from the tumour sample (PD1234a) that contribute to this rearrangement">
 ##INFO=<ID=NRDS,Number=.,Type=String,Description="Reads from the normal sample (PD1234b) that contribute to this rearrangement">
 ##FORMAT=<ID=RC,Number=1,Type=Integer,Description="Count of countributing reads">

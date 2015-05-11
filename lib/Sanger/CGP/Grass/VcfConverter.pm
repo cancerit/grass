@@ -165,41 +165,40 @@ sub gen_header{
   my $contigs = $self->{_contigs};
 
   my $info = [
-    {key => 'INFO', ID => 'SVTYPE',     Number => 1, Type => 'String',   Description => 'Type of structural variant. (All sequence is on the plus strand and in the forward direction).'},
-    {key => 'INFO', ID => 'MATEID',     Number => 1, Type => 'String',   Description => 'ID of mate breakend'},
-    {key => 'INFO', ID => 'HOMSEQ',     Number => 1, Type => 'String',   Description => 'Sequence of base pair identical micro-homology at event breakpoints. Plus strand sequence displayed.'},
-    {key => 'INFO', ID => 'IMPRECISE',  Number => 0, Type => 'Flag',     Description => 'Imprecise structural variation'},
-    {key => 'INFO', ID => 'CIPOS',      Number => 2, Type => 'Integer',  Description => 'Confidence interval around POS for imprecise variants'},
-    {key => 'INFO', ID => 'CIEND',      Number => 2, Type => 'Integer',  Description => 'Confidence interval around END for imprecise variants'},
-    {key => 'INFO', ID => 'HOMLEN',     Number => 1, Type => 'Integer',  Description => 'Length of base pair identical micro-homology at event breakpoints'},
-    {key => 'INFO', ID => 'REPS',       Number => '.', Type => 'String', Description => 'Repeat features that may contribute to rearrangement'},
-    {key => 'INFO', ID => 'NPSNO',      Number => 1, Type => 'Integer',  Description => 'Number of normal panel samples with sequencing reads for this rearrangement'},
-    {key => 'INFO', ID => 'NPRNO',      Number => 1, Type => 'Integer',  Description => 'Number of sequencing reads from normal panel samples for this rearrangement'},
-    {key => 'INFO', ID => 'RBLAT',      Number => 1, Type => 'Integer',  Description => 'Blat score for first bkpt range versus second bkpt range'},
-    {key => 'INFO', ID => 'BKDIST',     Number => 1, Type => 'Integer',  Description => 'Distance between breakpoints (-1 if difference chromosomes)'},
-    {key => 'INFO', ID => 'BALS',       Number => '.', Type => 'String', Description => 'IDs of complementary rearrangements involved in balanced translocations'},
-    {key => 'INFO', ID => 'INVS',       Number => '.', Type => 'String', Description => 'IDs of complementary rearrangements involved in inversion events'},
-    {key => 'INFO', ID => 'FFV',        Number => 1, Type => 'Integer',  Description => 'Fusion Flag value. Best one reported.'},
-    {key => 'INFO', ID => 'CNCH',       Number => 1, Type => 'String',   Description => 'Copynumber changepoints lie within CN_WITHIN of breakpoint (A=ASCAT,B=BATTENBERG,N=NGS_PICNIC). Only reported if both rearrangement breakpoints have adjacent changepoints'},
-    {key => 'INFO', ID => 'OCC',        Number => 1, Type => 'Integer',  Description => 'How many time the breakpoint appears in this dataset'},
-    {key => 'INFO', ID => 'SID',        Number => 1, Type => 'String',   Description => 'Unique identifier from gene annotation source or unknown'},
-    {key => 'INFO', ID => 'GENE',       Number => 1, Type => 'String',   Description => 'HUGO gene symbol or Unknown'},
-    {key => 'INFO', ID => 'TID',        Number => 1, Type => 'String',   Description => 'Transcript id for transcript associated with breakpoint'},
-    {key => 'INFO', ID => 'AS',         Number => 1, Type => 'String',   Description => 'Breakpoint annotation on this strand (+ or -)'},
-    {key => 'INFO', ID => 'EPH',        Number => 1, Type => 'Integer',  Description => 'End phase - phase of the first coding base following the breakpoint'},
-    {key => 'INFO', ID => 'PH',         Number => 1, Type => 'Integer',  Description => 'Phase at the breakpoint'},
-    {key => 'INFO', ID => 'FL',         Number => 1, Type => 'String',   Description => 'If the breakpoint is at the first or last base of an exon (common in RNAseq data)'},
-    {key => 'INFO', ID => 'RGN',        Number => 1, Type => 'String',   Description => 'Region where nucleotide variant (breakpoint) occurs in relation to a gene'},
-    {key => 'INFO', ID => 'RGNNO',      Number => 1, Type => 'Integer',  Description => 'Number of intron/exon where nucleotide variant (breakpoint) occurs in relation to a gene'},
-    {key => 'INFO', ID => 'RGNC',       Number => 1, Type => 'Integer',  Description => 'Count of total number of introns/exons in stated transcript'},
-    {key => 'INFO', ID => 'TSRDS',      Number => '.', Type => 'String',  Description => 'Reads from the tumour sample ('.$mt_sample->name.') that span to this rearrangement'},
-    {key => 'INFO', ID => 'NSRDS',      Number => '.', Type => 'String',  Description => 'Reads from the normal sample ('.$wt_sample->name.') that span to this rearrangement'},
-    {key => 'INFO', ID => 'TRDS',       Number => '.', Type => 'String',  Description => 'Reads from the tumour sample ('.$mt_sample->name.') that contribute to this rearrangement'},
-    {key => 'INFO', ID => 'NRDS',       Number => '.', Type => 'String',  Description => 'Reads from the normal sample ('.$wt_sample->name.') that contribute to this rearrangement'},
+    {key => 'INFO', ID => 'SVTYPE',    Number => 1, Type => 'String',   Description => 'Type of structural variant. (All sequence is on the plus strand and in the forward direction).'},
+    {key => 'INFO', ID => 'MATEID',    Number => 1, Type => 'String',   Description => 'ID of mate breakend'},
+    {key => 'INFO', ID => 'HOMSEQ',    Number => 1, Type => 'String',   Description => 'Sequence of base pair identical micro-homology at event breakpoints. Plus strand sequence displayed.'},
+    {key => 'INFO', ID => 'IMPRECISE', Number => 0, Type => 'Flag',     Description => 'Imprecise structural variation'},
+    {key => 'INFO', ID => 'CIPOS',     Number => 2, Type => 'Integer',  Description => 'Confidence interval around POS for imprecise variants'},
+    {key => 'INFO', ID => 'CIEND',     Number => 2, Type => 'Integer',  Description => 'Confidence interval around END for imprecise variants'},
+    {key => 'INFO', ID => 'HOMLEN',    Number => 1, Type => 'Integer',  Description => 'Length of base pair identical micro-homology at event breakpoints'},
+    {key => 'INFO', ID => 'REPS',      Number => '.', Type => 'String', Description => 'Repeat features that may contribute to rearrangement'},
+    {key => 'INFO', ID => 'NPSNO',     Number => 1, Type => 'Integer',  Description => 'Number of normal panel samples with sequencing reads for this rearrangement'},
+    {key => 'INFO', ID => 'NPRNO',     Number => 1, Type => 'Integer',  Description => 'Number of sequencing reads from normal panel samples for this rearrangement'},
+    {key => 'INFO', ID => 'RBLAT',     Number => 1, Type => 'Integer',  Description => 'Blat score for first bkpt range versus second bkpt range'},
+    {key => 'INFO', ID => 'BKDIST',    Number => 1, Type => 'Integer',  Description => 'Distance between breakpoints (-1 if difference chromosomes)'},
+    {key => 'INFO', ID => 'BALS',      Number => '.', Type => 'String', Description => 'IDs of complementary rearrangements involved in balanced translocations'},
+    {key => 'INFO', ID => 'INVS',      Number => '.', Type => 'String', Description => 'IDs of complementary rearrangements involved in inversion events'},
+    {key => 'INFO', ID => 'FFV',       Number => 1, Type => 'Integer',  Description => 'Fusion Flag value. Best one reported.'},
+    {key => 'INFO', ID => 'CNCH',      Number => 1, Type => 'String',   Description => 'Copynumber changepoints lie within CN_WITHIN of breakpoint (A=ASCAT,B=BATTENBERG,N=NGS_PICNIC). Only reported if both rearrangement breakpoints have adjacent changepoints'},
+    {key => 'INFO', ID => 'OCC',       Number => 1, Type => 'Integer',  Description => 'How many time the breakpoint appears in this dataset'},
+    {key => 'INFO', ID => 'SID',       Number => 1, Type => 'String',   Description => 'Unique identifier from gene annotation source or unknown'},
+    {key => 'INFO', ID => 'GENE',      Number => 1, Type => 'String',   Description => 'HUGO gene symbol or Unknown'},
+    {key => 'INFO', ID => 'TID',       Number => 1, Type => 'String',   Description => 'Transcript id for transcript associated with breakpoint'},
+    {key => 'INFO', ID => 'AS',        Number => 1, Type => 'String',   Description => 'Breakpoint annotation on this strand (+ or -)'},
+    {key => 'INFO', ID => 'EPH',       Number => 1, Type => 'Integer',  Description => 'End phase - phase of the first coding base following the breakpoint'},
+    {key => 'INFO', ID => 'PH',        Number => 1, Type => 'Integer',  Description => 'Phase at the breakpoint'},
+    {key => 'INFO', ID => 'FL',        Number => 1, Type => 'String',   Description => 'If the breakpoint is at the first or last base of an exon (common in RNAseq data)'},
+    {key => 'INFO', ID => 'RGN',       Number => 1, Type => 'String',   Description => 'Region where nucleotide variant (breakpoint) occurs in relation to a gene'},
+    {key => 'INFO', ID => 'RGNNO',     Number => 1, Type => 'Integer',  Description => 'Number of intron/exon where nucleotide variant (breakpoint) occurs in relation to a gene'},
+    {key => 'INFO', ID => 'RGNC',      Number => 1, Type => 'Integer',  Description => 'Count of total number of introns/exons in stated transcript'},
+    {key => 'INFO', ID => 'TRDS',      Number => '.', Type => 'String',  Description => 'Reads from the tumour sample ('.$mt_sample->name.') that contribute to this rearrangement'},
+    {key => 'INFO', ID => 'NRDS',      Number => '.', Type => 'String',  Description => 'Reads from the normal sample ('.$wt_sample->name.') that contribute to this rearrangement'},
       ];
 
   # details info layout for the tumour and the normal column
   my $format = [
+#	{key => 'FORMAT', ID => 'GT', Number => 1, Type => 'String', Description => 'Genotype'},
     {key => 'FORMAT', ID => 'RC', Number => 1, Type => 'Integer', Description => 'Count of countributing reads'},
       ];
 
@@ -499,17 +498,12 @@ sub gen_record {
     $rec2 .= 'FL='.$firstlast2.';' if ($firstlast2);
   }
 
-  if($names) {
-    $rec1 .= 'TSRDS='.$names;
-    $rec2 .= 'TSRDS='.$names;
-  }
-
   # FORMAT FIELDS
   # in format put read counts for: normal, tumour
 
 	# FORMAT
-	$normal_count = q{.} unless(defined $normal_count);
-	$tumour_count = q{.} unless(defined $tumour_count);
+	$normal_count = q{} unless(defined $normal_count);
+	$tumour_count = q{} unless(defined $tumour_count);
 	$rec1 .= SEP.$self->{_format}.SEP.$normal_count.SEP.$tumour_count;
 	$rec2 .= SEP.$self->{_format}.SEP.$normal_count.SEP.$tumour_count;
 
