@@ -122,8 +122,8 @@ sub test_file_input_bedpe {
     my $slurp_outfile_vcf = slurp_file($outfile_vcf);
 
     # path of reference file will differ so remove from comparison
-    splice(@{$slurp_testfile_out_vcf}, 3);
-    splice(@{$slurp_outfile_vcf}, 3);
+    splice(@{$slurp_testfile_out_vcf}, 3,1);
+    splice(@{$slurp_outfile_vcf}, 3,1);
 
     is_deeply($slurp_testfile_out_vcf, $slurp_outfile_vcf, 'correct vcf file created');
 }
