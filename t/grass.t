@@ -40,9 +40,13 @@ use FindBin qw($Bin);
 #my $genome_cache = '/lustre/scratch104/sanger/am3/vagrent/e74/Homo_sapiens.GRCh37.74.vagrent.cache.gz';
 my $genome_cache = "$Bin/../testData/vagrent.cache.gz";
 my $ref = "$Bin/../testData/genome.fa";
+if(exists $ENV{GRASS_GRCH37_FA}) {
+  $ref = $ENV{GRASS_GRCH37_FA};
+}
 
 my $script = $Bin.'/../bin/' . 'grass.pl';
 my $tmpdir = tempdir( CLEANUP => 1 );
+note $tmpdir;
 
 test_coord_input();
 test_file_input();
@@ -97,6 +101,7 @@ sub test_file_input_bedpe {
     my $testfile_out_vcf = "$tmpdir/testout_Brass_ann.vcf";
 
     ok(copy($infile, $testfile), 'setup files');
+    unless (-e $ref) { die "ERROR: ref file $ref does not exist. exiting\n"; }
     my $command = "$^X $script -genome_cache $genome_cache -file $testfile -ref $ref";
     note "$command\n";
     my ($out, $err, @result) = capture { system($command); };
@@ -116,7 +121,7 @@ sub test_file_input_bedpe {
 
     my $slurp_testfile_out = slurp_file($testfile_out);
     my $slurp_outfile = slurp_file($outfile);
-    is_deeply($slurp_testfile_out, $slurp_testfile_out, 'correct bedpe file created');
+    is_deeply($slurp_testfile_out, $slurp_outfile, 'correct bedpe file created');
 
     my $slurp_testfile_out_vcf = slurp_file($testfile_out_vcf);
     my $slurp_outfile_vcf = slurp_file($outfile_vcf);
