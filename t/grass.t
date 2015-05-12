@@ -48,9 +48,17 @@ my $script = $Bin.'/../bin/' . 'grass.pl';
 my $tmpdir = tempdir( CLEANUP => 1 );
 note $tmpdir;
 
-test_coord_input();
+SKIP: {
+  unless(-e $ref) {
+    my $message = "SKIPPING: Reference *.fa not found at '$ref', set ENV: GRASS_GRCH37_FA to enable these tests";
+    warn "$message\n";
+    skip $message, '3';
+  }
+  test_coord_input();
+  test_file_input_bedpe();
+}
 test_file_input();
-test_file_input_bedpe();
+
 
 #----------------------------------------------------------------------------------------#
 sub test_coord_input {
@@ -101,6 +109,7 @@ sub test_file_input_bedpe {
     my $testfile_out_vcf = "$tmpdir/testout_Brass_ann.vcf";
 
     ok(copy($infile, $testfile), 'setup files');
+
     unless (-e $ref) { die "ERROR: ref file $ref does not exist. exiting\n"; }
     my $command = "$^X $script -genome_cache $genome_cache -file $testfile -ref $ref";
     note "$command\n";
