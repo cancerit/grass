@@ -192,13 +192,14 @@ sub gen_header{
     {key => 'INFO', ID => 'RGN',       Number => 1, Type => 'String',   Description => 'Region where nucleotide variant (breakpoint) occurs in relation to a gene'},
     {key => 'INFO', ID => 'RGNNO',     Number => 1, Type => 'Integer',  Description => 'Number of intron/exon where nucleotide variant (breakpoint) occurs in relation to a gene'},
     {key => 'INFO', ID => 'RGNC',      Number => 1, Type => 'Integer',  Description => 'Count of total number of introns/exons in stated transcript'},
+    {key => 'INFO', ID => 'TSRDS',     Number => '.', Type => 'String',  Description => 'Reads from the tumour sample ('.$mt_sample->name.') that span to this rearrangement'},
+    {key => 'INFO', ID => 'NSRDS',     Number => '.', Type => 'String',  Description => 'Reads from the normal sample ('.$wt_sample->name.') that span to this rearrangement'},
     {key => 'INFO', ID => 'TRDS',      Number => '.', Type => 'String',  Description => 'Reads from the tumour sample ('.$mt_sample->name.') that contribute to this rearrangement'},
     {key => 'INFO', ID => 'NRDS',      Number => '.', Type => 'String',  Description => 'Reads from the normal sample ('.$wt_sample->name.') that contribute to this rearrangement'},
       ];
 
   # details info layout for the tumour and the normal column
   my $format = [
-#	{key => 'FORMAT', ID => 'GT', Number => 1, Type => 'String', Description => 'Genotype'},
     {key => 'FORMAT', ID => 'RC', Number => 1, Type => 'Integer', Description => 'Count of countributing reads'},
       ];
 
@@ -498,12 +499,17 @@ sub gen_record {
     $rec2 .= 'FL='.$firstlast2.';' if ($firstlast2);
   }
 
+  if($names) {
+    $rec1 .= 'TSRDS='.$names;
+    $rec2 .= 'TSRDS='.$names;
+  }
+
   # FORMAT FIELDS
   # in format put read counts for: normal, tumour
 
 	# FORMAT
-	$normal_count = q{} unless(defined $normal_count);
-	$tumour_count = q{} unless(defined $tumour_count);
+	$normal_count = q{0} unless(defined $normal_count);
+	$tumour_count = q{0} unless(defined $tumour_count);
 	$rec1 .= SEP.$self->{_format}.SEP.$normal_count.SEP.$tumour_count;
 	$rec2 .= SEP.$self->{_format}.SEP.$normal_count.SEP.$tumour_count;
 
