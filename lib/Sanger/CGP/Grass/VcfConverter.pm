@@ -77,7 +77,7 @@ sub new {
 
     if ($args{-infile})  { $self->infile($args{-infile}); }
     if ($args{-contigs}) { $self->{_contigs} = $args{-contigs}; }
-    if ($args{-flip_strand}) { $self->{-flip_strand} = $args{-flip_strand}; }
+    if ($args{-flip_strand}) { $self->flip_strand($args{-flip_strand}); }
 
     $self->{_format} = 'RC';
 
