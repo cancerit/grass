@@ -82,7 +82,7 @@ sub new {
 
     if ($args{-infile})  { $self->infile($args{-infile}); }
     if ($args{-ref})     { $self->ref($args{-ref}); }
-    if ($args{-flip_strand}) { $self->{-flip_strand} = $args{-flip_strand}; }
+    if ($args{-flip_strand}) { $self->flip_strand($args{-flip_strand}); }
 
     return $self;
 }
