@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ##########LICENCE##########
-#  Copyright (c) 2014 Genome Research Ltd.
+#  Copyright (c) 2014,2015 Genome Research Ltd.
 #
 #  Author: Lucy Stebbings <cgpit@sanger.ac.uk>
 #
@@ -95,7 +95,7 @@ echo > $INIT_DIR/setup.log
 
 VCF=`perl -le 'eval "require $ARGV[0]" and print $ARGV[0]->VERSION' Sanger::CGP::Vcf`
 if [[ "x$VCF" == "x" ]] ; then
-  echo "PREREQUISITE: Please install Sanger::CGP::Vagrent before proceeding: https://github.com/cancerit/cgpVcf/releases"
+  echo "PREREQUISITE: Please install Sanger::CGP::Vcf before proceeding: https://github.com/cancerit/cgpVcf/releases"
   exit 1;
 fi
 
