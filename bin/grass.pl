@@ -202,6 +202,7 @@ sub do_file {
 	}
 
 	my $entry_is_bedpe = do_data_line($fh_out, $line, $field, $is_refract, $list_between, $show_biotype, $genome_data);
+
 	if ($entry_is_bedpe) { $is_bedpe = 1; }
 	elsif(-s $infile == 0 && $infile =~ m/\.bedpe$/i) {
 	  $is_bedpe = 1;
