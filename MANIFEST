@@ -101,6 +101,7 @@ MANIFEST			This list of files
 perltidy.LOG
 prerelease.sh
 README.md
+setup.log
 setup.sh
 t/1_pm_compile.t
 t/2_pl_compile.t
