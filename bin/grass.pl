@@ -180,14 +180,13 @@ sub do_coord {
 sub do_file {
     my ($within, $species, $infile, $outfile, $field, $is_refract, $list_between, $show_biotype, $genome_data) = @_;
     my $is_bedpe = 0;
-
+    my $non_head_count = 0;
     unless ($outfile) {
 	$outfile = $infile;
 	if ($outfile =~ /\./) { $outfile =~ s/\.(\D+)$/_ann.$1/; }
 	else                  { $outfile = $infile . '_ann'; }
 	if ($infile eq $outfile) { $outfile = $infile . '_ann'; }
     }
-
     # open the file
     open my $fh_in, "<$infile" or die $!;
     open my $fh_out, ">$outfile" or die $!;
@@ -200,7 +199,7 @@ sub do_file {
 	    do_header_line($fh_out, $show_biotype, $line);
 	    next;
 	}
-
+  $non_head_count++;
 	my $entry_is_bedpe = do_data_line($fh_out, $line, $field, $is_refract, $list_between, $show_biotype, $genome_data);
 
 	if ($entry_is_bedpe) { $is_bedpe = 1; }
@@ -208,7 +207,7 @@ sub do_file {
 	  $is_bedpe = 1;
 	}
     }
-  if($is_bedpe != 1 && -s $infile == 0 && $infile =~ m/\.bedpe$/i) {
+  if($is_bedpe != 1 && (-s $infile == 0 || (-s $infile > 0 && $non_head_count == 0)) && $infile =~ m/\.bedpe$/i) {
 	  $is_bedpe = 1;
 	}
     return($outfile, $is_bedpe);
