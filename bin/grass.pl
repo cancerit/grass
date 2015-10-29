@@ -299,6 +299,14 @@ sub do_data_line {
             -strand2    => $line[9],
             -pos2_start => ($line[4] + 1),
             -pos2_end   => $line[5]);
+    if($entry1->strand1 eq '-') {
+      $line[1] = $entry1->pos1_end - 1;
+      $line[2] = $entry1->pos1_start;
+    }
+    if($entry1->strand2 eq '-') {
+      $line[4] = $entry1->pos2_end - 1;
+      $line[5] = $entry1->pos2_start;
+    }
     $is_bedpe = 1;
   }
   # refract format - coordinate usually in second field, possibly more than one pair of coordinates, ?? in place of shards or unknown coordinate

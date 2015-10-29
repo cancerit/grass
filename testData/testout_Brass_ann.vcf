@@ -1,6 +1,6 @@
 ##fileformat=VCFv4.1
 ##fileDate=20140512
-##source_20140512.1=grass.pl_v1.1.3
+##source_20140512.1=grass.pl_v1.1.4
 ##reference=/nfs/cancer_ref01/human/37/genome.fa
 ##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant. (All sequence is on the plus strand and in the forward direction).">
 ##INFO=<ID=MATEID,Number=1,Type=String,Description="ID of mate breakend">
@@ -34,7 +34,7 @@
 ##INFO=<ID=TRDS,Number=.,Type=String,Description="Reads from the tumour sample () that contribute to this rearrangement">
 ##INFO=<ID=NRDS,Number=.,Type=String,Description="Reads from the normal sample () that contribute to this rearrangement">
 ##FORMAT=<ID=RC,Number=1,Type=Integer,Description="Count of countributing reads">
-##vcfProcessLog_20140512.1=<InputVCFSource=<grass.pl>,InputVCFVer=<1.1.3>>
+##vcfProcessLog_20140512.1=<InputVCFSource=<grass.pl>,InputVCFVer=<1.1.4>>
 ##SAMPLE=<ID=NORMAL,Description="Normal",SampleName=>
 ##SAMPLE=<ID=TUMOUR,Description="Mutant",SampleName=>
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NORMAL	TUMOUR
