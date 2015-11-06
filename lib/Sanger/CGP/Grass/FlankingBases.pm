@@ -292,8 +292,8 @@ sub _read_data {
 	my $Hstring = "$chr2:" . $Hbase_pos . "-" . $Hbase_pos;
 	if ($self->{debug}) { print "L $Lstring, H $Hstring\n"; }
 
-	if ($self->{data}->{$name}->{1}) { die "duplicate entry $name in infile. Exiting.\n $!"; }
-	if ($self->{data}->{$name}->{2}) { die "duplicate entry $name in infile. Exiting.\n $!"; }
+	if ($self->{data}->{$name}->{1}) { die "duplicate entry $name in infile. Exiting.\n"; }
+	if ($self->{data}->{$name}->{2}) { die "duplicate entry $name in infile. Exiting.\n"; }
 
 	$self->{data}->{$name}->{1} = $fai->fetch("$Lstring");
 	$self->{data}->{$name}->{2} = $fai->fetch("$Hstring");

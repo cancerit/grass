@@ -25,6 +25,6 @@ package Sanger::CGP::Grass;
 use strict;
 use Const::Fast qw(const);
 
-our $VERSION = '1.1.4';
+our $VERSION = '1.1.5';
 
 1;
