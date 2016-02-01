@@ -123,7 +123,7 @@ subtest 'Cache approach' => sub {
   is (($End2->end()), $end , "get end");
   is (($End2->within()), $within , "get within");
   is (($End2->ccds_only()), 1 , "get ccds_only");
-  is ((Dumper($anns2)), $res , "get result cache");
+  is_deeply ($anns2, $res , "get result cache");
 
   # make a new object - plus strand
   my $End2_2 = new_ok('Sanger::CGP::Grass::Annotation::RGendAnnotator',
@@ -136,7 +136,7 @@ subtest 'Cache approach' => sub {
   is (($End2_2->end()), $end_2 , "get end (plus strand gene)");
   is (($End2_2->within()), $within_2 , "get within (plus strand gene)");
   is (($End2_2->ccds_only()), 1 , "get ccds_only (plus strand gene)");
-  is ((Dumper($anns2_2)), $res_2 , "get result cache (plus strand gene)");
+  is_deeply ($anns2_2, $res_2 , "get result cache (plus strand gene)");
 };
 
 
@@ -164,7 +164,7 @@ SKIP: {
     is (($End->end()), $end , "get end");
     is (($End->within()), $within , "get within");
     is (($End->ccds_only()), 1 , "get ccds_only");
-    is ((Dumper($anns)), $res , "get result ensembl");
+    is_deeply ($anns, $res , "get result ensembl");
 
     my $End_2 = new_ok('Sanger::CGP::Grass::Annotation::RGendAnnotator',
                [-entry   => $entry_2,
@@ -176,14 +176,15 @@ SKIP: {
     is (($End_2->end()), $end_2 , "get end (plus strand gene)");
     is (($End_2->within()), $within_2 , "get within (plus strand gene)");
     is (($End_2->ccds_only()), 1 , "get ccds_only (plus strand gene)");
-    is ((Dumper($anns_2)), $res_2 , "get result ensembl (plus strand gene)"); # has a putative coding transcript as well that is missing from the cache version
+    is_deeply ($anns_2, $res_2 , "get result ensembl (plus strand gene)"); # has a putative coding transcript as well that is missing from the cache version
   };
 };
 
 #------------------------------------------------------------------------------------------------#
 sub get_result_58 {
-    my $res = <<'END';
-$VAR1 = [
+    my $res;
+    eval <<'END';
+$res = [
           bless( {
                    'id_rg' => 'TEST',
                    'H5' => bless( {
@@ -321,8 +322,9 @@ END
 
 #------------------------------------------------------------------------------------------------#
 sub get_result_74 {
-    my $res = <<'END';
-$VAR1 = [
+    my $res;
+    eval <<'END';
+$res = [
           bless( {
                    'id_rg' => 'TEST',
                    'H5' => bless( {
@@ -366,8 +368,9 @@ END
 }
 #------------------------------------------------------------------------------------------------#
 sub get_result_74_2 {
-    my $res = <<'END';
-$VAR1 = [
+  my $res;
+    eval <<'END';
+$res = [
           bless( {
                    'L5' => bless( {
                                     'gene_id' => 'MIB2',
