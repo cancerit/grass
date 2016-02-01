@@ -106,7 +106,7 @@ subtest 'Cache approach' => sub {
   is (($combi_cache->strand1()), $strand1 , "get strand1. Cache");
   is (($combi_cache->strand2()), $strand2 , "get strand2. Cache");
   is (($combi_cache->shard()), $shard , "get shard. Cache");
-  is ((Dumper($rganno_cache)), $res_74 , "get result. Cache");
+  is_deeply ($rganno_cache, $res_74 , "get result. Cache");
 };
 
 SKIP: {
@@ -146,14 +146,15 @@ SKIP: {
     is (($combi->strand1()), $strand1 , "get strand1. Ensembl");
     is (($combi->strand2()), $strand2 , "get strand2. Ensembl");
     is (($combi->shard()), $shard , "get shard. Ensembl");
-    is ((Dumper($rganno)), $res_74 , "get result. Ensembl");
+    is_deeply ($rganno, $res_74 , "get result. Ensembl");
   };
 };
 
 #------------------------------------------------------------------------------------------------#
 sub get_result_58 {
-    my $res = <<'END';
-$VAR1 = bless( {
+  my $res;
+    eval <<'END';
+$res = bless( {
                  'L5' => bless( {
                                   'gene_id' => 'TMCC1',
                                   'up2' => 'TT',
@@ -230,8 +231,9 @@ END
 }
 #------------------------------------------------------------------------------------------------#
 sub get_result_74 {
-    my $res = <<'END';
-$VAR1 = bless( {
+  my $res;
+    eval <<'END';
+$res = bless( {
                  'L5' => bless( {
                                   'gene_id' => 'TMCC1',
                                   'up2' => 'TT',
