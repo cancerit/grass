@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 ##########LICENCE##########
-# Copyright (c) 2014 Genome Research Ltd.
+# Copyright (c) 2014-2016 Genome Research Ltd.
 #
 # Author: Cancer Genome Project cgpit@sanger.ac.uk
 #
@@ -37,8 +37,8 @@ WriteMakefile(
                      'Pod::Coverage' => 0.23,
                      'Attribute::Abstract' => 1.02,
                      'Sub::Exporter::Progressive' => 0.001011,
-                     'Bio::DB::Sam' => 1.39,
-                     'Bio::Root::Version' => 1.006923, # this is the only way to get Bio::Perl to behave
+                     'Bio::DB::HTS' => 1.11,
+                     'Bio::Root::Version' => 1.006924, # this is the only way to get Bio::Perl to behave
                                                        # and return the version correctly
                    }
 );

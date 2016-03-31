@@ -24,18 +24,13 @@ package Sanger::CGP::Grass::GenomeData::GenomeDataCache;
 
 use strict;
 
-# prevent the init warnings from Tabix
-BEGIN {
-  $SIG{__WARN__} = sub {warn $_[0] unless( $_[0] =~ m/^Subroutine Tabix.* redefined/)};
-};
-
-use Tabix;
+use Bio::DB::HTS::Tabix;
 
 use Sanger::CGP::Vagrent::Data::Transcript;
 use Sanger::CGP::Vagrent::Data::Exon;
 use Sanger::CGP::Grass::GenomeData::Exon;
 use Sanger::CGP::Grass::GenomeData::Transcript;
-use Bio::DB::Sam;
+use Bio::DB::HTS;
 use Data::Dumper;
 use Try::Tiny qw(try catch);
 
@@ -166,21 +161,19 @@ sub get_gene_list {
     my $cache = $self->{genome_cache};
 
     # set up cache if not already prepared (start coordinate is zero based in the cache!)
-    $self->{_cache_tbx} = Tabix->new('-data' => $self->{genome_cache}) unless defined $self->{_cache_tbx};
+    $self->{_cache_tbx} = Bio::DB::HTS::Tabix->new(filename => $self->{genome_cache}) unless defined $self->{_cache_tbx};
 
-    my $res = $self->{_cache_tbx}->query($chr,($start_coord - 1),$end_coord);
-    return undef unless defined $res;
+    my $iter = $self->{_cache_tbx}->query(sprintf '%s:%d-%d', $chr,($start_coord - 1),$end_coord);
+    return undef unless defined $iter;
 
     my @results = ();
-    if(defined $res){
-	while(my $ret = $self->{_cache_tbx}->read($res)){
+	while(my $ret = $iter->next){
 	    my $raw = (split("\t",$ret))[6];
 	    my $VAR1;
 	    eval $raw;
 	    next unless ($VAR1->{_genename});
 	    push @results, $VAR1->{_genename} unless (grep {$_ eq $VAR1->{_genename}} @results);
 	}
-    }
 
 #    # eg tabix Homo_sapiens.GRCh37.74.vagrent.cache.gz 1:10000000-10100000 | cut -f5 | uniq
 #    my $coord_string = $chr . ':' . $start_coord . '-' . $end_coord;
@@ -212,27 +205,24 @@ sub fetch_transcripts_by_region {
     if (($cache =~ /Canis/) && ($chr eq 'M')) { $chr = 'mt'; } # dogs have motochondrial chr naming problem
 
     # set up cache if not already prepared (start coordinate is zero based in the cache!)
-    $self->{_cache_tbx} = Tabix->new('-data' => $self->{genome_cache}) unless defined $self->{_cache_tbx};
+    $self->{_cache_tbx} = Bio::DB::HTS::Tabix->new(filename => $self->{genome_cache}) unless defined $self->{_cache_tbx};
 
-    my $res = $self->{_cache_tbx}->query($chr,($start_coord - 1),$end_coord);
+    my $iter = $self->{_cache_tbx}->query(sprintf '%s:%d-%d', $chr,($start_coord - 1),$end_coord);
+    return undef unless defined $iter;
 
-    return undef unless defined $res;
-
-    if(defined $res){
-      try {
-        while(my $ret = $self->{_cache_tbx}->read($res)) {
-          my $length = (split("\t",$ret))[5];
-          my $raw = (split("\t",$ret))[6];
-          my $VAR1;
-          eval $raw;
-          my $vagrent_transcript = $VAR1;
-          push @vagrent_transcripts, [$length, $vagrent_transcript];
-        }
+    try {
+      while(my $ret = $iter->next) {
+        my $length = (split("\t",$ret))[5];
+        my $raw = (split("\t",$ret))[6];
+        my $VAR1;
+        eval $raw;
+        my $vagrent_transcript = $VAR1;
+        push @vagrent_transcripts, [$length, $vagrent_transcript];
       }
-      catch {
-        croak $_ if($_ !~ m/^Tabix::tabix_read: iter is not of type ti_iter_t/);
-      };
     }
+    catch {
+      croak $_ if($_ !~ m/^Tabix::tabix_read: iter is not of type ti_iter_t/);
+    };
 
 #    my $coord_string = $chr . ':' . $start_coord . '-' . $end_coord;
 #    my $results = `tabix $cache $coord_string | cut -f6,7`;
@@ -442,7 +432,7 @@ sub _get_seq {
 	my $fasta_ref = $self->{genome_cache};
 #	$fasta_ref =~ s/cache.gz/transcript.fa/;
 	$fasta_ref =~ s/cache.gz/fa/;
-	$self->{fai} = Bio::DB::Sam::Fai->load( $fasta_ref );
+	$self->{fai} = Bio::DB::HTS::Fai->load( $fasta_ref );
     }
     my $seq = $self->{fai}->fetch($transcript);
 
