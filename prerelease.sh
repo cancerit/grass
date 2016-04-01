@@ -48,8 +48,9 @@ echo '#   GRASS_ENS_API'
 echo '#   GRASS_GRCH37_FA'
 echo '########################################'
 
+rm -rf reports docs pm_to_blib blib
+cover -delete
 export HARNESS_PERL_SWITCHES=-MDevel::Cover=-db,reports,-select='^lib/*\.pm$',-ignore,'^t/',-ignore,'Bio/EnsEMBL'
-rm -rf docs
 mkdir -p docs/reports_text
 prove -w -I ./lib t
 
