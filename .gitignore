@@ -1,6 +1,7 @@
 /Makefile
 /blib
 /docs
+/reports
 /pm_to_blib
 /MANIFEST.bak
 /LICENCE.TXT
@@ -8,3 +9,4 @@
 /licence_head.txt
 /setup.log
 /perltidy.LOG
+/MYMETA.*

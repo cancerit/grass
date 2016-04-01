@@ -24,7 +24,7 @@ package Sanger::CGP::Grass::FlankingBases;
 
 use strict;
 use File::Copy qw(move);
-use Bio::DB::Sam;
+use Bio::DB::HTS;
 
 use Sanger::CGP::Grass;
 our $VERSION = Sanger::CGP::Grass->VERSION;
@@ -235,7 +235,7 @@ sub _read_data {
     my $data = {};
 
     # load an indexed fasta file
-    my $fai = Bio::DB::Sam::Fai->load( $self->{ref} );
+    my $fai = Bio::DB::HTS::Fai->load( $self->{ref} );
 
     open my $fh, "<$file" or die $!;
     while (my $line = <$fh>) {

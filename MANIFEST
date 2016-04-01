@@ -1,6 +1,6 @@
 bin/brass_bedpe2vcf.pl
-bin/cpanm
 bin/grass.pl
+CHANGES.md
 docs.tar.gz
 docs/pod_html/_blkbluw.css
 docs/pod_html/_blkcynw.css
