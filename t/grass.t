@@ -48,6 +48,11 @@ my $script = $Bin.'/../bin/' . 'grass.pl';
 my $tmpdir = tempdir( CLEANUP => 1 );
 note $tmpdir;
 
+# get the current version being tested:
+use Sanger::CGP::Grass;
+my $new_version = Sanger::CGP::Grass->VERSION;
+
+
 SKIP: {
   unless(-e $ref) {
     my $message = "SKIPPING: Reference *.fa not found at '$ref', set ENV: GRASS_GRCH37_FA to enable these tests";
@@ -129,11 +134,11 @@ sub test_file_input_bedpe {
     `$command3`;
 
     my $slurp_testfile_out = slurp_file($testfile_out);
-    my $slurp_outfile = slurp_file($outfile);
+    my $slurp_outfile = slurp_file($outfile, $new_version);
     is_deeply($slurp_testfile_out, $slurp_outfile, 'correct bedpe file created');
 
     my $slurp_testfile_out_vcf = slurp_file($testfile_out_vcf);
-    my $slurp_outfile_vcf = slurp_file($outfile_vcf);
+    my $slurp_outfile_vcf = slurp_file($outfile_vcf, $new_version);
 
     # path of reference file will differ so remove from comparison
     splice(@{$slurp_testfile_out_vcf}, 3,1);
@@ -144,9 +149,21 @@ sub test_file_input_bedpe {
 #----------------------------------------------------------------------------------------#
 
 sub slurp_file {
-  my $in = shift;
+  my ($in, $new_version) = @_;
+  my @data;
   open my $fh, '<', $in or die $!;
-  my @data = <$fh>;
+  if(defined $new_version) {
+    while (my $line = <$fh>) {
+      chomp $line;
+      if($line eq '##source_20140512.1=grass.pl_v1.1.6' || $line eq '##vcfProcessLog_20140512.1=<InputVCFSource=<grass.pl>,InputVCFVer=<1.1.6>>') {
+        $line =~ s/1\.1\.6/$new_version/;
+      }
+      push @data, "$line\n";
+    }
+  }
+  else {
+    @data = <$fh>;
+  }
   close $fh;
   return \@data;
 }

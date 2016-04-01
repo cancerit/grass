@@ -43,6 +43,10 @@ use FindBin qw($Bin);
 
 my $ref = "$Bin/../testData/genome.fa";
 
+# get the current version being tested:
+use Sanger::CGP::Grass;
+my $new_version = Sanger::CGP::Grass->VERSION;
+
 test_brassI_bedpe_file_input($ref);
 test_brassII_bedpe_file_input($ref);
 
@@ -83,7 +87,7 @@ sub test_brassI_bedpe_file_input {
 
     my $testoutdata = slurp_file($testoutfile);
     splice(@{$testoutdata}, 3, 1); # line 3 has a file path that will change
-    my $outdata = slurp_file($outfile);
+    my $outdata = slurp_file($outfile, $new_version);
     splice(@{$outdata}, 3, 1); # line 3 has a file path that will change
     is_deeply($testoutdata, $outdata, 'correct file created');
 
@@ -126,7 +130,7 @@ sub test_brassII_bedpe_file_input {
 
     my $testoutdata = slurp_file($testoutfile);
     splice(@{$testoutdata}, 3, 1); # line 3 has a file path that will change
-    my $outdata = slurp_file($outfile);
+    my $outdata = slurp_file($outfile, $new_version);
     splice(@{$outdata}, 3, 1); # line 3 has a file path that will change
     is_deeply($testoutdata, $outdata, 'correct file created');
 
@@ -192,9 +196,21 @@ sub get_support_objects {
 
 
 sub slurp_file {
-  my $file = shift;
-  open my $fh, '<', $file || die $!;
-  my @lines = <$fh>;
+  my ($in, $new_version) = @_;
+  my @data;
+  open my $fh, '<', $in or die $!;
+  if(defined $new_version) {
+    while (my $line = <$fh>) {
+      chomp $line;
+      if($line eq '##source_20140512.1=VcfConverter.t_v1.1.6' || $line eq '##vcfProcessLog_20140512.1=<InputVCFSource=<VcfConverter.t>,InputVCFVer=<1.1.6>>') {
+        $line =~ s/1\.1\.6/$new_version/;
+      }
+      push @data, "$line\n";
+    }
+  }
+  else {
+    @data = <$fh>;
+  }
   close $fh;
-  return \@lines;
+  return \@data;
 }
