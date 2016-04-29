@@ -44,7 +44,7 @@ cd $MY_PATH
 echo '########## Running perl tests ##########'
 echo '# Better coverage is obtained by setting'
 echo '# the following ENV variables:'
-echo '#   GRASS_ENS_API'
+echo '#   GRASS_ENS_API (www_74_1)'
 echo '#   GRASS_GRCH37_FA'
 echo '########################################'
 
