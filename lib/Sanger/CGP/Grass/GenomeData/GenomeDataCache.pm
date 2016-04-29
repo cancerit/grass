@@ -163,7 +163,7 @@ sub get_gene_list {
     # set up cache if not already prepared (start coordinate is zero based in the cache!)
     $self->{_cache_tbx} = Bio::DB::HTS::Tabix->new(filename => $self->{genome_cache}) unless defined $self->{_cache_tbx};
 
-    my $iter = $self->{_cache_tbx}->query(sprintf '%s:%d-%d', $chr,($start_coord - 1),$end_coord);
+    my $iter = $self->{_cache_tbx}->query(sprintf '%s:%d-%d', $chr,$start_coord,$end_coord);
     return undef unless defined $iter;
 
     my @results = ();
@@ -207,7 +207,7 @@ sub fetch_transcripts_by_region {
     # set up cache if not already prepared (start coordinate is zero based in the cache!)
     $self->{_cache_tbx} = Bio::DB::HTS::Tabix->new(filename => $self->{genome_cache}) unless defined $self->{_cache_tbx};
 
-    my $iter = $self->{_cache_tbx}->query(sprintf '%s:%d-%d', $chr,($start_coord - 1),$end_coord);
+    my $iter = $self->{_cache_tbx}->query(sprintf '%s:%d-%d', $chr,$start_coord,$end_coord);
     return undef unless defined $iter;
 
     try {
