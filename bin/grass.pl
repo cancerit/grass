@@ -84,6 +84,7 @@ my $normal = '';
 my $acc_normal = '';
 my $acc_source_normal = '';
 my $study_normal = '';
+my @add_header;
 
 my $help = 0;
 my $arg_count = scalar @ARGV;
@@ -108,6 +109,7 @@ GetOptions( 'within:s'      => \$within,
 	    'acc_normal:s'       => \$acc_normal,
 	    'acc_source_normal:s'=> \$acc_source_normal,
 	    'study_normal:s'     => \$study_normal,
+	    'add_header:s'     => \@add_header, # VCF only
 	    'list_between'  => \$list_between,
 	    'show_biotype'  => \$show_biotype,
 	    'use_all_biotypes' => \$use_all_biotypes,
@@ -515,7 +517,8 @@ sub make_vcf_file {
 
     if ($file) {
 	my $VcfConverter = new Sanger::CGP::Grass::VcfConverter(-infile  => $file,
-								-contigs => $contigs );
+								-contigs => $contigs,
+								-add_header => \@add_header );
 	$VcfConverter->convert($wt_sample, $mt_sample, \@process_logs, $ref, $source);
     }
 }
@@ -560,6 +563,8 @@ options...
    -acc_normal     : name of normal sample accession id. For vcf out file generation.
    -acc_source_normal : source of normal sample accession id. For vcf out file generation.
    -study_normal   : study id associated with normal sample. For vcf out file generation.
+   -add_header     : One or more additional header lines, these should not be core header elements.
+                     e.g. -add_header 'brassVer=5.0.1'
 
    -help          : Print this message
 
