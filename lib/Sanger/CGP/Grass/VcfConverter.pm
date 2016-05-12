@@ -75,9 +75,12 @@ sub new {
     my $self = {};
     bless $self,$class;
 
+    $self->{add_header} = [];
+
     if ($args{-infile})  { $self->infile($args{-infile}); }
     if ($args{-contigs}) { $self->{_contigs} = $args{-contigs}; }
     if ($args{-flip_strand}) { $self->flip_strand($args{-flip_strand}); }
+    if ($args{-add_header}) { $self->add_header($args{-add_header}); }
 
     $self->{_format} = 'RC';
 
@@ -98,6 +101,22 @@ sub infile {
     my $self = shift;
     $self->{infile} = shift if @_;
     return $self->{infile};
+}
+#-----------------------------------------------------------------------#
+
+=head2 add_header
+
+  Arg (1)    : array ref of strings
+  Example    : ['brassVer=5.0.1']
+  Description: entries to be added to VCF header
+  Return     : array ref of strings
+
+=cut
+
+sub add_header {
+    my $self = shift;
+    $self->{add_header} = shift if @_;
+    return $self->{add_header};
 }
 #-----------------------------------------------------------------------#
 
@@ -180,7 +199,7 @@ sub gen_header{
     {key => 'INFO', ID => 'BALS',      Number => '.', Type => 'String', Description => 'IDs of complementary rearrangements involved in balanced translocations'},
     {key => 'INFO', ID => 'INVS',      Number => '.', Type => 'String', Description => 'IDs of complementary rearrangements involved in inversion events'},
     {key => 'INFO', ID => 'FFV',       Number => 1, Type => 'Integer',  Description => 'Fusion Flag value. Best one reported.'},
-    {key => 'INFO', ID => 'CNCH',      Number => 1, Type => 'String',   Description => 'Copynumber changepoints lie within CN_WITHIN of breakpoint (A=ASCAT,B=BATTENBERG,N=NGS_PICNIC). Only reported if both rearrangement breakpoints have adjacent changepoints'},
+    {key => 'INFO', ID => 'CNCH',      Number => 1, Type => 'String',   Description => 'Passes iterative, weighted CN boundary analysis.'},
     {key => 'INFO', ID => 'OCC',       Number => 1, Type => 'Integer',  Description => 'How many time the breakpoint appears in this dataset'},
     {key => 'INFO', ID => 'SID',       Number => 1, Type => 'String',   Description => 'Unique identifier from gene annotation source or unknown'},
     {key => 'INFO', ID => 'GENE',      Number => 1, Type => 'String',   Description => 'HUGO gene symbol or Unknown'},
@@ -203,7 +222,13 @@ sub gen_header{
     {key => 'FORMAT', ID => 'RC', Number => 1, Type => 'Integer', Description => 'Count of countributing reads'},
       ];
 
-  return Sanger::CGP::Vcf::VcfUtil::gen_tn_vcf_header( $wt_sample, $mt_sample, $contigs, $process_logs, $reference_name, $input_source, $info, $format, []);
+  my @other;
+  for my $head_line(@{$self->add_header}) {
+    die "ERROR, Additional header line doesn't match expected format of '^[^=]+=.+$': $head_line\n" unless($head_line =~ m/^[^=]+=.+$/);
+    my ($key, $value) = split /=/, $head_line;
+    push @other, {key => $key, value => $value};
+  }
+  return Sanger::CGP::Vcf::VcfUtil::gen_tn_vcf_header( $wt_sample, $mt_sample, $contigs, $process_logs, $reference_name, $input_source, $info, $format, \@other);
 }
 
 #-----------------------------------------------------------------------#
@@ -400,8 +425,7 @@ sub gen_record {
   my $svtype = 'BND';
 
   # split the copynumber entry into breakpoints
-  $copynumber_flag ||= q{};
-  my ($cnch1, $cnch2) = split '_', $copynumber_flag;
+  $copynumber_flag ||= 0;
 
   # put both names in for each id for bal_trans and inv
   my @bal_trans_formatted = ();
@@ -438,7 +462,7 @@ sub gen_record {
   $rec1 .= 'BALS='.$bal_trans_formatted.';' if ($bal_trans_formatted);
   $rec1 .= 'INVS='.$inv_formatted.';' if ($inv_formatted);
   $rec1 .= 'FFV='.$fusion_flag.';' if (defined($fusion_flag) && $gene1 && $gene2);
-  $rec1 .= 'CNCH='.$cnch1.';' if ($cnch1);
+  $rec1 .= 'CNCH='.$copynumber_flag.';' if ($copynumber_flag);
   $rec1 .= 'OCC='.$occL.';' if ($occL);
   if ($microhom1) {
     $rec1 .= 'HOMSEQ='.$microhom1.';';
@@ -477,7 +501,7 @@ sub gen_record {
   $rec2 .= 'BALS='.$bal_trans_formatted.';' if ($bal_trans_formatted);
   $rec2 .= 'INVS='.$inv_formatted.';' if ($inv_formatted);
   $rec2 .= 'FFV='.$fusion_flag.';' if (defined($fusion_flag) && $gene1 && $gene2);
-  $rec2 .= 'CNCH='.$cnch2.';' if ($cnch2);
+  $rec2 .= 'CNCH='.$copynumber_flag.';' if ($copynumber_flag);
   $rec2 .= 'OCC='.$occH.';' if ($occH);
   if ($microhom2) {
     $rec2 .= 'HOMSEQ='.$microhom2.';';
