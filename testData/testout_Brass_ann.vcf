@@ -17,7 +17,7 @@
 ##INFO=<ID=BALS,Number=.,Type=String,Description="IDs of complementary rearrangements involved in balanced translocations">
 ##INFO=<ID=INVS,Number=.,Type=String,Description="IDs of complementary rearrangements involved in inversion events">
 ##INFO=<ID=FFV,Number=1,Type=Integer,Description="Fusion Flag value. Best one reported.">
-##INFO=<ID=CNCH,Number=1,Type=String,Description="Copynumber changepoints lie within CN_WITHIN of breakpoint (A=ASCAT,B=BATTENBERG,N=NGS_PICNIC). Only reported if both rearrangement breakpoints have adjacent changepoints">
+##INFO=<ID=CNCH,Number=1,Type=String,Description="Passes iterative, weighted CN boundary analysis.">
 ##INFO=<ID=OCC,Number=1,Type=Integer,Description="How many time the breakpoint appears in this dataset">
 ##INFO=<ID=SID,Number=1,Type=String,Description="Unique identifier from gene annotation source or unknown">
 ##INFO=<ID=GENE,Number=1,Type=String,Description="HUGO gene symbol or Unknown">

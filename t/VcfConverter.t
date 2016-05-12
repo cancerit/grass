@@ -68,7 +68,8 @@ sub test_brassI_bedpe_file_input {
 
     # make a new object
     my $VcfConverter = new Sanger::CGP::Grass::VcfConverter(-infile  => $testfile,
-                                                            -contigs => $contigs );
+                                                            -contigs => $contigs,
+                                                            -add_header => ['brassVer=5.0.1'] );
     ok($VcfConverter, 'object defined');
 
     $VcfConverter->convert($wt_sample, $mt_sample, $process_logs, $ref, $source);
