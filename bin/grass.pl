@@ -180,39 +180,37 @@ sub do_coord {
 }
 #------------------------------------------------------------------------------------------------#
 sub do_file {
-    my ($within, $species, $infile, $outfile, $field, $is_refract, $list_between, $show_biotype, $genome_data) = @_;
-    my $is_bedpe = 0;
-    my $non_head_count = 0;
-    unless ($outfile) {
-	$outfile = $infile;
-	if ($outfile =~ /\./) { $outfile =~ s/\.(\D+)$/_ann.$1/; }
-	else                  { $outfile = $infile . '_ann'; }
-	if ($infile eq $outfile) { $outfile = $infile . '_ann'; }
+  my ($within, $species, $infile, $outfile, $field, $is_refract, $list_between, $show_biotype, $genome_data) = @_;
+  my ($is_bedpe, $non_head_count) = (0,0);
+
+  unless ($outfile) {
+    $outfile = $infile;
+    if    ($outfile =~ s/\.(assembled\.bedpe)$/_ann.$1/){}
+    elsif ($outfile =~ s/\.(groups\.clean\.bedpe)$/_ann.$1/){}
+    elsif ($outfile =~ /\./) { $outfile =~ s/\.(\D+)$/_ann.$1/; }
+    else                  { $outfile = $infile . '_ann'; }
+
+    if ($infile eq $outfile) { $outfile = $infile . '_ann'; }
+  }
+  # open the file
+  open my $fh_in, "<$infile" or die $!;
+  open my $fh_out, ">$outfile" or die $!;
+
+  while (my $line = <$fh_in>) {
+    chomp $line;
+    # do any headers
+    if (($line =~ /k?e?y?\s*EXPECTED/i) || ($line =~ /study\tsample/i) || ($line =~ /^#/)) {
+      do_header_line($fh_out, $show_biotype, $line);
+      next;
     }
-    # open the file
-    open my $fh_in, "<$infile" or die $!;
-    open my $fh_out, ">$outfile" or die $!;
+    $non_head_count++;
+    my $entry_is_bedpe = do_data_line($fh_out, $line, $field, $is_refract, $list_between, $show_biotype, $genome_data);
 
-    while (my $line = <$fh_in>) {
-	chomp $line;
-
-	# do any headers
-	if (($line =~ /k?e?y?\s*EXPECTED/i) || ($line =~ /study\tsample/i) || ($line =~ /^#/)) {
-	    do_header_line($fh_out, $show_biotype, $line);
-	    next;
-	}
-  $non_head_count++;
-	my $entry_is_bedpe = do_data_line($fh_out, $line, $field, $is_refract, $list_between, $show_biotype, $genome_data);
-
-	if ($entry_is_bedpe) { $is_bedpe = 1; }
-	elsif(-s $infile == 0 && $infile =~ m/\.bedpe$/i) {
-	  $is_bedpe = 1;
-	}
-    }
-  if($is_bedpe != 1 && (-s $infile == 0 || (-s $infile > 0 && $non_head_count == 0)) && $infile =~ m/\.bedpe$/i) {
-	  $is_bedpe = 1;
-	}
-    return($outfile, $is_bedpe);
+    if ($entry_is_bedpe) { $is_bedpe = 1; }
+    elsif(-s $infile == 0 && $infile =~ m/\.bedpe$/i) { $is_bedpe = 1; }
+  }
+  $is_bedpe = 1 if($is_bedpe != 1 && (-s $infile == 0 || (-s $infile > 0 && $non_head_count == 0)) && $infile =~ m/\.bedpe$/i);
+  return($outfile, $is_bedpe);
 }
 #------------------------------------------------------------------------------------------------#
 sub do_header_line {
