@@ -1,0 +1,37 @@
+notifications:
+  slack: wtsi-cgpit:ptUMR1tkNyZJYd9TpGoss8WR
+  email: false
+
+env:
+ - CC=gcc
+
+addons:
+ apt:
+  packages:
+   - build-essential
+   - autoconf
+   - curl
+   - zlib1g-dev
+   - libncurses5-dev
+   - libpstreams-dev
+   - libcurl4-openssl-dev
+
+install: true
+
+language: perl
+
+perl:
+ - "5.22"
+
+script:
+ - git clone --depth 1 --single-branch --branch dev https://github.com/cancerit/cgpVcf.git
+ - cd cgpVcf
+ - ./setup.sh $HOME/cgpVcf-opt
+ - cd ../
+ - rm -rf cgpVcf
+ - git clone --depth 1 --single-branch --branch dev https://github.com/cancerit/VAGrENT.git
+ - cd VAGrENT
+ - ./setup.sh $HOME/VAGrENT-opt $HOME/cgpVcf-opt/lib/perl5
+ - cd ../
+ - rm -rf VAGrENT
+ - ./setup.sh $HOME/grass-opt $HOME/VAGrENT-opt/lib/perl5:$HOME/cgpVcf-opt/lib/perl5

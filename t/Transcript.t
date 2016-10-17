@@ -66,7 +66,7 @@ my $Exon = new Sanger::CGP::Grass::GenomeData::Exon(-phase => $phase,
 				       -coding_region_start => $ecoding_region_start,
 				       -coding_region_end => $ecoding_region_end,
 				       -seq => $seq );
-push $exons, $Exon;
+push @{$exons}, $Exon;
 
 # make a new transcript object
 my $Transcript = new Sanger::CGP::Grass::GenomeData::Transcript(-stable_id => $stable_id,

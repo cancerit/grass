@@ -19,20 +19,17 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+# 1. The usage of a range of years within a copyright statement contained within
+# this distribution should be interpreted as being equivalent to a list of years
+# including the first and last year specified and all consecutive years between
+# them. For example, a copyright statement that reads ‘Copyright (c) 2005, 2007-
+# 2009, 2011-2012’ should be interpreted as being identical to a statement that
+# reads ‘Copyright (c) 2005, 2007, 2008, 2009, 2011, 2012’ and a copyright
+# statement that reads ‘Copyright (c) 2005-2012’ should be interpreted as being
+# identical to a statement that reads ‘Copyright (c) 2005, 2006, 2007, 2008,
+# 2009, 2010, 2011, 2012’."
 ##########LICENCE##########
-
-done_message () {
-    if [ $? -eq 0 ]; then
-        echo " done."
-        if [ "x$1" != "x" ]; then
-            echo $1
-        fi
-    else
-        echo " failed.  See setup.log file for error messages." $2
-        echo "    Please check INSTALL file for items that should be installed by a package manager"
-        exit 1
-    fi
-}
 
 get_file () {
 # output, source
@@ -43,35 +40,34 @@ get_file () {
   fi
 }
 
-if [ "$#" -ne "1" ] ; then
-  echo "Please provide an installation path  such as /opt/ICGC"
+if [[ ($# -ne 1 && $# -ne 2) ]] ; then
+  echo "Please provide an installation path and optionally perl lib paths to allow, e.g."
+  echo "  ./setup.sh /opt/myBundle"
+  echo "OR all elements versioned:"
+  echo "  ./setup.sh /opt/cgpVcf-X.X.X /opt/PCAP-X.X.X/lib/perl"
   exit 0
 fi
 
-CPU=`cat /proc/cpuinfo | egrep "^processor" | wc -l`
+INST_PATH=$1
+
+if [[ $# -eq 2 ]] ; then
+  CGP_PERLLIBS=$2
+fi
+
+CPU=`grep -c ^processor /proc/cpuinfo`
+if [[ $? -eq 0 ]]; then
+  if [[ $CPU -gt 6 ]]; then
+    CPU=6
+  fi
+else
+  CPU=1
+fi
 echo "Max compilation CPUs set to $CPU"
 
 INST_PATH=$1
 
 # get current directory
 INIT_DIR=`pwd`
-
-# re-initialise log file
-echo > $INIT_DIR/setup.log
-
-
-# log information about this system
-(
-    echo '============== System information ===='
-    set -x
-    lsb_release -a
-    uname -a
-    sw_vers
-    system_profiler
-    grep MemTotal /proc/meminfo
-    set +x
-    echo
-) >>$INIT_DIR/setup.log 2>&1
 
 set -e
 
@@ -104,7 +100,6 @@ cd $SETUP_DIR
 get_file $SETUP_DIR/cpanm https://cpanmin.us/
 perl $SETUP_DIR/cpanm -l $INST_PATH App::cpanminus
 CPANM=`which cpanm`
-echo $CPANM
 
 VCF=`perl -le 'eval "require $ARGV[0]" and print $ARGV[0]->VERSION' Sanger::CGP::Vcf`
 if [[ "x$VCF" == "x" ]] ; then
@@ -127,20 +122,17 @@ if ! ( perl -MExtUtils::MakeMaker -e 1 >/dev/null 2>&1); then
     echo "WARNING: Your Perl installation does not seem to include a complete set of core modules.  Attempting to cope with this, but if installation fails please make sure that at least ExtUtils::MakeMaker is installed.  For most users, the best way to do this is to use your system's package manager: apt, yum, fink, homebrew, or similar."
 fi
 
-$CPANM -v --mirror http://cpan.metacpan.org --notest -l $INST_PATH/ --installdeps . < /dev/null
-done_message "" "Failed during installation of core dependencies."
+$CPANM --mirror http://cpan.metacpan.org --notest -l $INST_PATH/ --installdeps . < /dev/null
 
 echo -n "Installing grass ..."
 cd $INIT_DIR
-perl Makefile.PL INSTALL_BASE=$INST_PATH && \
-make && \
-make test && \
+perl Makefile.PL INSTALL_BASE=$INST_PATH
+make
+make test
 make install
-done_message "" "grass install failed."
 
 # cleanup all junk
 rm -rf $SETUP_DIR
-
 
 
 echo
@@ -149,5 +141,4 @@ echo "Please add the following to beginning of path:"
 echo "  $INST_PATH/bin"
 echo "Please add the following to beginning of PERL5LIB:"
 echo "  $PERLROOT"
-echo "  $PERLARCH"
 echo
