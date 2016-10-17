@@ -126,10 +126,14 @@ $CPANM --mirror http://cpan.metacpan.org --notest -l $INST_PATH/ --installdeps .
 
 echo -n "Installing grass ..."
 cd $INIT_DIR
-$CPANM -v --mirror http://cpan.metacpan.org -l $INST_PATH/ .
+perl Makefile.PL INSTALL_BASE=$INST_PATH
+make
+make test
+make install
 
 # cleanup all junk
 rm -rf $SETUP_DIR
+
 
 echo
 echo
