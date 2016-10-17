@@ -5,6 +5,10 @@ Gene Rearrangement AnalySiS
 
 Takes pairs of coordinates describing potential rearrangement events and predicts the 'most interesting' fusion consequences that could occur.
 
+| Master | Dev |
+|---|---|
+|  [![Build Status](https://travis-ci.org/cancerit/grass.svg?branch=master)](https://travis-ci.org/cancerit/grass) | [![Build Status](https://travis-ci.org/cancerit/grass.svg?branch=dev)](https://travis-ci.org/cancerit/grass) |
+
 ###Dependencies/Install
 This package has dependencies on other software.  These __must be installed in advance__:
 
