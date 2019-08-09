@@ -94,6 +94,7 @@ GetOptions( 'within:s'      => \$within,
 	    'file:s'        => \$file,
 	    'r_file:s'      => \$file2,
 	    'outfile:s'     => \$outfile,
+        'version'       => \$version,
 	    'genome_cache:s'=> \$genome_cache_file,
 	    'ensembl_api:s' => \$ensembl_api,
 	    'species:s'     => \$species,
@@ -119,6 +120,11 @@ GetOptions( 'within:s'      => \$within,
 
 # check inputs
 if ($help || $arg_count == 0) { usage(); }
+
+if($version){
+  print 'Version: '.Sanger::CGP::Grass->VERSION."\n";
+  exit;
+}
 
 # set up access to genome data  from EnsemblDB (if species/ensembl_api supplied) or a cached flat file version (if genome_cache supplied)
 my $genome_data = new Sanger::CGP::Grass::GenomeData(-species      => $species,
