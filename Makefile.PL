@@ -34,7 +34,7 @@ WriteMakefile(
                      'Try::Tiny' => 0.19,
                      'List::Util' => 1.38,
                      'Devel::Cover' => 1.09,
-                     'Pod::Coverage' => 0.23,
+                     'Pod::Usage' => 1.64,
                      'Attribute::Abstract' => 1.02,
                      'Sub::Exporter::Progressive' => 0.001011,
                      'Bio::DB::HTS' => 1.11,
