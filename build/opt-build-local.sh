@@ -51,8 +51,8 @@ set -u
 
 cd $INIT_DIR
 
-## VAGrENT - should be the build root
-if [ ! -e $SETUP_DIR/VAGrENT.success ]; then
+## GRASS - should be the build root
+if [ ! -e $SETUP_DIR/GRASS.success ]; then
   cpanm --no-interactive --notest --mirror http://cpan.metacpan.org --notest -l $INST_PATH File::ShareDir::Install
   cpanm --no-interactive --notest --mirror http://cpan.metacpan.org --notest -l $INST_PATH --installdeps .
   cpanm -v --no-interactive --mirror http://cpan.metacpan.org -l $INST_PATH .
