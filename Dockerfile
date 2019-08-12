@@ -6,6 +6,7 @@ USER root
 ENV VER_CGPVCF="0.1.16"
 ENV VER_BIODBHTS="2.10"
 ENV VER_HTSLIB="1.9"
+ENV VER_SAMTOOLS="1.9"
 
 RUN apt-get -yq update
 RUN apt-get install -yq --no-install-recommends \
