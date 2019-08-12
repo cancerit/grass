@@ -33,7 +33,6 @@ WriteMakefile(
                      'Const::Fast' => 0.014,
                      'Try::Tiny' => 0.19,
                      'List::Util' => 1.38,
-                     'Devel::Cover' => 1.09,
                      'Pod::Usage' => 1.64,
                      'Attribute::Abstract' => 1.02,
                      'Sub::Exporter::Progressive' => 0.001011,
