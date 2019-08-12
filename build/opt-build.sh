@@ -92,16 +92,15 @@ if [ ! -e $SETUP_DIR/Bio-DB-HTS.success ]; then
 fi
 
 ## Sanger::CGP::Vcf
-if [ ! -e $SETUP_DIR/cgp-vcf.success ]; then
-  curl -sSL --retry 10 -o distro.tar.gz https://github.com/cgpVcf/releases/download/v${VER_CGPVCF}/cgpVcf-${VER_CGPVCF}.tar.gz
+if [ ! -e $SETUP_DIR/cgpVcf.success ]; then
+  curl -sSL --retry 10 https://github.com/cancerit/cgpVcf/archive/${VER_CGPVCF}.tar.gz > distro.tar.gz
   rm -rf distro/*
-  tar --strip-components 2 -C distro -xzf distro.tar.gz
+  tar --strip-components 1 -C distro -xzf distro.tar.gz
   cd distro
-  ./configure --prefix=$INST_PATH --with-pmdir=lib/perl5
-  make -j$CPU
-  make install
+  cpanm --no-interactive --notest --mirror http://cpan.metacpan.org --notest -l $INST_PATH --installdeps .
+  cpanm -v --no-interactive --mirror http://cpan.metacpan.org -l $INST_PATH .
   cd $SETUP_DIR
   rm -rf distro.* distro/*
-  touch $SETUP_DIR/cgp-vcf.success
+  touch $SETUP_DIR/cgpVcf.success
 fi
 
