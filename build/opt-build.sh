@@ -91,6 +91,20 @@ if [ ! -e $SETUP_DIR/Bio-DB-HTS.success ]; then
   touch $SETUP_DIR/Bio-DB-HTS.success
 fi
 
+## vcftools
+if [ ! -e $SETUP_DIR/vcftools.success ]; then
+  curl -sSL --retry 10 https://github.com/vcftools/vcftools/releases/download/v${VER_VCFTOOLS}/vcftools-${VER_VCFTOOLS}.tar.gz > distro.tar.gz
+  rm -rf distro/*
+  tar --strip-components 2 -C distro -xzf distro.tar.gz
+  cd distro
+  ./configure --prefix=$INST_PATH --with-pmdir=lib/perl5
+  make -j$CPU
+  make install
+  cd $SETUP_DIR
+  rm -rf distro.* distro/*
+  touch $SETUP_DIR/vcftools.success
+fi
+
 ## Sanger::CGP::Vcf
 if [ ! -e $SETUP_DIR/cgpVcf.success ]; then
   curl -sSL --retry 10 https://github.com/cancerit/cgpVcf/archive/${VER_CGPVCF}.tar.gz > distro.tar.gz
