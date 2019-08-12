@@ -3,7 +3,7 @@ FROM ubuntu:16.04 as builder
 USER root
 
 # ALL tool versions used by opt-build.sh
-ENV VER_CGPVCF="2.2.1"
+ENV VER_CGPVCF="v2.2.1"
 ENV VER_BIODBHTS="2.10"
 ENV VER_HTSLIB="1.9"
 
