@@ -35,9 +35,6 @@ WriteMakefile(
                      'List::Util' => 1.38,
                      'Pod::Usage' => 1.64,
                      'Attribute::Abstract' => 1.02,
-                     'File::ShareDir' => 1.102,
-                     'Bio::Root::Version' => 1.006924,# this is the only way to get Bio::Perl to behave
-                                                       # and return the version correctly
                    }
 );
 
