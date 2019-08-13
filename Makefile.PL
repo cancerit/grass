@@ -22,9 +22,6 @@
 ##########LICENCE##########
 
 use ExtUtils::MakeMaker;
-use File::ShareDir::Install;
-
-install_share module => 'Sanger::CGP::Grass', 'share';
 
 WriteMakefile(
   NAME          => 'Grass',
@@ -44,5 +41,3 @@ WriteMakefile(
                    }
 );
 
-package MY;
-use File::ShareDir::Install qw( postamble );
