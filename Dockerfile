@@ -1,4 +1,4 @@
-FROM ubuntu:16.04 as builder
+FROM quay.io/wtsicgp/vagrent:v3.5.0 as builder
 
 USER root
 
@@ -43,11 +43,12 @@ WORKDIR /tmp/builder
 ADD build/opt-build.sh build/
 RUN bash build/opt-build.sh $OPT
 
-FROM quay.io/wtsicgp/vagrent:v3.5.0
 
 # build the tools in this repo, separate to reduce build time on errors
 COPY . .
 RUN bash build/opt-build-local.sh $OPT
+
+FROM ubuntu:16.04 as builder
 
 LABEL maintainer="cgphelp@sanger.ac.uk" \
       uk.ac.sanger.cgp="Cancer, Ageing and Somatic Mutation, Wellcome Trust Sanger Institute" \
