@@ -22,6 +22,7 @@
 ##########LICENCE##########
 
 use ExtUtils::MakeMaker;
+use File::ShareDir::Install;
 
 WriteMakefile(
   NAME          => 'Grass',
@@ -33,8 +34,15 @@ WriteMakefile(
                      'Const::Fast' => 0.014,
                      'Try::Tiny' => 0.19,
                      'List::Util' => 1.38,
+                     'Devel::Cover' => 1.09,
                      'Pod::Usage' => 1.64,
                      'Attribute::Abstract' => 1.02,
+                     'Sub::Exporter::Progressive' => 0.001011,
                      'Bio::DB::HTS' => 1.11,
+                     'Bio::Root::Version' => 1.006924, # this is the only way to get Bio::Perl to behave
+                                                       # and return the version correctly
                    }
 );
+
+package MY;
+use File::ShareDir::Install qw( postamble );
