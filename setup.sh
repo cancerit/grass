@@ -31,38 +31,10 @@
 # 2009, 2010, 2011, 2012’."
 ##########LICENCE##########
 
-SOURCE_HTSLIB="https://github.com/samtools/samtools/releases/download/1.7/samtools-1.7.tar.bz2"
-SOURCE_BIOBDHTS="https://github.com/Ensembl/Bio-HTS/archive/2.10.tar.gz"
-SOURCE_CGPVCF="https://github.com/cancerit/cgpVcf/archive/v2.2.1.tar.gz"
-SOURCE_VCFTOOLS="https://github.com/vcftools/vcftools/releases/download/v0.1.14/vcftools-0.1.14.tar.gz"
-
-get_distro () {
-  EXT=""
-  DECOMP=""
-  if [[ $2 == *.tar.bz2* ]] ; then
-    EXT="tar.bz2"
-    DECOMP="-j"
-  elif [[ $2 == *.tar.gz* ]] ; then
-    EXT="tar.gz"
-    DECOMP="-z"
-  else
-    echo "I don't understand the file type for $1"
-    exit 1
-  fi
-
-  if hash curl 2>/dev/null; then
-    curl -sS -o $1.$EXT -L $2
-  else
-    wget -nv -O $1.$EXT $2
-  fi
-  mkdir -p $1
-  tar --strip-components 1 -C $1 $DECOMP -xf $1.$EXT
-}
-
 get_file () {
 # output, source
   if hash curl 2>/dev/null; then
-    curl -sS -o $1 -L $2
+    curl --insecure -sS -o $1 -L $2
   else
     wget -nv -O $1 $2
   fi
@@ -72,7 +44,7 @@ if [[ ($# -ne 1 && $# -ne 2) ]] ; then
   echo "Please provide an installation path and optionally perl lib paths to allow, e.g."
   echo "  ./setup.sh /opt/myBundle"
   echo "OR all elements versioned:"
-  echo "  ./setup.sh /opt/myBundle /opt/cgpVcf-X.X.X/lib/perl5:/opt/PCAP-X.X.X/lib/perl5"
+  echo "  ./setup.sh /opt/cgpVcf-X.X.X /opt/PCAP-X.X.X/lib/perl"
   exit 0
 fi
 
@@ -106,7 +78,6 @@ INST_PATH=`pwd`
 cd $INIT_DIR
 
 # make sure that build is self contained
-unset PERL5LIB
 PERLROOT=$INST_PATH/lib/perl5
 
 # allows user to knowingly specify other PERL5LIB areas.
@@ -116,6 +87,7 @@ else
   export PERL5LIB="$PERLROOT:$CGP_PERLLIBS"
 fi
 
+#add bin path for install tests
 export PATH=$INST_PATH/bin:$PATH
 
 #create a location to build dependencies
@@ -126,96 +98,27 @@ cd $SETUP_DIR
 
 ## grab cpanm and stick in workspace, then do a self upgrade into bin:
 get_file $SETUP_DIR/cpanm https://cpanmin.us/
-perl $SETUP_DIR/cpanm --no-wget -l $INST_PATH App::cpanminus
+perl $SETUP_DIR/cpanm -l $INST_PATH App::cpanminus
 CPANM=`which cpanm`
-echo $CPANM
 
-if [ -e $SETUP_DIR/basePerlDeps.success ]; then
-  echo "Previously installed base perl deps..."
-else
-  perlmods=( "File::ShareDir" "File::ShareDir::Install" "Module::Build" "Bio::Root::Version@1.006924")
-  for i in "${perlmods[@]}" ; do
-    echo -n "Installing build prerequisite $i..."
-    $CPANM --no-wget --no-interactive --notest --mirror http://cpan.metacpan.org -l $INST_PATH $i
-  done
-  touch $SETUP_DIR/basePerlDeps.success
+VCF=`perl -le 'eval "require $ARGV[0]" and print $ARGV[0]->VERSION' Sanger::CGP::Vcf`
+if [[ "x$VCF" == "x" ]] ; then
+  echo "PREREQUISITE: Please install Sanger::CGP::Vcf before proceeding: https://github.com/cancerit/cgpVcf/releases"
+  exit 1;
 fi
 
-CURR_TOOL="vcftools"
-CURR_SOURCE=$SOURCE_VCFTOOLS
-echo -n "Building $CURR_TOOL ..."
-if [ -e $SETUP_DIR/$CURR_TOOL.success ]; then
-  echo -n " previously installed (resumed) ..."
-elif [ -e $INST_PATH/bin/$CURR_TOOL ]; then
-  echo -n " previously installed ...";
-else
-  get_distro $CURR_TOOL $CURR_SOURCE
-  cd $SETUP_DIR/$CURR_TOOL
-  patch src/perl/Vcf.pm < $INIT_DIR/patches/vcfToolsProcessLog.diff
-  ./configure --prefix=$INST_PATH --with-pmdir=$INST_PATH/lib/perl5
-  make -j$CPU
-  make install
-  touch $SETUP_DIR/$CURR_TOOL.success
+VAGRENT=`perl -le 'eval "require $ARGV[0]" and print $ARGV[0]->VERSION' Sanger::CGP::Vagrent`
+if [[ "x$VAGRENT" == "x" ]] ; then
+  echo "PREREQUISITE: Please install Sanger::CGP::Vagrent before proceeding: https://github.com/cancerit/vagrent/releases"
+  exit 1;
 fi
 
-echo -n "Get htslib ..."
-if [ -e $SETUP_DIR/htslibGet.success ]; then
-  echo " already staged ...";
-else
-  echo
-  cd $SETUP_DIR
-  get_distro "htslib" $SOURCE_HTSLIB
-  touch $SETUP_DIR/htslibGet.success
-fi
-
-echo -n "Building htslib ..."
-if [ -e $SETUP_DIR/htslib.success ]; then
-  echo " previously installed ...";
-else
-  echo
-  mkdir -p htslib
-  tar --strip-components 1 -C htslib -jxf htslib.tar.bz2
-  cd htslib
-  ./configure --enable-plugins --enable-libcurl --prefix=$INST_PATH
-  make -j$CPU
-  make install
-  cd $SETUP_DIR
-  touch $SETUP_DIR/htslib.success
-fi
-
-export HTSLIB=$INST_PATH
-
-cd $INIT_DIR
-
-CHK=`perl -le 'eval "require $ARGV[0]" and print $ARGV[0]->VERSION' Bio::DB::HTS`
-if [[ "x$CHK" == "x" ]] ; then
-  echo -n "Building Bio::DB::HTS ..."
-  if [ -e $SETUP_DIR/biohts.success ]; then
-    echo " previously installed ...";
-  else
-    echo
-    cd $SETUP_DIR
-    rm -rf bioDbHts
-    get_distro "bioDbHts" $SOURCE_BIOBDHTS
-    mkdir -p bioDbHts
-    tar --strip-components 1 -C bioDbHts -zxf bioDbHts.tar.gz
-    cd bioDbHts
-    perl Build.PL --htslib=$HTSLIB --install_base=$INST_PATH
-    ./Build
-    ./Build test
-    ./Build install
-    cd $SETUP_DIR
-    rm -f bioDbHts.tar.gz
-    touch $SETUP_DIR/biohts.success
-  fi
-else
-  echo "Bio::DB::HTS already installed ..."
-fi
 
 cd $INIT_DIR
 
 echo -n "Installing Perl prerequisites ..."
 if ! ( perl -MExtUtils::MakeMaker -e 1 >/dev/null 2>&1); then
+    echo
     echo "WARNING: Your Perl installation does not seem to include a complete set of core modules.  Attempting to cope with this, but if installation fails please make sure that at least ExtUtils::MakeMaker is installed.  For most users, the best way to do this is to use your system's package manager: apt, yum, fink, homebrew, or similar."
 fi
 
@@ -231,6 +134,7 @@ make install
 # cleanup all junk
 rm -rf $SETUP_DIR
 
+
 echo
 echo
 echo "Please add the following to beginning of path:"
@@ -238,4 +142,3 @@ echo "  $INST_PATH/bin"
 echo "Please add the following to beginning of PERL5LIB:"
 echo "  $PERLROOT"
 echo
-
