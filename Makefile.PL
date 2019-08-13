@@ -24,6 +24,8 @@
 use ExtUtils::MakeMaker;
 use File::ShareDir::Install;
 
+install_share module => 'Sanger::CGP::Grass', 'share';
+
 WriteMakefile(
   NAME          => 'Grass',
   LICENSE       => 'agpl_3', # http://search.cpan.org/~dagolden/CPAN-Meta-2.142690/lib/CPAN/Meta/Spec.pm#license
