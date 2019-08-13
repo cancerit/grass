@@ -84,6 +84,7 @@ my $normal = '';
 my $acc_normal = '';
 my $acc_source_normal = '';
 my $study_normal = '';
+my $version = 0;
 my @add_header;
 
 my $help = 0;
