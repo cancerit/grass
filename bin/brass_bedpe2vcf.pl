@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 ##########LICENCE##########
-# Copyright (c) 2014 Genome Research Ltd.
+# Copyright (c) 2014-2019 Genome Research Ltd.
 # 
 # Author: Lucy Stebbings <cgpit@sanger.ac.uk>
 # 
@@ -75,6 +75,7 @@ my $normal = '';
 my $acc_normal = '';
 my $acc_source_normal = '';
 my $study_normal = '';
+my $version = 0;
 
 my $help = 0;
 
@@ -84,6 +85,7 @@ GetOptions( 'file:s'        => \$file,
 	    'assembly:s'    => \$assembly,
 	    'platform:s'    => \$platform,
 	    'protocol:s'    => \$protocol,
+        'version'       => \$version,
 	    'tumour:s'            => \$tumour,
 	    'acc_tumour:s'        => \$acc_tumour,
 	    'acc_source_tumour:s' => \$acc_source_tumour,
@@ -97,6 +99,11 @@ GetOptions( 'file:s'        => \$file,
 
 # check inputs
 if ($help) { usage(); }
+
+if($version){
+  print 'Version: '.Sanger::CGP::Grass->VERSION."\n";
+  exit;
+}
 
 # get the flanking bases for use in vcf conversion (appends the up and downstream bases to the end of each line)
 if ($file) {
