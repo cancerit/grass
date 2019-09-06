@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 ##########LICENCE##########
-# Copyright (c) 2014 Genome Research Ltd.
+# Copyright (c) 2014-2019 Genome Research Ltd.
 #
 # Author: Lucy Stebbings <cgpit@sanger.ac.uk>
 #
@@ -84,6 +84,7 @@ my $normal = '';
 my $acc_normal = '';
 my $acc_source_normal = '';
 my $study_normal = '';
+my $version = 0;
 my @add_header;
 
 my $help = 0;
@@ -94,6 +95,7 @@ GetOptions( 'within:s'      => \$within,
 	    'file:s'        => \$file,
 	    'r_file:s'      => \$file2,
 	    'outfile:s'     => \$outfile,
+        'version'       => \$version,
 	    'genome_cache:s'=> \$genome_cache_file,
 	    'ensembl_api:s' => \$ensembl_api,
 	    'species:s'     => \$species,
@@ -119,6 +121,11 @@ GetOptions( 'within:s'      => \$within,
 
 # check inputs
 if ($help || $arg_count == 0) { usage(); }
+
+if($version){
+  print 'Version: '.Sanger::CGP::Grass->VERSION."\n";
+  exit;
+}
 
 # set up access to genome data  from EnsemblDB (if species/ensembl_api supplied) or a cached flat file version (if genome_cache supplied)
 my $genome_data = new Sanger::CGP::Grass::GenomeData(-species      => $species,

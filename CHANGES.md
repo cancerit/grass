@@ -1,5 +1,9 @@
 # CHANGES
 
+## 2.2.0
+
+* Added a Docker container
+
 ## 2.1.1
 
 * Update tabix->query to use tabix->query_full
